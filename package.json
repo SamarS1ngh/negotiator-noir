@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/SamarS1ngh/negotiator-noir#readme",
   "devDependencies": {
+    "@capacitor/cli": "^8.4.2",
     "@types/node": "^26.1.1",
     "jsdom": "^29.1.1",
     "typescript": "^7.0.2",
@@ -31,6 +32,8 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/oswald": "^5.2.8"
   }
