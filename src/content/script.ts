@@ -31,12 +31,18 @@ export const COLLECTOR_SCRIPT: Script = {
   ],
 
   statements: [
-    { id: 's_leash', text: "He doesn't need to know how I collect.", truth: 'evasion' },
-    { id: 's_efficient', text: "I don't miss. I don't negotiate. Not with anyone.", truth: 'lie' },
-    { id: 's_book', text: "I run my own book. I don't answer to Marlowe.", truth: 'lie', contradicts: 'skims' },
-    { id: 's_number', text: "The number's the number. Nobody argues it twice.", truth: 'lie' },
-    { id: 's_count_self', text: 'I count every crate myself, down to the last case.', truth: 'lie' },
-    { id: 's_count_never', text: "Counting? I've never once touched a crate myself.", truth: 'lie', contradicts: 's_count_self' },
+    { id: 's_leash', text: "He doesn't need to know how I collect.", truth: 'evasion',
+      subtext: "He's protecting the boss's blind spot — that's the string you can pull." },
+    { id: 's_efficient', text: "I don't miss. I don't negotiate. Not with anyone.", truth: 'lie',
+      subtext: 'Pure ego. He wants you to believe he has no give — so there IS give.' },
+    { id: 's_book', text: "I run my own book. I don't answer to Marlowe.", truth: 'lie', contradicts: 'skims',
+      subtext: "He's overselling it — nobody defends the truth this hard. He answers to Marlowe, and it scares him." },
+    { id: 's_number', text: "The number's the number. Nobody argues it twice.", truth: 'lie',
+      subtext: 'Repeating it to convince himself. The number is exactly what he\'d move on.' },
+    { id: 's_count_self', text: 'I count every crate myself, down to the last case.', truth: 'lie',
+      subtext: "Planting his own alibi — remember it, he'll trip on it." },
+    { id: 's_count_never', text: "Counting? I've never once touched a crate myself.", truth: 'lie', contradicts: 's_count_self',
+      subtext: "He just contradicted himself. He forgot what he told you." },
   ],
 
   leverage: [

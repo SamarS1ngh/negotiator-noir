@@ -25,4 +25,19 @@ export const COLLECTOR: Opponent = {
       folding: 'assets/art/collector/folding.jpg',
     },
   },
+  objective: {
+    goal: 'BREAK RICCI',
+    why: "Collector for the empire that took your family. The debt's invented. Crack him → it dies + he names who's above him.",
+  },
+  expressions: {
+    guarded: 'still · watching · giving nothing away',
+    rattled: 'jaw tight · eyes flicking to the door',
+    angry: 'leaning in · teeth bared · trying to reset the room',
+    cornered: 'sweating · glancing for an exit that isn\'t there',
+    folding: 'shoulders down · the mask is off',
+  },
+  tell: {
+    text: 'his hand keeps drifting to his watch',
+    teach: "A tell — a crack he can't stop. His body says what his mouth won't. Catch it, press it.",
+  },
 };

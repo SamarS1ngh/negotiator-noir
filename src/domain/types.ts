@@ -8,7 +8,8 @@ export type Risk = 'safe' | 'uncertain' | 'high';
 
 export interface ProbeEffect { hisComposure: number; yourComposure: number; leak?: AgendaField; leakAmount: number; band: Band; }
 
-export interface Statement { id: string; text: string; truth: 'true' | 'evasion' | 'lie'; contradicts?: string; }
+// subtext = the plain-language read of what he's REALLY doing beneath this reply.
+export interface Statement { id: string; text: string; truth: 'true' | 'evasion' | 'lie'; contradicts?: string; subtext?: string; }
 export interface Contradiction { id: string; statementId: string; against: string; kind: 'leverage' | 'statement'; }
 export interface Leverage { id: string; label: string; text: string; targets: AgendaField; heldAtStart: boolean; }
 
@@ -18,6 +19,10 @@ export interface Opponent {
   moodStart: number; composureStart: number; yourComposureStart: number;
   agenda: Record<AgendaField, string>; debtAmount: number;
   art: { seed: number; states: Record<MoodState, string> };
+  // presentation content (optional; UI falls back if absent) —
+  objective?: { goal: string; why: string };            // on-screen stakes
+  expressions?: Record<MoodState, string>;              // his face, per mood ("jaw tight · eyes flicking")
+  tell?: { text: string; teach: string };               // a live tell + first-time plain-language teach
 }
 export interface Script { angles: AngleId[]; lines: Line[]; statements: Statement[]; leverage: Leverage[]; }
 export interface DuelState {
