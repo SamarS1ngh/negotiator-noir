@@ -1,0 +1,167 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090c; --bg2:#0c0e13; --surf:#12141b; --surf2:#171a22; --line:#242832;
+  --bone:#eef0f4; --dim:#8b90a0; --faint:#565b69;
+  --crimson:#e23b42; --crimson-deep:#8f1f24; --crimson-soft:rgba(226,59,66,.16);
+  --steel:#6fd3e6; --steel-deep:#2b7180; --steel-soft:rgba(111,211,230,.12);
+  --gold:#e0b24a; --good:#63c088;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --pad:clamp(16px,5vw,22px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg)}
+body{font-family:'Oswald',system-ui,sans-serif;color:var(--bone);-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;min-height:100dvh;overflow:hidden;font-weight:400}
+.kicker{font-size:clamp(9px,2.4vw,11px);font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+
+/* ── OBJECTIVE ─────────────────────────────── */
+.objective{flex:none;display:flex;align-items:center;gap:14px;padding:calc(12px + var(--safe-t)) var(--pad) 12px;
+  background:linear-gradient(180deg,rgba(226,59,66,.08),transparent);border-bottom:1px solid var(--line);z-index:6}
+.objective .badge{flex:none;width:30px;height:30px;border-radius:8px;border:1px solid var(--crimson-deep);
+  display:grid;place-items:center;color:var(--crimson);font-size:15px;background:var(--crimson-soft)}
+.objective .txt{min-width:0}
+.objective .goal{font-size:clamp(15px,4.3vw,19px);font-weight:700;letter-spacing:.06em;line-height:1;text-transform:uppercase}
+.objective .goal b{color:var(--crimson);font-weight:700}
+.objective .why{font-size:clamp(10px,2.7vw,12px);color:var(--dim);line-height:1.35;margin-top:4px;font-weight:300}
+
+/* ── SCENE ─────────────────────────────────── */
+.scene{position:relative;flex:1 1 auto;min-height:36vh;overflow:hidden;background:#000}
+.scene>img{width:100%;height:100%;object-fit:cover;object-position:center 20%;animation:breathe 7s ease-in-out infinite;opacity:.96}
+@keyframes breathe{0%,100%{transform:scale(1.015)}50%{transform:scale(1.055)}}
+.scene::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(135% 95% at 50% 26%,transparent 52%,rgba(8,9,12,.5) 100%),
+  linear-gradient(180deg,rgba(8,9,12,.35),transparent 20%,transparent 66%,var(--bg) 100%)}
+.nameplate{position:absolute;top:14px;left:var(--pad);z-index:3}
+.nameplate .nm{font-size:clamp(26px,7.5vw,38px);font-weight:600;letter-spacing:.04em;line-height:.9;text-shadow:0 3px 18px #000}
+.nameplate .role{font-size:clamp(10px,2.6vw,12px);color:var(--crimson);letter-spacing:.18em;text-transform:uppercase;font-weight:500;margin-top:5px;text-shadow:0 2px 8px #000}
+
+/* floating reads = designed HUD tags (glass, hairline, subtle glow) */
+.tag{position:absolute;z-index:3;max-width:52%;padding:8px 11px;border-radius:9px;
+  background:rgba(12,14,19,.55);border:1px solid var(--line);
+  box-shadow:0 6px 22px rgba(0,0,0,.4);
+  animation:rise 6s ease-in-out infinite}
+.tag .lab{display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px}
+.tag .val{font-size:clamp(11px,2.9vw,13px);line-height:1.3;color:var(--bone);font-weight:300}
+.tag .val b{font-weight:500}
+@keyframes rise{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.t-face{top:calc(14px + 62px);left:var(--pad)}.t-face .lab{color:var(--steel)}
+.t-mean{top:22%;right:var(--pad);text-align:left}.t-mean .lab{color:var(--gold)}.t-mean .lab i{color:var(--gold)}
+.t-mean .val b{color:#f2e2b0}
+.t-tell{bottom:24%;left:var(--pad);border-color:var(--crimson-deep);box-shadow:0 6px 22px rgba(226,59,66,.15);animation:pulse 2s ease-in-out infinite}
+.t-tell .lab{color:var(--crimson)}.t-tell .teach{display:block;margin-top:5px;font-size:10px;color:var(--dim);font-weight:300;line-height:1.3}
+@keyframes pulse{0%,100%{border-color:var(--crimson-deep);box-shadow:0 6px 22px rgba(226,59,66,.12)}50%{border-color:var(--crimson);box-shadow:0 6px 26px rgba(226,59,66,.28)}}
+.verdict{position:absolute;top:14px;right:var(--pad);z-index:3;text-align:right}
+.verdict .lab{font-size:9px;letter-spacing:.2em;color:var(--faint);text-transform:uppercase}
+.verdict .v{font-size:clamp(14px,3.8vw,17px);font-weight:700;letter-spacing:.04em;color:var(--good);text-shadow:0 0 16px rgba(99,192,136,.4)}
+
+/* composure = refined meter */
+.composure{position:absolute;left:var(--pad);right:var(--pad);bottom:14px;z-index:3}
+.composure .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.composure .cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:500;text-shadow:0 1px 6px #000}
+.composure .cap b{color:var(--bone)}
+.composure .num{font-family:'JetBrains Mono';font-size:15px;color:var(--bone);text-shadow:0 1px 6px #000}
+.composure .track{height:8px;border-radius:5px;background:rgba(143,31,36,.25);border:1px solid rgba(143,31,36,.5);overflow:hidden}
+.composure .fill{height:100%;width:62%;border-radius:5px;background:linear-gradient(90deg,var(--crimson-deep),var(--crimson));
+  box-shadow:0 0 12px rgba(226,59,66,.5);transition:width .6s cubic-bezier(.2,.7,.2,1)}
+
+/* ── CONVERSATION ─────────────────────────── */
+.convo{flex:none;padding:16px var(--pad) 14px;background:var(--bg2);border-top:1px solid var(--line)}
+.convo .you{font-family:'JetBrains Mono';font-size:clamp(11px,2.9vw,13px);color:var(--faint);line-height:1.4;margin-bottom:10px}
+.convo .you b{color:var(--dim);font-weight:500;letter-spacing:.1em}
+.convo .him{position:relative;padding-left:14px}
+.convo .him::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:2px;border-radius:2px;background:linear-gradient(180deg,var(--crimson),var(--crimson-deep))}
+.convo .him .who{font-size:11px;font-weight:600;letter-spacing:.18em;color:var(--crimson);text-transform:uppercase;margin-bottom:5px}
+.convo .him .said{font-family:'JetBrains Mono';font-size:clamp(15px,4.4vw,20px);line-height:1.4;color:var(--bone);font-weight:400}
+
+/* ── YOUR PLAY ────────────────────────────── */
+.play{flex:none;padding:14px var(--pad) calc(16px + var(--safe-b));
+  background:linear-gradient(180deg,#0b1113,var(--bg));border-top:1px solid rgba(111,211,230,.18)}
+.play .head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.play .head .dot{width:6px;height:6px;border-radius:50%;background:var(--steel);box-shadow:0 0 8px var(--steel)}
+.play .head .lab{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--steel)}
+.play .head .lab b{color:#cdeef5}
+.hud{display:flex;gap:16px;align-items:flex-start}
+.dial{width:min(42vw,164px);height:auto;flex:none;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5))}
+.dial .seg{fill:rgba(111,211,230,.05);stroke:rgba(111,211,230,.28);stroke-width:1;transition:.2s}
+.dial .seg.active{fill:url(#g);stroke:var(--steel);stroke-width:1.6;filter:drop-shadow(0 0 6px rgba(111,211,230,.4))}
+.dial .hub{fill:#0a0e11;stroke:rgba(111,211,230,.45);stroke-width:1}
+.dial text{font-family:'Oswald';text-anchor:middle;fill:#9fc9d3;font-size:10px;font-weight:500;letter-spacing:.04em}
+.dial text.active{fill:#eafbff;font-weight:700}
+.dial .hublbl{fill:var(--steel);font-size:8.5px;font-weight:600;letter-spacing:.18em}
+.words{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+.words .wh{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--steel-deep);margin-bottom:1px}
+.word{text-align:left;padding:12px 13px;border-radius:11px;background:linear-gradient(180deg,rgba(23,26,34,.9),rgba(15,17,22,.9));
+  border:1px solid var(--line);transition:.15s;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.word:hover,.word.hot{border-color:rgba(111,211,230,.45);box-shadow:0 0 0 1px rgba(111,211,230,.15),0 4px 16px rgba(0,0,0,.4)}
+.word .wt{font-family:'JetBrains Mono';font-size:clamp(12px,3.3vw,15px);line-height:1.35;color:#e7eaf0;font-weight:400}
+.word .wr{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:500}
+.rdot{width:7px;height:7px;border-radius:50%}.r-unc{background:var(--gold);box-shadow:0 0 6px rgba(224,178,74,.5)}.r-high{background:var(--crimson);box-shadow:0 0 6px rgba(226,59,66,.5)}.r-safe{background:var(--good)}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:13px;border-top:1px solid var(--line)}
+.foot .comp{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:9px;font-weight:500}
+.pips{display:inline-flex;gap:5px}.pip{width:22px;height:5px;border-radius:3px;background:var(--crimson);box-shadow:0 0 6px rgba(226,59,66,.4)}.pip.off{background:#23262f;box-shadow:none}
+.rec{padding:9px 16px;border-radius:9px;border:1px solid var(--line);background:var(--surf);color:var(--dim);
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+.rec .ri{color:var(--steel)}
+</style></head><body>
+  <div class="objective">
+    <div class="badge">◎</div>
+    <div class="txt">
+      <div class="goal">Break <b>Ricci</b></div>
+      <div class="why">Collector for the empire that took your family. The debt's invented — crack him and it dies, and he names who's above him.</div>
+    </div>
+  </div>
+
+  <div class="scene">
+    <img src="collector/rattled.jpg" alt="">
+    <div class="nameplate"><div class="nm">RICCI</div><div class="role">the collector</div></div>
+
+    <div class="verdict"><div class="lab">last read</div><div class="v">HE FLINCHED</div></div>
+
+    <div class="tag t-face"><div class="lab">👁 his face</div><div class="val">jaw tight · eyes flicking to the door</div></div>
+    <div class="tag t-mean"><div class="lab">⌕ what it means</div><div class="val">He's <b>overselling it</b> — nobody defends the truth this hard.</div></div>
+    <div class="tag t-tell"><div class="lab">▲ a tell</div><div class="val">his hand keeps drifting to his watch</div><span class="teach">A tell — a crack he can't stop. Press it.</span></div>
+
+    <div class="composure">
+      <div class="row"><span class="cap">His composure — <b>break it to 0</b></span><span class="num">62</span></div>
+      <div class="track"><div class="fill"></div></div>
+    </div>
+  </div>
+
+  <div class="convo">
+    <div class="you"><b>YOU</b> — Marlowe quoted me different terms than you did.</div>
+    <div class="him"><div class="who">Ricci</div><div class="said">"I run my own book. I don't answer to Marlowe."</div></div>
+  </div>
+
+  <div class="play">
+    <div class="head"><span class="dot"></span><span class="lab">Your play — <b>tap an angle</b>, it opens your words</span></div>
+    <div class="hud">
+      <svg class="dial" viewBox="0 0 200 200">
+        <defs><radialGradient id="g" cx="50%" cy="50%" r="70%"><stop offset="0%" stop-color="rgba(111,211,230,.32)"/><stop offset="100%" stop-color="rgba(111,211,230,.08)"/></radialGradient></defs>
+        <path class="seg" d="M100,100 L100,12 A88,88 0 0,1 183.6,71.6 Z"/>
+        <path class="seg" d="M100,100 L183.6,71.6 A88,88 0 0,1 151.7,170.9 Z"/>
+        <path class="seg active" d="M100,100 L151.7,170.9 A88,88 0 0,1 48.3,170.9 Z"/>
+        <path class="seg" d="M100,100 L48.3,170.9 A88,88 0 0,1 16.4,71.6 Z"/>
+        <path class="seg" d="M100,100 L16.4,71.6 A88,88 0 0,1 100,12 Z"/>
+        <circle class="hub" cx="100" cy="100" r="24"/>
+        <text x="132" y="56">Lean</text>
+        <text x="149" y="120">Flatter</text>
+        <text class="active" x="100" y="150">Plant<tspan x="100" dy="12">Doubt</tspan></text>
+        <text x="51" y="120">Bluff</text>
+        <text x="66" y="56">Offer</text>
+        <text class="hublbl" x="100" y="103">PICK</text>
+      </svg>
+      <div class="words">
+        <div class="wh">Plant doubt — your words</div>
+        <button class="word hot"><div class="wt">"Funny — your own crew doesn't back that number."</div><div class="wr"><span class="rdot r-unc"></span> uncertain · could go either way</div></button>
+        <button class="word"><div class="wt">"You sure this is even your call to make?"</div><div class="wr"><span class="rdot r-high"></span> high risk · could blow up</div></button>
+      </div>
+    </div>
+    <div class="foot">
+      <span class="comp">Your composure <span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip off"></i></span></span>
+      <span class="rec">The Record <span class="ri">▸</span></span>
+    </div>
+  </div>
+</body></html>
