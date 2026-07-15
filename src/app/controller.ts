@@ -103,8 +103,8 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
 
     const result = apply(state, { kind: 'catch', contradictionId }, opp, script);
     state = result.state;
-    if (state.end !== 'ongoing') { showAftermath(); return; }
-    renderCatch(root, said, against, leakField, { continue: showDuel });
+    const next = state.end !== 'ongoing' ? showAftermath : showDuel;
+    renderCatch(root, said, against, leakField, { continue: next });
   }
 
   function doDeploy(leverageId: string): void {
@@ -113,8 +113,8 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
 
     const result = apply(state, { kind: 'deploy', leverageId }, opp, script);
     state = result.state;
-    if (state.end !== 'ongoing') { showAftermath(); return; }
-    renderDeploy(root, lev, { continue: showDuel });
+    const next = state.end !== 'ongoing' ? showAftermath : showDuel;
+    renderDeploy(root, lev, { continue: next });
   }
 
   function walk(): void {
