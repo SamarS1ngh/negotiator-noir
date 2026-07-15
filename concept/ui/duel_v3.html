@@ -1,0 +1,103 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0a0a0c;--panel:#111114;--edge:#26262b;--crimson:#d1272e;--crimson-dim:#7a1a1f;--bone:#e9e6df;--smoke:#8c8a86;--green:#5aa05f;--gold:#c8a23a;
+  --safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--ink)}
+body{font-family:'Oswald',sans-serif;color:var(--bone);display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;overflow:hidden}
+
+/* OBJECTIVE */
+.objective{flex:none;padding:calc(9px + var(--safe-t)) 5vw 9px;background:linear-gradient(180deg,#140b0c,transparent);border-bottom:1px solid #241315;display:flex;align-items:center;gap:10px;z-index:5}
+.objective .goal{font-size:clamp(14px,4vw,19px);font-weight:700;letter-spacing:2px;color:#fff;text-transform:uppercase;white-space:nowrap}
+.objective .goal b{color:var(--crimson)}
+.objective .why{font-size:clamp(10px,2.8vw,12px);color:var(--smoke);border-left:1px solid var(--edge);padding-left:10px;line-height:1.25}
+
+/* SCENE — the character + FLOATING reads (subtext / expression / tell / verdict) in the air around him */
+.scene{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+.scene>img{width:100%;height:100%;object-fit:cover;object-position:center 22%;animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1.01)}50%{transform:scale(1.05)}}
+.scene::after{content:"";position:absolute;inset:0;background:radial-gradient(130% 90% at 50% 30%,transparent 55%,rgba(10,10,12,.35) 100%),linear-gradient(180deg,rgba(10,10,12,.15),transparent 22%,transparent 70%,var(--ink))}
+.who{position:absolute;top:10px;left:5vw;z-index:3}
+.who .nm{font-size:clamp(20px,6vw,30px);font-weight:700;letter-spacing:2px;text-shadow:0 2px 12px #000}
+
+/* floating read chips — hover in the air, glowing, distinct from dialogue */
+.float{position:absolute;z-index:3;max-width:46%;font-size:clamp(11px,3vw,14px);line-height:1.3;text-shadow:0 2px 12px #000;animation:drift 5s ease-in-out infinite}
+.float .k{display:block;font-size:clamp(9px,2.4vw,11px);letter-spacing:3px;font-weight:700;text-transform:uppercase;margin-bottom:3px}
+@keyframes drift{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* expression — top-left, cool/white */
+.f-expr{top:12%;left:4%;color:#cfd6da}.f-expr .k{color:#9fb0b8}
+/* subtext — upper-right, amber (the meaning beneath) */
+.f-sub{top:20%;right:4%;text-align:right;color:#e6d29a}.f-sub .k{color:var(--gold)}
+.f-sub b{color:#fff}
+/* tell — lower-left near hands, crimson, pulsing */
+.f-tell{bottom:20%;left:4%;color:#ff8b8f;font-weight:600;animation:tellpulse 1.5s ease-in-out infinite}.f-tell .k{color:var(--crimson)}
+@keyframes tellpulse{0%,100%{opacity:.72;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+/* verdict — floats center on your move, pops */
+.f-verdict{left:50%;bottom:16%;transform:translateX(-50%);text-align:center;max-width:80%;animation:vpop .4s ease}
+.f-verdict .big{font-size:clamp(30px,9vw,46px);font-weight:700;letter-spacing:2px;color:var(--green);text-shadow:0 0 30px rgba(90,160,95,.5),0 3px 16px #000}
+@keyframes vpop{0%{opacity:0;transform:translateX(-50%) scale(.85)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
+/* composure — thin bar pinned to scene bottom */
+.hisbar{position:absolute;left:5vw;right:5vw;bottom:10px;z-index:3}
+.hisbar .lbl{display:flex;justify-content:space-between;font-size:clamp(9px,2.6vw,12px);letter-spacing:2px;color:var(--smoke);text-transform:uppercase;margin-bottom:5px;text-shadow:0 1px 6px #000}
+.hisbar .lbl b{color:var(--bone)}
+.hisbar .track{height:10px;background:#20110f;border:1px solid #3a1a18;border-radius:6px;overflow:hidden}
+.hisbar .track i{display:block;height:100%;width:62%;background:linear-gradient(90deg,var(--crimson-dim),var(--crimson));transition:width .55s cubic-bezier(.2,.7,.2,1)}
+
+/* CONVERSATION — ONLY the dialogue lives here */
+.convo{flex:none;padding:12px 5vw;background:var(--panel);border-top:1px solid #201316}
+.turn{font-family:'JetBrains Mono',monospace;line-height:1.35}
+.turn.you{font-size:clamp(11px,3vw,13px);color:var(--smoke);margin-bottom:8px}
+.turn.you b{color:#b8b4ae;letter-spacing:1px;font-weight:700}
+.turn.him{font-size:clamp(15px,4.4vw,20px);color:var(--bone);padding-left:12px;border-left:3px solid var(--crimson)}
+.turn.him b{display:block;font-family:'Oswald';font-size:clamp(10px,2.7vw,12px);letter-spacing:3px;color:var(--crimson);text-transform:uppercase;margin-bottom:3px}
+
+/* YOUR MOVE */
+.move{flex:none;padding:11px 5vw calc(11px + var(--safe-b));background:#16161b;border-top:1px solid var(--edge)}
+.move .head{font-size:clamp(10px,2.8vw,13px);letter-spacing:3px;color:var(--smoke);text-transform:uppercase;margin-bottom:9px}
+.move .head b{color:var(--crimson)}
+.angles{display:flex;flex-wrap:wrap;gap:7px}
+.angle{padding:9px 15px;border:1px solid var(--edge);border-radius:6px;background:#0e0e11;font-size:clamp(12px,3.5vw,15px);letter-spacing:1px;color:var(--smoke);text-transform:uppercase}
+.angle.on{color:#fff;border-color:var(--crimson);box-shadow:0 0 16px rgba(209,39,46,.3)}
+.words{margin-top:9px;display:flex;flex-direction:column;gap:7px}
+.word{padding:11px 13px;border:1px solid var(--edge);border-left:4px solid var(--crimson-dim);border-radius:7px;background:#141417}
+.word .t{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,3.8vw,16px);line-height:1.3;color:var(--bone)}
+.word .cue{margin-top:5px;font-size:clamp(9px,2.6vw,11px);letter-spacing:1px;color:var(--smoke);text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%}.risk-uncertain{background:var(--gold)}.risk-high{background:var(--crimson)}
+.footer{margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.comp{font-size:clamp(9px,2.6vw,12px);letter-spacing:2px;color:var(--smoke);text-transform:uppercase}
+.pips{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}.pip{width:18px;height:9px;background:var(--crimson);border-radius:2px}.pip.off{background:#2a2a2e}
+.recbtn{padding:8px 15px;border:1px solid var(--edge);border-radius:6px;background:#0e0e11;color:var(--bone);font-size:clamp(10px,2.8vw,13px);letter-spacing:2px}
+</style></head><body>
+  <div class="objective"><div class="goal">◎ BREAK <b>RICCI</b></div><div class="why">Collector for the empire that took your family. The debt's invented. Crack him → it dies + he names who's above him.</div></div>
+
+  <div class="scene">
+    <img src="collector/rattled.jpg" alt="">
+    <div class="who"><div class="nm">RICCI</div></div>
+
+    <!-- reads FLOAT in the air around him -->
+    <div class="float f-expr"><span class="k">his face</span>jaw tight · eyes flicking to the door</div>
+    <div class="float f-sub"><span class="k">⌕ subtext</span>He's <b>overcommitting to the lie</b> — nobody defends the truth this hard.</div>
+    <div class="float f-tell"><span class="k">▲ tell</span>hand keeps drifting to his watch</div>
+    <div class="float f-verdict"><div class="big">HE FLINCHED</div></div>
+
+    <div class="hisbar"><div class="lbl"><span>his composure — <b>break it to 0</b></span><span>62</span></div><div class="track"><i></i></div></div>
+  </div>
+
+  <!-- CONVERSATION: dialogue only -->
+  <div class="convo">
+    <div class="turn you"><b>YOU</b> — Marlowe quoted me different terms than you did.</div>
+    <div class="turn him"><b>Ricci</b>"I run my own book. I don't answer to Marlowe."</div>
+  </div>
+
+  <div class="move">
+    <div class="head">Your move · angle <b>› plant doubt</b> · now the words</div>
+    <div class="angles"><span class="angle on">Plant doubt</span><span class="angle">Lean</span><span class="angle">Flatter</span><span class="angle">Bluff</span><span class="angle">Offer out</span></div>
+    <div class="words">
+      <div class="word"><div class="t">"Funny — your own crew doesn't back that number."</div><div class="cue"><span class="dot risk-uncertain"></span> uncertain · could go either way</div></div>
+      <div class="word"><div class="t">"You sure this is even your call to make?"</div><div class="cue"><span class="dot risk-high"></span> high risk · could rattle him or blow up</div></div>
+    </div>
+    <div class="footer"><div class="comp">You <span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip off"></i></span></div><div class="recbtn">THE RECORD ▸</div></div>
+  </div>
+</body></html>
