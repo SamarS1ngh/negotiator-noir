@@ -37,3 +37,7 @@ See **[SCREENS.md](SCREENS.md)** — the duel, the hot-spike/tell moment, the af
 ## Art-style options
 
 See **[STYLES.md](STYLES.md)** — the same opponent rendered 6 ways to choose the finish.
+
+## Dialogue font
+
+See **[FONTS.md](FONTS.md)** — three non-cursive options (sans / mono / serif) to replace the italic.
