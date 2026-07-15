@@ -4,6 +4,9 @@ import '@fontsource/oswald/600.css';
 import '@fontsource/oswald/700.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '../ui/theme.css';
+import { startDuel } from './controller';
+import { COLLECTOR } from '../content/collector';
+import { COLLECTOR_SCRIPT } from '../content/script';
 
 const app = document.querySelector<HTMLDivElement>('#app');
-if (app) app.textContent = 'Negotiator — booting';
+if (app) startDuel(app, COLLECTOR, COLLECTOR_SCRIPT);

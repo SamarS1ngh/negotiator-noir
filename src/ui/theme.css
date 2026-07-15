@@ -213,6 +213,8 @@ body {
   cursor: pointer;
 }
 
+.walk-btn { display: block; margin: 0 5% 32px; background: transparent; opacity: .7; }
+
 .footer { display: flex; justify-content: space-between; align-items: center; padding: 20px 5% 32px; }
 .comp { font-size: clamp(13px, 1.6vw, 18px); letter-spacing: 4px; color: var(--smoke); text-transform: uppercase; }
 .comp b { color: var(--bone); font-weight: 600; }
