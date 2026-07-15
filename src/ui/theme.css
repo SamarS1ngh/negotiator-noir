@@ -47,7 +47,7 @@ body {
   color: var(--bone);
   min-height: 100vh;
   min-height: 100dvh;
-  overflow: hidden;
+  overflow-y: auto; /* if the word HUD makes it taller than the viewport, scroll instead of crushing the scene */
 }
 
 /* ---- OBJECTIVE: always visible, the stakes of this duel ---- */
@@ -69,7 +69,7 @@ body {
 .scene {
   position: relative;
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 34vh; /* never collapse his face to a sliver when the word HUD opens */
   overflow: hidden;
 }
 .scene::after {

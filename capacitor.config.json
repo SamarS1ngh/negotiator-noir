@@ -1,5 +1,9 @@
 {
   "appId": "com.samar.negotiator",
   "appName": "Negotiator",
-  "webDir": "dist"
+  "webDir": "dist",
+  "backgroundColor": "#0a0a0c",
+  "android": {
+    "backgroundColor": "#0a0a0c"
+  }
 }
