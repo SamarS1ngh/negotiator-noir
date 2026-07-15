@@ -1,28 +1,26 @@
 import type { AgendaField, AngleId, Band, DuelState, Opponent, Script } from '../domain/types';
 import { initDuel, apply } from '../domain/engine';
 import { renderDuel } from '../ui/duel';
-import { renderReaction } from '../ui/reaction';
+import type { DuelReaction } from '../ui/duel';
 import { renderRecord } from '../ui/record';
 import { renderCatch, renderDeploy } from '../ui/deploy';
 import { renderSpike } from '../ui/spike';
 import { renderAftermath } from '../ui/aftermath';
 
-// Tell-spike is timed (drains + auto-passes) in the live app, but never in
-// tests — vitest sets `import.meta.env.MODE` to 'test' by default, so this
-// stays deterministic without the integration test needing to know about it.
-const TIMED = import.meta.env.MODE !== 'test';
-
 /**
  * Wires the domain engine to the UI screens into one playable duel.
  * Owns the live `DuelState` + `selectedAngle`, and re-renders `root` on
- * every change. See .superpowers/sdd/task-11-brief.md for the flow rules.
+ * every change. See .superpowers/sdd/v2ui-brief.md for the flow rules.
  */
 export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDone?: () => void): void {
   let state: DuelState = initDuel(opp, script);
   let selectedAngle: AngleId | null = null;
+  // The last probe's verdict — re-rendered inline (punches out once, then
+  // sits docked top-right) instead of a separate reaction screen.
+  let lastReaction: DuelReaction | null = null;
 
   function showDuel(): void {
-    renderDuel(root, state, opp, angleFreshFirst(), { probe, pickAngle, openRecord }, selectedAngle);
+    renderDuel(root, state, opp, angleFreshFirst(), { probe, pickAngle, openRecord }, selectedAngle, lastReaction ?? undefined);
     appendWalkAffordance();
   }
 
@@ -66,29 +64,22 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
     state = result.state;
     selectedAngle = null;
 
-    const saidEvent = result.events.find((e) => e.type === 'said');
     const bandEvent = result.events.find((e) => e.type === 'band');
     const tellEvent = result.events.find((e) => e.type === 'tell');
     const band = (bandEvent?.text ?? 'neutral') as Band;
 
-    // The reaction beat is what makes a probe FEEL like something happened:
-    // his reply, a verdict, his composure moving. Then route onward.
-    renderReaction(
-      root,
-      opp,
-      { hisLine: saidEvent?.text ?? null, band, spent, hisComposure: state.hisComposure, mood: state.mood },
-      {
-        continue: () => {
-          if (state.end !== 'ongoing') { showAftermath(); return; }
-          if (tellEvent) { showSpike(tellEvent.text); return; }
-          showDuel();
-        },
-      },
-    );
+    // The verdict is now INLINE on the duel screen itself: it punches out
+    // once (fresh:true) here, then subsequent re-renders show it docked.
+    lastReaction = { band, fresh: true, spent };
+    showDuel();
+    lastReaction = { band, fresh: false, spent };
+
+    if (state.end !== 'ongoing') { showAftermath(); return; }
+    if (tellEvent) { showSpike(tellEvent.text); return; }
   }
 
   function showSpike(tellText: string): void {
-    renderSpike(root, tellText, opp.palette, { press: pressTell, pass: showDuel }, TIMED);
+    renderSpike(root, tellText, opp.palette, { press: pressTell, pass: showDuel });
   }
 
   function pressTell(): void {

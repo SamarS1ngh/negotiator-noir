@@ -1,23 +1,18 @@
-const TIMED_MS = 2500;
-
 /**
  * Renders the "tell spike" burst — ported from concept/ui/screen_spike.html.
- * A tell just cracked through; you get one beat to press it before he
- * recovers, or let it pass. Accent color is driven by the opponent's
- * `palette` token (must match a `--<palette>`/`--<palette>-dim` pair
- * defined in theme.css, e.g. 'crimson').
- *
- * When `timed` is true, a CSS-driven ring drains over ~2.5s and a
- * `setTimeout` fires `on.pass()` on lapse. When `timed` is false (tests),
- * everything renders statically with no timer — deterministic.
+ * A tell just cracked through; you press it or let it pass. No auto-timer —
+ * always time to read (this used to auto-pass after ~2.5s; that's gone).
+ * `timed` is accepted only so existing call sites keep compiling; it no
+ * longer changes behavior.
  */
 export function renderSpike(
   root: HTMLElement,
   tellText: string,
   palette: string,
   on: { press(): void; pass(): void },
-  timed: boolean,
+  timed?: boolean,
 ): void {
+  void timed;
   root.innerHTML = '';
   root.classList.add('spike-screen');
   root.style.setProperty('--accent', `var(--${palette})`);
@@ -27,9 +22,9 @@ export function renderSpike(
   tell.className = 'tell';
 
   const ring = document.createElement('div');
-  ring.className = timed ? 'ring timed' : 'ring';
+  ring.className = 'ring';
   const ringTwo = document.createElement('div');
-  ringTwo.className = timed ? 'ring two timed' : 'ring two';
+  ringTwo.className = 'ring two';
 
   const word = document.createElement('div');
   word.className = 'word';
@@ -50,11 +45,6 @@ export function renderSpike(
   beat.textContent = 'one beat — before he recovers';
   prompt.appendChild(beat);
 
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const clear = (): void => {
-    if (timer) clearTimeout(timer);
-  };
-
   const pressBtn = document.createElement('button');
   pressBtn.type = 'button';
   pressBtn.className = 'press';
@@ -63,10 +53,7 @@ export function renderSpike(
   const pressCue = document.createElement('small');
   pressCue.textContent = 'corner him on it';
   pressBtn.appendChild(pressCue);
-  pressBtn.addEventListener('click', () => {
-    clear();
-    on.press();
-  });
+  pressBtn.addEventListener('click', () => on.press());
   prompt.appendChild(pressBtn);
 
   const passBtn = document.createElement('button');
@@ -74,20 +61,8 @@ export function renderSpike(
   passBtn.className = 'pass';
   passBtn.dataset.pass = '';
   passBtn.textContent = '— or let it pass, play it safe —';
-  passBtn.addEventListener('click', () => {
-    clear();
-    on.pass();
-  });
+  passBtn.addEventListener('click', () => on.pass());
   prompt.appendChild(passBtn);
 
   root.appendChild(prompt);
-
-  if (timed) {
-    const timerEl = document.createElement('div');
-    timerEl.className = 'timer';
-    timerEl.style.animationDuration = `${TIMED_MS}ms`;
-    root.appendChild(timerEl);
-
-    timer = setTimeout(() => on.pass(), TIMED_MS);
-  }
 }
