@@ -33,3 +33,7 @@ Style tests — not final characters. Confirming the *look* before building anyt
 ## More screens
 
 See **[SCREENS.md](SCREENS.md)** — the duel, the hot-spike/tell moment, the aftermath, and the climb toward the end goal.
+
+## Art-style options
+
+See **[STYLES.md](STYLES.md)** — the same opponent rendered 6 ways to choose the finish.
