@@ -1,6 +1,7 @@
-import type { AgendaField, AngleId, DuelState, Opponent, Script } from '../domain/types';
+import type { AgendaField, AngleId, Band, DuelState, Opponent, Script } from '../domain/types';
 import { initDuel, apply } from '../domain/engine';
 import { renderDuel } from '../ui/duel';
+import { renderReaction } from '../ui/reaction';
 import { renderRecord } from '../ui/record';
 import { renderCatch, renderDeploy } from '../ui/deploy';
 import { renderSpike } from '../ui/spike';
@@ -57,16 +58,33 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
   }
 
   function probe(lineId: string): void {
+    const line = script.lines.find((l) => l.id === lineId);
+    // reciprocity check must read spentAngles BEFORE apply mutates it
+    const spent = line ? state.spentAngles.includes(line.angleId) : false;
+
     const result = apply(state, { kind: 'probe', lineId }, opp, script);
     state = result.state;
     selectedAngle = null;
 
-    if (state.end !== 'ongoing') { showAftermath(); return; }
-
+    const saidEvent = result.events.find((e) => e.type === 'said');
+    const bandEvent = result.events.find((e) => e.type === 'band');
     const tellEvent = result.events.find((e) => e.type === 'tell');
-    if (tellEvent) { showSpike(tellEvent.text); return; }
+    const band = (bandEvent?.text ?? 'neutral') as Band;
 
-    showDuel();
+    // The reaction beat is what makes a probe FEEL like something happened:
+    // his reply, a verdict, his composure moving. Then route onward.
+    renderReaction(
+      root,
+      opp,
+      { hisLine: saidEvent?.text ?? null, band, spent, hisComposure: state.hisComposure, mood: state.mood },
+      {
+        continue: () => {
+          if (state.end !== 'ongoing') { showAftermath(); return; }
+          if (tellEvent) { showSpike(tellEvent.text); return; }
+          showDuel();
+        },
+      },
+    );
   }
 
   function showSpike(tellText: string): void {

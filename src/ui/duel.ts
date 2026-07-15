@@ -78,7 +78,9 @@ export function renderDuel(
 
   const lineEl = document.createElement('div');
   lineEl.className = 'line';
-  lineEl.textContent = state.log.length > 0 ? state.log[state.log.length - 1]! : "He's waiting on you.";
+  // Ambient line under his face = the last thing HE said (not your own move).
+  const stmts = state.record.statements;
+  lineEl.textContent = stmts.length > 0 ? `“${stmts[stmts.length - 1]!.text}”` : "He's waiting on you.";
   stage.appendChild(lineEl);
 
   root.appendChild(stage);
