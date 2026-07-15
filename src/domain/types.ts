@@ -11,3 +11,25 @@ export interface ProbeEffect { hisComposure: number; yourComposure: number; leak
 export interface Statement { id: string; text: string; truth: 'true' | 'evasion' | 'lie'; contradicts?: string; }
 export interface Contradiction { id: string; statementId: string; against: string; kind: 'leverage' | 'statement'; }
 export interface Leverage { id: string; label: string; text: string; targets: AgendaField; heldAtStart: boolean; }
+
+export interface Line { id: string; angleId: AngleId; text: string; emits?: string; }
+export interface Opponent {
+  id: string; name: string; role: string; type: OpponentType; palette: string;
+  moodStart: number; composureStart: number; yourComposureStart: number;
+  agenda: Record<AgendaField, string>; debtAmount: number;
+  art: { seed: number; states: Record<MoodState, string> };
+}
+export interface Script { angles: AngleId[]; lines: Line[]; statements: Statement[]; leverage: Leverage[]; }
+export interface DuelState {
+  hisComposure: number; yourComposure: number; mood: MoodState;
+  known: Record<AgendaField, number>; spentAngles: AngleId[];
+  record: { statements: Statement[]; heldLeverage: Leverage[]; openContradictions: Contradiction[] };
+  end: EndState; log: string[];
+}
+export type DuelAction =
+  | { kind: 'probe'; lineId: string }
+  | { kind: 'catch'; contradictionId: string }
+  | { kind: 'deploy'; leverageId: string }
+  | { kind: 'pressTell' }
+  | { kind: 'walk' };   // player chooses to leave -> 'walked'
+export interface DuelEvent { type: 'said' | 'band' | 'tell' | 'caught' | 'deployed' | 'leak' | 'end'; text: string; }
