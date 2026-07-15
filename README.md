@@ -29,3 +29,7 @@ Same visual language, different types + palettes:
 | ![](concept/duel_enforcer.jpg) **the enforcer** | | |
 
 Style tests — not final characters. Confirming the *look* before building anything.
+
+## More screens
+
+See **[SCREENS.md](SCREENS.md)** — the duel, the hot-spike/tell moment, the aftermath, and the climb toward the end goal.
