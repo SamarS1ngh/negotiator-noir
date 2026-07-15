@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#07100f;--bone:#eafcfb;--smoke:#7fa5a3;--accent:#18c9c9;--accent-dim:#0c6b6b;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ink);color:var(--bone);font-family:'Oswald',sans-serif;width:1080px;height:2200px;overflow:hidden;position:relative}
+.stage{position:relative;height:100%}
+.stage img{width:100%;height:100%;object-fit:cover;object-position:center 20%}
+.stage::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 40%,rgba(7,16,15,0) 30%,rgba(7,16,15,.5) 70%,var(--ink) 100%)}
+.grain{position:absolute;inset:0;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+.top{position:absolute;top:56px;left:52px;right:52px;display:flex;justify-content:space-between;z-index:3}
+.name{font-size:58px;font-weight:700;letter-spacing:2px;text-shadow:0 3px 16px #000}
+.tag{font-size:27px;color:var(--smoke);letter-spacing:4px;text-transform:uppercase;margin-top:4px}
+.mood{text-align:right;font-size:44px;font-weight:700;color:var(--accent);letter-spacing:4px;text-shadow:0 0 26px rgba(24,201,201,.6)}
+.mood small{display:block;font-size:22px;color:var(--smoke);letter-spacing:4px;font-weight:400}
+/* big tell burst */
+.tell{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:4}
+.tell .ring{width:520px;height:520px;border:6px solid var(--accent);border-radius:50%;box-shadow:0 0 80px rgba(24,201,201,.55),inset 0 0 80px rgba(24,201,201,.25);opacity:.9;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.tell .ring.two{width:400px;height:400px;border-width:2px;opacity:.5}
+.tell .word{font-size:120px;font-weight:700;letter-spacing:14px;color:var(--accent);text-shadow:0 0 50px rgba(24,201,201,.8),0 6px 24px #000;position:relative}
+.tell .desc{font-family:'Playfair Display',serif;font-style:italic;font-size:46px;color:#fff;margin-top:14px;text-shadow:0 3px 18px #000;position:relative}
+/* pressure prompt */
+.prompt{position:absolute;left:52px;right:52px;bottom:120px;text-align:center;z-index:4}
+.beat{font-size:30px;letter-spacing:8px;color:var(--smoke);text-transform:uppercase;margin-bottom:26px}
+.press{display:inline-block;padding:40px 80px;border:3px solid var(--accent);border-radius:14px;background:linear-gradient(180deg,rgba(24,201,201,.16),rgba(12,107,107,.08));
+  font-size:62px;font-weight:700;letter-spacing:8px;color:#fff;box-shadow:0 0 60px rgba(24,201,201,.4)}
+.press small{display:block;font-size:26px;letter-spacing:5px;color:var(--accent);font-weight:400;margin-top:8px}
+.pass{margin-top:30px;font-size:28px;letter-spacing:4px;color:var(--smoke)}
+.timer{position:absolute;left:0;right:0;bottom:70px;text-align:center;font-size:26px;letter-spacing:10px;color:var(--accent)}
+</style></head><body>
+<div class="stage"><img src="crisp_femme.jpg"><div class="grain"></div>
+  <div class="top">
+    <div><div class="name">VERA KOSTA</div><div class="tag">knows where the ledger is</div></div>
+    <div class="mood">CRACKING<small>she slipped</small></div>
+  </div>
+  <div class="tell">
+    <div class="ring"></div><div class="ring two"></div>
+    <div class="word">TELL</div>
+    <div class="desc">her eyes cut to the door — she's ready to run</div>
+  </div>
+  <div class="prompt">
+    <div class="beat">one beat — before she recovers</div>
+    <div class="press">PRESS IT<small>corner her on the exit</small></div>
+    <div class="pass">— or let it pass, play it safe —</div>
+  </div>
+  <div class="timer">▸ ▸ ▸ ▸ ▸ ▹ ▹</div>
+</div></body></html>
