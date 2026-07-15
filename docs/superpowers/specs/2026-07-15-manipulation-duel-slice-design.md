@@ -111,6 +111,11 @@ When the duel reaches an end state, a cinematic card (see the approved `screen_a
 - **Expression-state art, not a full rig (for the slice):** generate the opponent in a small set of mood states (e.g., `guarded`, `rattled`, `angry`, `cornered`, `folding`) on a locked seed, glossy-cel. Cross-fade between states on mood change; overlay a **tell animation** (e.g., a flicker/emphasis) on spikes; add subtle **idle motion** (slow breathing / a faint parallax push) so it's never a dead still.
 - **Rive (rigged 2D face) is noted as a future upgrade** for richer live emotion; not required to prove the slice.
 
+### 9.3 Typography (locked)
+- **Display / UI / labels:** Oswald (condensed, bold) — names, headlines, angle chips, section labels.
+- **Dialogue / spoken lines / the Record entries:** **JetBrains Mono** (typewriter) — every spoken line reads like typed intel in a case file, reinforcing the interrogation fantasy.
+- **No cursive / italic-serif** anywhere (the Playfair italic used in early mockups is rejected). Emphasis via weight/color, not script fonts.
+
 ### 9.2 UI note — the interrogation layer on screen
 The approved duel mockup (`screen_aftermath`, `duel_screen`, etc.) covers PROBE. The interrogation layer adds two UI elements the plan must design (extending, not replacing, the approved look):
 - **The Record** (§7.5) — a case-file drawer/panel: his logged statements, your leverage, agenda %s, and open contradictions. Pulled up over the duel; styled to the noir look.
