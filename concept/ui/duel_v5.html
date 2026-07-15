@@ -1,0 +1,134 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0a0a0c;--panel:#111114;--edge:#26262b;--crimson:#d1272e;--crimson-dim:#7a1a1f;--bone:#e9e6df;--smoke:#8c8a86;--green:#5aa05f;--gold:#c8a23a;
+  --steel:#63b6c6;--steel-dim:#2b6773;--steel-glow:rgba(99,182,198,.32);
+  --safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--ink)}
+body{font-family:'Oswald',sans-serif;color:var(--bone);display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;overflow:hidden}
+
+/* OBJECTIVE */
+.objective{flex:none;padding:calc(9px + var(--safe-t)) 5vw 9px;background:linear-gradient(180deg,#140b0c,transparent);border-bottom:1px solid #241315;display:flex;align-items:center;gap:10px;z-index:5}
+.objective .goal{font-size:clamp(14px,4vw,19px);font-weight:700;letter-spacing:2px;color:#fff;text-transform:uppercase;white-space:nowrap}
+.objective .goal b{color:var(--crimson)}
+.objective .why{font-size:clamp(10px,2.8vw,12px);color:var(--smoke);border-left:1px solid var(--edge);padding-left:10px;line-height:1.25}
+
+/* SCENE — the character + FLOATING reads (subtext / expression / tell / verdict) in the air around him */
+.scene{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+.scene>img{width:100%;height:100%;object-fit:cover;object-position:center 22%;animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1.01)}50%{transform:scale(1.05)}}
+.scene::after{content:"";position:absolute;inset:0;background:radial-gradient(130% 90% at 50% 30%,transparent 55%,rgba(10,10,12,.35) 100%),linear-gradient(180deg,rgba(10,10,12,.15),transparent 22%,transparent 70%,var(--ink))}
+.who{position:absolute;top:10px;left:5vw;z-index:3}
+.who .nm{font-size:clamp(20px,6vw,30px);font-weight:700;letter-spacing:2px;text-shadow:0 2px 12px #000}
+
+/* floating read chips — hover in the air, glowing, distinct from dialogue */
+.float{position:absolute;z-index:3;max-width:46%;font-size:clamp(11px,3vw,14px);line-height:1.3;text-shadow:0 2px 12px #000;animation:drift 5s ease-in-out infinite}
+.float .k{display:block;font-size:clamp(9px,2.4vw,11px);letter-spacing:3px;font-weight:700;text-transform:uppercase;margin-bottom:3px}
+@keyframes drift{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* expression — top-left, cool/white */
+.f-expr{top:12%;left:4%;color:#cfd6da}.f-expr .k{color:#9fb0b8}
+/* subtext — upper-right, amber (the meaning beneath) */
+.f-sub{top:20%;right:4%;text-align:right;color:#e6d29a}.f-sub .k{color:var(--gold)}
+.f-sub b{color:#fff}
+/* tell — lower-left near hands, crimson, pulsing */
+.f-tell{bottom:20%;left:4%;color:#ff8b8f;font-weight:600;animation:tellpulse 1.5s ease-in-out infinite}.f-tell .k{color:var(--crimson)}
+.f-tell .teach{display:block;margin-top:3px;font-size:clamp(9px,2.3vw,11px);font-weight:400;color:var(--smoke);letter-spacing:.5px;font-style:normal}
+@keyframes tellpulse{0%,100%{opacity:.72;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+/* verdict — RESTING state: docked small, top-right (a "last read" marker).
+   In the build it punches out big toward the viewer, fades at max zoom,
+   then shrinks and settles here. */
+.f-verdict{top:8px;right:4%;text-align:right;animation:none}
+.f-verdict .note{font-size:clamp(8px,2.2vw,10px);letter-spacing:2px;color:var(--smoke);text-transform:uppercase}
+.f-verdict .big{font-size:clamp(13px,3.6vw,17px);font-weight:700;letter-spacing:1px;color:var(--green);text-shadow:0 0 14px rgba(90,160,95,.45),0 2px 8px #000}
+/* composure — thin bar pinned to scene bottom */
+.hisbar{position:absolute;left:5vw;right:5vw;bottom:10px;z-index:3}
+.hisbar .lbl{display:flex;justify-content:space-between;font-size:clamp(9px,2.6vw,12px);letter-spacing:2px;color:var(--smoke);text-transform:uppercase;margin-bottom:5px;text-shadow:0 1px 6px #000}
+.hisbar .lbl b{color:var(--bone)}
+.hisbar .track{height:10px;background:#20110f;border:1px solid #3a1a18;border-radius:6px;overflow:hidden}
+.hisbar .track i{display:block;height:100%;width:62%;background:linear-gradient(90deg,var(--crimson-dim),var(--crimson));transition:width .55s cubic-bezier(.2,.7,.2,1)}
+
+/* CONVERSATION — ONLY the dialogue lives here */
+.convo{flex:none;padding:12px 5vw;background:var(--panel);border-top:1px solid #201316}
+.turn{font-family:'JetBrains Mono',monospace;line-height:1.35}
+.turn.you{font-size:clamp(11px,3vw,13px);color:var(--smoke);margin-bottom:8px}
+.turn.you b{color:#b8b4ae;letter-spacing:1px;font-weight:700}
+.turn.him{font-size:clamp(15px,4.4vw,20px);color:var(--bone);padding-left:12px;border-left:3px solid var(--crimson)}
+.turn.him b{display:block;font-family:'Oswald';font-size:clamp(10px,2.7vw,12px);letter-spacing:3px;color:var(--crimson);text-transform:uppercase;margin-bottom:3px}
+
+/* YOUR MOVE */
+/* YOUR side = cool STEEL (distinct from his crimson dialogue) */
+.move{flex:none;padding:11px 5vw calc(11px + var(--safe-b));background:#0f1416;border-top:2px solid var(--steel-dim);box-shadow:0 -8px 24px rgba(99,182,198,.06)}
+.move .head{font-size:clamp(10px,2.8vw,13px);letter-spacing:3px;color:var(--steel);text-transform:uppercase;margin-bottom:9px}
+.move .head b{color:#bfeaf1}
+/* the radial angle DIAL + expanded word HUD (transparent cyan) */
+.hud{display:flex;gap:14px;align-items:center}
+.dial{width:min(40vw,158px);height:auto;flex:none}
+.dial .seg path{fill:rgba(30,55,62,.28);stroke:rgba(99,182,198,.4);stroke-width:1.1;transition:.2s}
+.dial .seg path.active{fill:rgba(99,182,198,.2);stroke:var(--steel);stroke-width:2;filter:drop-shadow(0 0 5px var(--steel-glow))}
+.dial .hub{fill:rgba(9,17,19,.75);stroke:rgba(99,182,198,.5)}
+.dial text{font-family:'Oswald';text-anchor:middle;text-transform:uppercase}
+.dial .lbl{fill:#a9d6de;font-size:10.5px;letter-spacing:.5px}
+.dial .lbl.active{fill:#eafaff;font-weight:700}
+.dial .hublbl{fill:var(--steel);font-size:9px;letter-spacing:2px}
+.wordhud{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
+.whud-head{font-size:clamp(9px,2.6vw,12px);letter-spacing:2px;color:var(--steel);text-transform:uppercase}
+.whud-word{text-align:left;padding:10px 12px;background:rgba(30,55,62,.22);border:1px solid rgba(99,182,198,.38);border-radius:9px;display:flex;flex-direction:column;gap:5px;box-shadow:inset 0 0 20px rgba(99,182,198,.05)}
+.whud-word .wt{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,3.3vw,15px);color:#e2f4f7;line-height:1.3}
+.whud-word .wr{font-size:clamp(9px,2.4vw,11px);letter-spacing:1px;color:#8fb0b6;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%}.risk-uncertain{background:var(--gold)}.risk-high{background:var(--crimson)}.risk-safe{background:var(--green)}
+.footer{margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.comp{font-size:clamp(9px,2.6vw,12px);letter-spacing:2px;color:var(--smoke);text-transform:uppercase}
+.pips{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}.pip{width:18px;height:9px;background:var(--crimson);border-radius:2px}.pip.off{background:#2a2a2e}
+.recbtn{padding:8px 15px;border:1px solid var(--edge);border-radius:6px;background:#0e0e11;color:var(--bone);font-size:clamp(10px,2.8vw,13px);letter-spacing:2px}
+</style></head><body>
+  <div class="objective"><div class="goal">◎ BREAK <b>RICCI</b></div><div class="why">Collector for the empire that took your family. The debt's invented. Crack him → it dies + he names who's above him.</div></div>
+
+  <div class="scene">
+    <img src="collector/rattled.jpg" alt="">
+    <div class="who"><div class="nm">RICCI</div></div>
+
+    <!-- reads FLOAT in the air around him (plain language, no jargon slapped on) -->
+    <div class="float f-expr"><span class="k">his face</span>jaw tight · eyes flicking to the door</div>
+    <div class="float f-sub"><span class="k">what it means</span>He's <b>overselling it</b> — nobody defends the truth this hard.</div>
+    <div class="float f-tell"><span class="k">▲ a tell</span>his hand keeps drifting to his watch<span class="teach">a crack he can't stop — press it</span></div>
+    <div class="float f-verdict"><div class="note">last read</div><div class="big">HE FLINCHED</div></div>
+
+    <div class="hisbar"><div class="lbl"><span>his composure — <b>break it to 0</b></span><span>62</span></div><div class="track"><i></i></div></div>
+  </div>
+
+  <!-- CONVERSATION: dialogue only -->
+  <div class="convo">
+    <div class="turn you"><b>YOU</b> — Marlowe quoted me different terms than you did.</div>
+    <div class="turn him"><b>Ricci</b>"I run my own book. I don't answer to Marlowe."</div>
+  </div>
+
+  <div class="move">
+    <div class="head">◆ Your play — <b>tap an angle</b>, it opens your words</div>
+    <div class="hud">
+      <svg class="dial" viewBox="0 0 200 200" aria-label="angle dial">
+        <g class="seg">
+          <path d="M100,100 L100,10 A90,90 0 0,1 185.6,72.2 Z"/>
+          <path d="M100,100 L185.6,72.2 A90,90 0 0,1 152.9,172.8 Z"/>
+          <path class="active" d="M100,100 L152.9,172.8 A90,90 0 0,1 47.1,172.8 Z"/>
+          <path d="M100,100 L47.1,172.8 A90,90 0 0,1 14.4,72.2 Z"/>
+          <path d="M100,100 L14.4,72.2 A90,90 0 0,1 100,10 Z"/>
+        </g>
+        <circle class="hub" cx="100" cy="100" r="25"/>
+        <text class="lbl" x="132" y="55">Lean</text>
+        <text class="lbl" x="150" y="120">Flatter</text>
+        <text class="lbl active" x="100" y="150">Plant<tspan x="100" dy="13">Doubt</tspan></text>
+        <text class="lbl" x="48" y="120">Bluff</text>
+        <text class="lbl" x="64" y="55">Offer</text>
+        <text class="hublbl" x="100" y="104">PICK</text>
+      </svg>
+      <div class="wordhud">
+        <div class="whud-head">▸ plant doubt — your words</div>
+        <button class="whud-word"><span class="wt">"Funny — your own crew doesn't back that number."</span><span class="wr"><i class="dot risk-uncertain"></i> uncertain · could go either way</span></button>
+        <button class="whud-word"><span class="wt">"You sure this is even your call to make?"</span><span class="wr"><i class="dot risk-high"></i> high risk · could blow up</span></button>
+      </div>
+    </div>
+    <div class="footer"><div class="comp">You <span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip off"></i></span></div><div class="recbtn">THE RECORD ▸</div></div>
+  </div>
+</body></html>
