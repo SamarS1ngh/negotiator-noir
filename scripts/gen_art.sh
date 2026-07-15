@@ -11,9 +11,9 @@ gen() { # gen <out> <expr>
   file "$1" | grep -q "image data" && echo "OK $1" || echo "FAIL $1"
   sleep 8
 }
-gen assets/art/collector/guarded.jpg  "wary narrowed eyes, guarded, reading you back"
-gen assets/art/collector/rattled.jpg  "jaw tight, uneasy, rattled, sweat starting"
-gen assets/art/collector/angry.jpg    "snarling furious, leaning in, teeth bared"
-gen assets/art/collector/cornered.jpg "sweating cornered, eyes darting, fear breaking through"
-gen assets/art/collector/folding.jpg  "defeated, looking down, beaten, folding"
+gen public/assets/art/collector/guarded.jpg  "wary narrowed eyes, guarded, reading you back"
+gen public/assets/art/collector/rattled.jpg  "jaw tight, uneasy, rattled, sweat starting"
+gen public/assets/art/collector/angry.jpg    "snarling furious, leaning in, teeth bared"
+gen public/assets/art/collector/cornered.jpg "sweating cornered, eyes darting, fear breaking through"
+gen public/assets/art/collector/folding.jpg  "defeated, looking down, beaten, folding"
 echo done
