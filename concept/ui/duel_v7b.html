@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08090c;--line:#2a2e38;--bone:#eef0f4;--dim:#9096a4;--faint:#5a6070;
+  --crimson:#e23b42;--steel:#6fd3e6;--steel-deep:#2b7180;--gold:#e0b24a;--good:#63c088;
+  --pad:clamp(16px,5vw,22px);--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#000;font-family:'Oswald',sans-serif;color:var(--bone);-webkit-font-smoothing:antialiased}
+.screen{position:relative;height:100dvh;overflow:hidden}
+.bg{position:absolute;inset:0}.bg img{width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:brightness(.35) saturate(.8)}
+.bg::after{content:"";position:absolute;inset:0;background:rgba(8,9,12,.55)}
+/* full-screen glassy word overlay (animates up from the dial) */
+.overlay{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;
+  padding:calc(20px + var(--safe-t)) var(--pad) calc(20px + var(--safe-b));
+  background:linear-gradient(180deg,rgba(9,13,15,.72),rgba(8,10,13,.82));
+  border-top:2px solid rgba(111,211,230,.4)}
+.oh{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.oh .dot{width:7px;height:7px;border-radius:50%;background:var(--steel);box-shadow:0 0 10px var(--steel)}
+.oh .t{font-size:clamp(15px,4.4vw,19px);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#eafbff}
+.oh .close{margin-left:auto;font-size:11px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;border:1px solid var(--line);border-radius:7px;padding:7px 12px}
+.osub{font-size:11px;letter-spacing:.1em;color:var(--steel-deep);text-transform:uppercase;margin-bottom:18px}
+.words{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:13px}
+.word{text-align:left;padding:18px 18px;border-radius:14px;
+  background:linear-gradient(180deg,rgba(20,26,30,.72),rgba(12,16,20,.72));
+  border:1px solid rgba(111,211,230,.28);box-shadow:0 6px 26px rgba(0,0,0,.4)}
+.word.hot{border-color:rgba(111,211,230,.55);box-shadow:0 0 0 1px rgba(111,211,230,.18),0 8px 30px rgba(0,0,0,.5)}
+.word .wt{font-family:'JetBrains Mono';font-size:clamp(15px,4.2vw,19px);line-height:1.4;color:#eef3f6}
+.word .wr{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:500}
+.rdot{width:8px;height:8px;border-radius:50%}.r-unc{background:var(--gold);box-shadow:0 0 7px rgba(224,178,74,.5)}.r-high{background:var(--crimson);box-shadow:0 0 7px rgba(226,59,66,.5)}.r-safe{background:var(--good)}
+.ohint{text-align:center;font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase;margin-top:14px}
+</style></head><body>
+<div class="screen">
+  <div class="bg"><img src="collector/rattled.jpg" alt=""></div>
+  <div class="overlay">
+    <div class="oh"><span class="dot"></span><span class="t">Plant Doubt</span><span class="close">✕ back</span></div>
+    <div class="osub">choose your words — he reads your read</div>
+    <div class="words">
+      <button class="word hot"><div class="wt">"Marlowe quoted me different terms than you did."</div><div class="wr"><span class="rdot r-unc"></span> uncertain · could go either way</div></button>
+      <button class="word"><div class="wt">"Funny — your own crew doesn't back that number."</div><div class="wr"><span class="rdot r-unc"></span> uncertain · could go either way</div></button>
+      <button class="word"><div class="wt">"You sure this is even your call to make?"</div><div class="wr"><span class="rdot r-high"></span> high risk · could rattle him or blow up</div></button>
+    </div>
+    <div class="ohint">tap a line to say it</div>
+  </div>
+</div>
+</body></html>
