@@ -10,3 +10,8 @@ Tap the dial → a **glassy-cyan modal** pops up ON the scene (scene visible aro
 
 ## The animated flow (built in code)
 Tap dial → modal pops up → pick a line → modal closes, your line flies into the LEFT conversation → **cut to him, his reply typewriters at the bottom then settles into the log** → reads update on the right → **verdict punches out of the screen → fades → docks in the corner.**
+
+---
+## v9 tweak — closer + glowing reads
+![v9 scene](ui/duel_v9a.png)
+Character pulled a bit closer; subtext (gold) and tell (crimson) now **glow in their own colour** so they pop off the scene.
