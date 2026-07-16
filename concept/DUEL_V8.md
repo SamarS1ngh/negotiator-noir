@@ -25,3 +25,8 @@ Reads scattered (face TL · last-read TR · subtext MR · tell ML). Subtext = **
 ## v11 — annotation lines + final scatter
 ![v11 scene](ui/duel_v11a.png)
 Conversation centred on the left (nothing beside it). Subtext just below his face; tell at the bottom (clear of the dial). Subtle **annotation lines** angle from each read to his body (steel→face, yellow→chin, red→hands), ending in a small colour-matched dot. No line on last-read.
+
+---
+## v12 — straight-then-bend lines, reads on the sides
+![v12 scene](ui/duel_v12a.png)
+Annotation lines start straight (H/V) then bend a little, kept short. Reads hug the screen sides (face TL · last-read TR · subtext R · tell lower-L); nothing beside the dial or the conversation box.
