@@ -30,3 +30,8 @@ Conversation centred on the left (nothing beside it). Subtext just below his fac
 ## v12 — straight-then-bend lines, reads on the sides
 ![v12 scene](ui/duel_v12a.png)
 Annotation lines start straight (H/V) then bend a little, kept short. Reads hug the screen sides (face TL · last-read TR · subtext R · tell lower-L); nothing beside the dial or the conversation box.
+
+---
+## v13 — annotation lines exit the box border, point outward
+![v13 scene](ui/duel_v13a.png)
+Each line originates at the read-box border and points away toward him (left-box→right, right-box→left, bottom→up, top→down), short, stopping short of the body.
