@@ -1,4 +1,4 @@
-import type { AngleId, Band, DuelState, MoodState, Opponent, Script } from '../domain/types';
+import type { AngleId, Band, DuelState, EndState, MoodState, Opponent, Script } from '../domain/types';
 import { initDuel, apply, moodFor } from '../domain/engine';
 import { endStateFor } from '../domain/outcome';
 import { renderCine } from '../ui/scene';
@@ -9,14 +9,26 @@ import { renderAftermath } from '../ui/aftermath';
 const TEST = import.meta.env.MODE === 'test';
 const TIMING = { TYPE_MS: 34, PRE_CHOICES: 550 };
 
-// ---- the GAME layer (see the research call: this is what makes it a duel you
-// can lose, not a menu). The domain engine stays the pure substrate; these are
-// the duel rules layered on top. ----
-const REGEN = 6;          // his nerve recovers this much on a weak (neutral) move — you can't stall
-const MISREAD_YOU = 10;   // extra hit to YOUR nerve on a backfire (on top of the engine's) — misreads bite
-const CALL_HIT_SOFT = 16; // calling a lie he told with no hard proof still lands, softer than a real catch
-const CALL_WRONG_HIS = 8; // a false accusation steadies him…
-const CALL_WRONG_YOU = 22;// …and costs YOU badly — only call it when you're sure
+// ---- the GAME layer. The domain engine stays the pure substrate (it does the
+// band/leak/statement/contradiction/spent bookkeeping); the controller owns the
+// whole NERVE + PATIENCE economy so the duel is genuinely hard and losable.
+// The win is a tight line: read his type → land the levers that fit → catch his
+// lie → finish with leverage, inside a patience budget. Flailing loses. ----
+const LAND_HIT = 20;        // his nerve drop when you read him right (the only real progress)
+const NEUTRAL_HIS = 4;      // a weak lever — he steadies, gains a little confidence…
+const NEUTRAL_YOU = 6;      // …and you wasted breath: it costs you
+const BACKFIRE_HIS = 8;     // the wrong lever entirely — he grows…
+const BACKFIRE_YOU = 20;    // …and it hits YOU hard
+const CATCH_HIT = 28;       // catching a real contradiction — a big, earned hit
+const CALL_SOFT = 14;       // calling a lie he told, no hard proof — lands, smaller
+const CALL_WRONG_HIS = 8;   // a false accusation steadies him…
+const CALL_WRONG_YOU = 24;  // …and costs you badly. Only call it when you're sure.
+const LEVERAGE_FINISH = 50; // leverage as a FINISHER — huge, but only once he's rattled
+const LEVERAGE_READY = 45;  // his nerve must be <= this for leverage to land at all
+const COLD_DEPLOY_HIS = 4;  // playing leverage while he's composed — he brushes it off…
+const COLD_DEPLOY_YOU = 16; // …and you overplayed your hand
+const PATIENCE_START = 6;   // he'll sit for about this many exchanges before he walks
+const PATIENCE_MISFIRE = 2; // a backfire / wrong call / cold deploy burns extra patience
 
 const INTENT: Record<AngleId, string> = {
   lean: 'hit his fear',
@@ -47,45 +59,59 @@ function clamp(n: number, lo: number, hi: number): number { return Math.min(hi, 
 /**
  * The cinematic manipulation duel — a game you can LOSE. His portrait fills the
  * frame, his line reads out, and you pick a manipulation move with NO risk
- * telegraph and nothing flagged as correct: you read his face + words and
- * judge. Land the right lever for his type and his nerve drops; misread (wrong
- * lever, or call a lie he isn't telling) and HE gains while YOUR nerve bleeds —
- * hit zero and he turns it on you. He recovers if you stall. Break his nerve to
- * zero to win. Reuses the domain engine unchanged; the duel rules live here.
+ * telegraph and nothing flagged as correct: you read his face + words and judge
+ * which lever fits his TYPE. Land the right ones and his nerve drops; misread
+ * and HE gains while YOUR nerve bleeds. Leverage only finishes a man already
+ * rattled — play it cold and he laughs it off. And he won't sit forever: waste
+ * his patience and he walks. Break his nerve to zero to win. The engine's
+ * composure numbers are overridden here so the controller owns the economy.
  */
 export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDone?: () => void): void {
   let state: DuelState = initDuel(opp, script);
+  let patience = PATIENCE_START;
   const history: Exchange[] = [];
   let hisLine: string = opp.opener ?? 'Well? You wanted this meeting.';
   let face: string | undefined;
   let teach: string | undefined =
-    "Read him — his words and his face tell you what lands. Feed a proud man's ego; don't offer him charity. Call his lies only when you're sure — guess wrong and he turns it on you.";
+    "Read what kind of man he is — aim at the right weakness, and the wrong lever bleeds you. He won't sit long. Break his nerve before he loses patience or reads you.";
   let movesMade = 0;
   const shown = new Set<string>();
   const calledLies = new Set<string>();
 
   const handlers: CineHandlers = { choose, walk };
 
-  // Re-settle after a game-layer nerve change: clamp, recompute his mood, and
-  // re-evaluate win/lose (his nerve 0 → he folds; your nerve 0 → he turns it).
+  // Apply a game-layer nerve change, then re-derive his mood + the win/lose
+  // state. His nerve 0 → he folds (win); your nerve 0 → he turns it (lose).
   function resettle(hisDelta: number, yourDelta: number): void {
     const his = clamp(state.hisComposure + hisDelta, 0, 100);
     const your = Math.max(0, state.yourComposure + yourDelta);
     const mood = moodFor(his);
-    const end = state.end === 'walked' ? 'walked' : endStateFor(his, your);
+    const end: EndState = state.end === 'walked' ? 'walked' : endStateFor(his, your);
     state = { ...state, hisComposure: his, yourComposure: your, mood, end };
   }
 
-  // His OBSERVABLE tell — read material, never an interpretation. When he's
-  // cracking, you can SEE the tell; otherwise just his face.
+  // Spend patience for a move; if he's had enough, he walks out — you lose.
+  function spendPatience(cost: number): void {
+    patience -= cost;
+    if (patience <= 0 && state.end === 'ongoing') state = { ...state, end: 'walked' };
+  }
+
+  // Run the engine for its bookkeeping (bands, leaks, statements,
+  // contradictions, spent angles, consumed leverage) but KEEP the controller's
+  // own nerve numbers — the engine's composure deltas are discarded here.
+  function bookkeep(action: Parameters<typeof apply>[1]): ReturnType<typeof apply>['events'] {
+    const prevHis = state.hisComposure;
+    const prevYour = state.yourComposure;
+    const r = apply(state, action, opp, script);
+    state = { ...r.state, hisComposure: prevHis, yourComposure: prevYour };
+    return r.events;
+  }
+
   function observedFace(): string | undefined {
     if (opp.tell && TELL_MOODS.includes(state.mood)) return opp.tell.text;
     return opp.expressions?.[state.mood];
   }
 
-  // Your moves: the manipulation levers (no risk hint — you judge which fits
-  // his type), plus the gambits once you've sized him up: call his lie, or play
-  // your leverage. Nothing is highlighted as the "right" move.
   function choicesFor(): Choice[] {
     const cs: Choice[] = [];
     if (movesMade >= 1) {
@@ -111,6 +137,7 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
       hisNerveWord: nerveWord(state.hisComposure),
       hisNervePct: state.hisComposure,
       yourNervePct: state.yourComposure,
+      patiencePct: clamp((patience / PATIENCE_START) * 100, 0, 100),
       history: history.slice(-4),
       hisLine,
       typedLen: opts.typing,
@@ -149,7 +176,7 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
   }
 
   function choose(c: Choice): void {
-    teach = undefined; // any action clears the standing steer
+    teach = undefined;
     if (c.kind === 'move') resolveMove(c);
     else if (c.kind === 'call') resolveCall();
     else if (c.kind === 'deploy') resolveDeploy(c);
@@ -166,34 +193,33 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
     movesMade += 1;
     pushExchange(line.text);
 
-    const r = apply(state, { kind: 'probe', lineId: line.id }, opp, script);
-    state = r.state;
-    const said = r.events.find((e) => e.type === 'said')?.text;
-    const band = (r.events.find((e) => e.type === 'band')?.text ?? 'neutral') as Band;
-    const tellEvent = r.events.find((e) => e.type === 'tell');
+    const events = bookkeep({ kind: 'probe', lineId: line.id });
+    const said = events.find((e) => e.type === 'said')?.text;
+    const band = (events.find((e) => e.type === 'band')?.text ?? 'neutral') as Band;
+    const tellEvent = events.find((e) => e.type === 'tell');
 
-    // game layer: a weak move lets him settle; a misread bleeds YOUR nerve.
-    if (band === 'neutral') resettle(REGEN, 0);
-    else if (band === 'backfires') resettle(0, -MISREAD_YOU);
+    if (band === 'lands') { resettle(-LAND_HIT, 0); spendPatience(1); }
+    else if (band === 'neutral') { resettle(NEUTRAL_HIS, -NEUTRAL_YOU); spendPatience(1); }
+    else { resettle(BACKFIRE_HIS, -BACKFIRE_YOU); spendPatience(PATIENCE_MISFIRE); }
 
     let newTeach: string | undefined;
     if (tellEvent && !shown.has('tell')) {
       shown.add('tell');
-      newTeach = 'His hand drifts to his watch — a tell. His body betrays a lie his mouth won’t. That’s the moment to call him.';
+      newTeach = 'His hand drifts to his watch — a tell. His body betrays a lie his mouth won’t. That’s the moment to call him, or to finish him.';
     }
     play(said ?? GENERIC_REACTION[band], observedFace(), newTeach);
   }
 
-  // Call him a liar — a JUDGMENT with no hint. Right (he's holding a real
-  // contradiction, or he just lied) → it lands. Wrong (he told the truth) →
-  // he steadies and your nerve takes the hit.
+  // Call him a liar — a judgment, no hint. Right (a real contradiction, or a lie
+  // he just told) lands; wrong (he told the truth) steadies him and bleeds you.
   function resolveCall(): void {
     pushExchange('"You’re lying. I can see it in your face."');
 
     const contra = state.record.openContradictions[0];
     if (contra) {
-      const r = apply(state, { kind: 'catch', contradictionId: contra.id }, opp, script);
-      state = r.state;
+      bookkeep({ kind: 'catch', contradictionId: contra.id });
+      resettle(-CATCH_HIT, 0);
+      spendPatience(1);
       play('…how the hell do you know that?', observedFace(), undefined);
       return;
     }
@@ -201,27 +227,41 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
     const last = state.record.statements[state.record.statements.length - 1];
     if (last && last.truth !== 'true' && !calledLies.has(last.id)) {
       calledLies.add(last.id);
-      resettle(-CALL_HIT_SOFT, 0);
+      resettle(-CALL_SOFT, 0);
+      spendPatience(1);
       play('…that’s a hell of a thing to accuse a man of.', observedFace(), undefined);
       return;
     }
 
     resettle(CALL_WRONG_HIS, -CALL_WRONG_YOU);
+    spendPatience(PATIENCE_MISFIRE);
     play('You’ve got nothing. Sit down before you embarrass yourself.', observedFace(), undefined);
   }
 
+  // Leverage is a FINISHER. Cold (while he's still composed) he laughs it off and
+  // you've tipped your hand. Only once he's rattled does it break him.
   function resolveDeploy(c: Choice): void {
     const lev = state.record.heldLeverage.find((l) => l.id === c.id);
     if (!lev) return;
+
+    if (state.hisComposure > LEVERAGE_READY) {
+      // cold — don't even consume the card, but it costs you
+      pushExchange(`You reach for it too early: ${lev.label.toLowerCase()}.`);
+      resettle(COLD_DEPLOY_HIS, -COLD_DEPLOY_YOU);
+      spendPatience(PATIENCE_MISFIRE);
+      play("Cute. That’s all you’ve got? You’ll have to do better than that.", observedFace(), undefined);
+      return;
+    }
+
     pushExchange(`You lay it on the table: ${lev.label.toLowerCase()}.`);
-    const r = apply(state, { kind: 'deploy', leverageId: c.id }, opp, script);
-    state = r.state;
+    bookkeep({ kind: 'deploy', leverageId: c.id });
+    resettle(-LEVERAGE_FINISH, 0);
+    spendPatience(1);
     play('…okay. Okay. What do you want.', observedFace(), undefined);
   }
 
   function walk(): void {
-    const r = apply(state, { kind: 'walk' }, opp, script);
-    state = r.state;
+    state = { ...state, end: 'walked' };
     showAftermath();
   }
 

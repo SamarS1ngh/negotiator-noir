@@ -11,6 +11,7 @@ function baseView(over: Partial<CineView> = {}): CineView {
     hisNerveWord: 'steady',
     hisNervePct: 100,
     yourNervePct: 100,
+    patiencePct: 100,
     history: [],
     hisLine: 'Five hundred. That’s the number.',
     face: undefined,
@@ -25,12 +26,13 @@ describe('cinematic scene', () => {
   const noop = { choose() {}, walk() {} };
   beforeEach(() => { root = document.createElement('div'); document.body.appendChild(root); });
 
-  it('renders his line, the objective and BOTH nerve gauges', () => {
-    renderCine(root, COLLECTOR, baseView({ hisNervePct: 70, yourNervePct: 40 }), noop);
+  it('renders his line, the objective and all three gauges (his nerve, your nerve, his patience)', () => {
+    renderCine(root, COLLECTOR, baseView({ hisNervePct: 70, yourNervePct: 40, patiencePct: 50 }), noop);
     expect(root.querySelector('.cine-say')?.textContent).toContain('Five hundred');
     expect(root.querySelector('.cine-obj')?.textContent).toContain('RICCI');
     expect(root.querySelector('.gauge.his .gauge-bar i')?.getAttribute('style')).toContain('70%');
     expect(root.querySelector('.gauge.you .gauge-bar i')?.getAttribute('style')).toContain('40%');
+    expect(root.querySelector('.gauge.patience .gauge-bar i')?.getAttribute('style')).toContain('50%');
   });
 
   it('renders moves with an intent and NO risk telegraph; gambits are marked but not "hot"', () => {

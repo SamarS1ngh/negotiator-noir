@@ -87,6 +87,9 @@ body {
 .gauge.you .gauge-lab b { color: var(--steel); }
 .gauge.you .gauge-bar { background: rgba(43,113,128,.24); }
 .gauge.you .gauge-bar i { background: linear-gradient(90deg, var(--steel-deep), var(--steel)); box-shadow: 0 0 9px rgba(111,211,230,.45); }
+.gauge.patience .gauge-lab b { color: var(--gold); }
+.gauge.patience .gauge-bar { background: rgba(90,72,26,.28); height: 4px; }
+.gauge.patience .gauge-bar i { background: linear-gradient(90deg, #7a5f1e, var(--gold)); box-shadow: 0 0 8px rgba(224,178,74,.4); }
 
 /* the lower cluster: history, his line + read, then your choices */
 .cine-bottom {

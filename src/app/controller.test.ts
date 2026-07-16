@@ -46,35 +46,46 @@ describe('cinematic duel controller (integration)', () => {
     expect(q('.gauge.his .gauge-bar i')!.style.width).not.toBe(before);
   });
 
-  it('you WIN by reading him right — flatter + doubt land, then leverage breaks him', () => {
+  it('leverage is a FINISHER — played cold (he\'s composed) it backfires, not a free win', () => {
+    startDuel(root, COLLECTOR, COLLECTOR_SCRIPT);
+    tap('[data-choice="l_flat1"]'); // one land → he's at ~80, still composed; unlocks leverage
+    const yourBefore = parseFloat(q('.gauge.you .gauge-bar i')!.style.width);
+    tap('[data-choice="ledger"]'); // deploy while he's steady = cold
+    // he brushed it off: HIS nerve is nowhere near broken, YOUR nerve took the hit
+    expect(root.textContent).not.toMatch(/FOLDED/i);
+    expect(root.querySelectorAll('[data-choice]').length).toBeGreaterThan(0); // still playing
+    expect(parseFloat(q('.gauge.you .gauge-bar i')!.style.width)).toBeLessThan(yourBefore);
+  });
+
+  it('you WIN only by working him down first, then finishing with leverage', () => {
     let done = false;
     startDuel(root, COLLECTOR, COLLECTOR_SCRIPT, () => { done = true; });
-    // proud mark: flattery + doubt land; then slap down both leverages
+    // proud mark: flattery + doubt land and rattle him; catch his lie; NOW the
+    // leverage finishes a man already on the ropes.
     tap('[data-choice="l_flat1"]');
     tap('[data-choice="l_doubt1"]');
-    tap('[data-choice="skims"]');
-    tap('[data-choice="ledger"]');
-    // reaching the aftermath as a fold IS the win
+    tap('[data-kind="call"]');       // catches the contradiction plant_doubt opened
+    tap('[data-choice="ledger"]');   // his nerve now low enough → finisher lands
     expect(root.textContent).toMatch(/FOLDED/i);
     expect(root.querySelector('.reveal')?.textContent).toContain('MARLOWE');
     tap('[data-continue]');
     expect(done).toBe(true);
   });
 
-  it('you can LOSE — false accusations bleed your nerve until he turns it on you', () => {
+  it('you can LOSE — flailing bleeds your nerve and burns his patience', () => {
     let done = false;
     startDuel(root, COLLECTOR, COLLECTOR_SCRIPT, () => { done = true; });
-    // size him up once, then keep crying "liar". The first call catches his lie;
-    // every call after that is a false accusation — each one bleeds your nerve.
-    tap('[data-choice="l_flat1"]');
+    // offer a proud man an out (backfire), then cry liar with nothing — bleeds
+    // your nerve AND his patience until the duel ends against you.
+    tap('[data-choice="l_offer1"]');
     for (let i = 0; i < 12; i += 1) {
       const call = q('[data-kind="call"]');
-      if (!call) break; // gone once the duel ends (aftermath screen)
+      if (!call) break;
       call.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     }
-    // he read you and flipped it — that's the loss
-    expect(root.textContent).toMatch(/TURNED IT ON YOU/i);
-    // a loss shows no break payoff
+    // a loss — he either turns it on you or walks out; never a fold
+    expect(root.textContent).toMatch(/TURNED IT ON YOU|HE WALKED/i);
+    expect(root.textContent).not.toMatch(/FOLDED/i);
     expect(root.querySelector('.reveal')).toBeNull();
     tap('[data-continue]');
     expect(done).toBe(true);

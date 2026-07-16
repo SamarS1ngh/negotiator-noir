@@ -24,6 +24,7 @@ export interface CineView {
   hisNerveWord: string;     // steady / shaken / rattled / cornered / breaking
   hisNervePct: number;      // 0–100 — break it to 0 to WIN
   yourNervePct: number;     // 0–100 — hits 0 and he turns it on you (LOSE)
+  patiencePct: number;      // 0–100 — his patience; hits 0 and he walks (LOSE)
   history: Exchange[];      // the last few lines, faint, above the current one
   hisLine: string;          // what he's saying right now
   typedLen?: number;        // if set, only show hisLine.slice(0, typedLen) + caret
@@ -133,6 +134,7 @@ export function renderCine(
   const gauges = el('div', 'gauges');
   gauges.appendChild(barEl('his', 'his nerve', view.hisNerveWord, view.hisNervePct));
   gauges.appendChild(barEl('you', 'your nerve', yourWord(view.yourNervePct), view.yourNervePct));
+  gauges.appendChild(barEl('patience', 'his patience', patienceWord(view.patiencePct), view.patiencePct));
   top.appendChild(gauges);
   root.appendChild(top);
 
@@ -200,4 +202,12 @@ function yourWord(pct: number): string {
   if (pct > 33) return 'slipping';
   if (pct > 0) return 'on the ropes';
   return 'read';
+}
+
+// How long he'll keep sitting — the clock on you.
+function patienceWord(pct: number): string {
+  if (pct > 66) return 'hearing you out';
+  if (pct > 33) return 'thinning';
+  if (pct > 0) return 'nearly gone';
+  return 'done';
 }
