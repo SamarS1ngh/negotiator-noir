@@ -236,14 +236,26 @@ function buildReads(state: DuelState, opp: Opponent, reaction?: DuelReaction): H
   return reads;
 }
 
+// A conversation line. Two visually distinct kinds so his WORDS and his
+// BEHAVIOUR never blur together (Samar's note):
+//   - SPEECH  — something actually said. A speaker label + the line in quotes.
+//     (Your lines are speech too — no quotes, but a "You" label + steel.)
+//   - NARRATION — what he DOES, not says (a generic beat like "He almost
+//     laughs in your face"). No speaker label, italic, em-dashed — it reads
+//     as a stage direction, not dialogue.
 function buildTurn(who: 'you' | 'him', text: string, quoted: boolean, opp: Opponent, extraClass = ''): HTMLElement {
+  const narration = who === 'him' && !quoted;
   const div = document.createElement('div');
-  div.className = `turn ${who}${extraClass ? ` ${extraClass}` : ''}`;
-  const w = document.createElement('div');
-  w.className = 'w';
-  w.textContent = who === 'you' ? 'You' : opp.name;
-  div.appendChild(w);
-  div.append(quoted ? `"${text}"` : text);
+  div.className = `turn ${who}${narration ? ' narration' : ''}${extraClass ? ` ${extraClass}` : ''}`;
+
+  if (!narration) {
+    const w = document.createElement('div');
+    w.className = 'w';
+    w.textContent = who === 'you' ? 'You' : opp.name;
+    div.appendChild(w);
+  }
+
+  div.append(narration ? `— ${text}` : quoted ? `"${text}"` : text);
   return div;
 }
 
@@ -391,12 +403,37 @@ function buildDialwrap(script: Script, selectedAngle: AngleId | null, on: DuelHa
   return wrap;
 }
 
-function buildRecordBtn(on: DuelHandlers): HTMLElement {
+// THE RECORD chip. It isn't a passive tab — it's where you go to PRESS him
+// for the truth (catch a contradiction, deploy leverage). So it advertises
+// live leads: an open contradiction makes it glow crimson + say "catch him";
+// otherwise it counts the leverage sitting in your hand, ready to deploy.
+function buildRecordBtn(state: DuelState, on: DuelHandlers): HTMLElement {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'recbtn';
   btn.dataset.openRecord = '';
-  btn.textContent = 'THE RECORD ▸';
+
+  const label = document.createElement('span');
+  label.className = 'rl';
+  label.textContent = 'THE RECORD';
+  btn.appendChild(label);
+
+  const contradictions = state.record.openContradictions.length;
+  const leverage = state.record.heldLeverage.length;
+
+  const cue = document.createElement('span');
+  cue.className = 'rcue';
+  if (contradictions > 0) {
+    btn.classList.add('hot');
+    cue.textContent = '● catch him';
+  } else if (leverage > 0) {
+    btn.classList.add('armed');
+    cue.textContent = `● ${leverage} to play`;
+  } else {
+    cue.textContent = '▸';
+  }
+  btn.appendChild(cue);
+
   btn.addEventListener('click', () => on.openRecord());
   return btn;
 }
@@ -518,7 +555,7 @@ export function renderDuel(
     scene.appendChild(punch);
   }
 
-  scene.appendChild(buildRecordBtn(on));
+  scene.appendChild(buildRecordBtn(state, on));
 
   root.appendChild(scene);
 

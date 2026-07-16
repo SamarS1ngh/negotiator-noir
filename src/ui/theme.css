@@ -193,6 +193,14 @@ body {
 .convo .him .w { color: var(--crimson); }
 .convo .him { color: var(--bone); font-size: clamp(11px, 3vw, 13px); }
 .convo .him.cur { border-left: 2px solid var(--crimson); padding-left: 8px; }
+/* NARRATION — what he DOES, not says. Muted + italic so it reads as a stage
+   direction, clearly apart from his (quoted, crimson-labelled) speech. */
+.convo .him.narration {
+  color: var(--faint);
+  font-style: italic;
+  font-size: clamp(10px, 2.6vw, 12px);
+}
+.convo .him.narration.cur { border-left: 0; padding-left: 0; }
 @keyframes turn-fly-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: no-preference) {
   .convo .turn.fresh { animation: turn-fly-in .35s ease-out; }
@@ -299,6 +307,10 @@ body {
   position: absolute;
   right: var(--pad); bottom: calc(14px + var(--safe-b));
   z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   padding: 7px 12px;
   border-radius: 8px;
   border: 1px solid var(--steel-deep);
@@ -310,6 +322,27 @@ body {
   letter-spacing: .1em;
   text-transform: uppercase;
   cursor: pointer;
+  max-width: 40vw;
+}
+.recbtn .rl { font-size: 10px; }
+.recbtn .rcue { font-size: 9px; font-weight: 500; letter-spacing: .06em; color: var(--steel-deep); }
+/* armed: leverage sitting in your hand, ready to deploy */
+.recbtn.armed { border-color: var(--steel); background: rgba(14,26,30,.7); }
+.recbtn.armed .rcue { color: var(--steel); }
+/* hot: an open contradiction — go corner him */
+.recbtn.hot {
+  border-color: var(--crimson);
+  background: rgba(30,12,14,.7);
+  color: var(--crimson);
+  box-shadow: 0 0 14px rgba(226,59,66,.35);
+}
+.recbtn.hot .rcue { color: var(--crimson); }
+@media (prefers-reduced-motion: no-preference) {
+  .recbtn.hot { animation: rec-pulse 1.4s ease-in-out infinite; }
+}
+@keyframes rec-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(226,59,66,.25); }
+  50% { box-shadow: 0 0 20px rgba(226,59,66,.6); }
 }
 
 /* the WALK affordance — a quiet exit, bottom-left, above the safe area */
@@ -396,6 +429,28 @@ body {
 .r-unc { background: var(--gold); box-shadow: 0 0 7px rgba(224,178,74,.5); }
 .r-high { background: var(--crimson); box-shadow: 0 0 7px rgba(226,59,66,.5); }
 .r-safe { background: var(--good); box-shadow: 0 0 7px rgba(99,192,136,.5); }
+
+/* ---- RESPONSIVE: the reads all anchor to the SCREEN EDGES (top band, right
+   rail, bottom-left) — never the centre — so on any phone they frame his face
+   instead of landing on it. These queries just keep the vertical rhythm from
+   bunching up on shorter / narrower devices (moto g64 class: 1080x2400). ---- */
+@media (max-width: 412px) {
+  .duel-screen { --pad: 13px; }
+  .convo { width: min(50%, 220px); }
+  .read { max-width: 48%; }
+  .r-face { max-width: 50%; }
+}
+/* shorter viewports: pull the mid/lower reads in so subtext clears the top
+   band and the tell clears the dial */
+@media (max-height: 820px) {
+  .r-sub { top: 29%; }
+  .r-tell { top: 64%; }
+}
+@media (max-height: 720px) {
+  .r-sub { top: 27%; }
+  .r-tell { top: 60%; }
+  .convo { height: 24%; }
+}
 
 /* ==== RECORD: the case-file drawer (Task 9), ported from concept/ui/screen_record.html ==== */
 .record-screen {
@@ -692,6 +747,49 @@ body {
   margin-right: 6px;
   vertical-align: -.2em;
 }
+/* the composure crack — the visible cost of this catch/deploy: a bar whose
+   striped tail is the chunk you just knocked off him. So the move reads as
+   cause -> effect, not "the number just fell". */
+.catch-screen .crack, .deploy-screen .crack {
+  position: relative;
+  z-index: 2;
+  max-width: 640px;
+  margin: 0 auto 5vh;
+}
+.catch-screen .crk-lab, .deploy-screen .crk-lab {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: clamp(13px, 1.8vw, 16px);
+  color: var(--smoke);
+  margin-bottom: 8px;
+}
+.catch-screen .crk-lab b, .deploy-screen .crk-lab b { color: var(--crimson); letter-spacing: 3px; }
+.catch-screen .crk-bar, .deploy-screen .crk-bar {
+  display: flex;
+  height: 9px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: rgba(143,31,36,.22);
+}
+.catch-screen .crk-bar i, .deploy-screen .crk-bar i {
+  height: 100%;
+  background: linear-gradient(90deg, var(--crimson-dim), var(--crimson));
+  box-shadow: 0 0 10px rgba(226,59,66,.5);
+}
+/* the just-lost segment — striped so it reads as "gone", not "held" */
+.catch-screen .crk-bar u, .deploy-screen .crk-bar u {
+  height: 100%;
+  background-image: repeating-linear-gradient(45deg, rgba(226,59,66,.5) 0 4px, transparent 4px 8px);
+  border-left: 1px solid rgba(255,255,255,.5);
+}
+.catch-screen .crk-nums, .deploy-screen .crk-nums {
+  margin-top: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(11px, 1.4vw, 13px);
+  letter-spacing: 1px;
+  color: var(--smoke);
+}
 .catch-screen .foot {
   position: relative;
   z-index: 2;
@@ -943,6 +1041,37 @@ body {
   margin-bottom: 42px;
 }
 .aftermath-screen .block { margin-bottom: 32px; }
+/* the break payoff — shown only on a fold. His confession + the name he
+   gives up, framed as the prize you just won. */
+.aftermath-screen .reveal {
+  margin-bottom: 40px;
+  padding: 22px 24px;
+  border-left: 3px solid var(--gold);
+  background: linear-gradient(90deg, rgba(200,162,58,.10), transparent 80%);
+  border-radius: 4px;
+}
+.aftermath-screen .reveal .blabel { color: var(--gold); border-bottom-color: #3a2f14; }
+.aftermath-screen .reveal-quote {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(18px, 2.4vw, 26px);
+  line-height: 1.5;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(200,162,58,.25);
+  margin-bottom: 18px;
+}
+.aftermath-screen .reveal-names {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(18px, 2.4vw, 26px);
+  letter-spacing: 1px;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.aftermath-screen .reveal-names .nk { color: var(--smoke); letter-spacing: 3px; text-transform: uppercase; font-size: .7em; }
+.aftermath-screen .reveal-teach {
+  font-size: clamp(14px, 1.7vw, 18px);
+  line-height: 1.55;
+  color: #b9b2ad;
+}
 .aftermath-screen .blabel {
   font-size: clamp(14px, 1.8vw, 18px);
   letter-spacing: 5px;

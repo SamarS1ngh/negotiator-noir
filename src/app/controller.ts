@@ -13,9 +13,16 @@ import { renderAftermath } from '../ui/aftermath';
 // full choreography below.
 const TEST = import.meta.env.MODE === 'test';
 
-// Rough beat timings (ms) for the live animated flow — see the brief's
-// "animated flow" section. None of these ever fire under Vitest.
-const TIMING = { MODAL_CLOSE: 220, FLY_IN: 260, TYPE_MS: 16, SETTLE: 260, PUNCH: 720 };
+// Beat timings (ms) for the live animated flow — see the brief's "animated
+// flow" section. Deliberately UNHURRIED (slow auto-play): the player needs
+// time to read his reply, the subtext, the tell, and the verdict before the
+// scene moves on. None of these ever fire under Vitest.
+//   FLY_IN   — how long your line sits before he answers
+//   TYPE_MS  — ms per character of his reply (42 ≈ readable, not a crawl)
+//   PRE_PUNCH— beat after his line settles, before the verdict punches
+//   PUNCH    — how long the verdict holds big on screen before docking
+//   POST     — final breath on the resting scene before the dial re-arms
+const TIMING = { MODAL_CLOSE: 300, FLY_IN: 700, TYPE_MS: 42, SETTLE: 900, PRE_PUNCH: 350, PUNCH: 2600, POST: 700 };
 
 /**
  * Wires the domain engine to the UI screens into one playable duel.
@@ -144,7 +151,8 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
       return;
     }
 
-    // ---- LIVE: the choreographed reveal (see the brief's animated flow) ----
+    // ---- LIVE: the choreographed reveal, UNHURRIED (see the brief's
+    // animated flow). Each beat holds long enough to actually read. ----
     // Step 2: your line flies into the conversation; reads/mood stay on the
     // PRE-reaction state until he's actually replied.
     transcript = [...transcript, youTurn];
@@ -156,20 +164,29 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
         renderBeat(prevState, lastReaction ?? undefined, { text: hisReply, typed, done, quoted });
         if (!done) return;
 
+        // Step 4: hold on his fully-typed reply so it can be read in full…
         setTimeout(() => {
-          // his line settles up into the conversation log
+          // …then his line settles up into the log and the reads update to
+          // the NEW state (face/subtext/tell/composure), but the verdict is
+          // still just DOCKED — giving a beat to take in what he gave away.
           transcript = [...transcript, himTurn];
-
-          // Step 4: reads update — expression/subtext/tell/composure move
-          // to the NEW (post-reaction) state; the verdict punches out fresh.
-          lastReaction = { band, fresh: true, spent };
+          lastReaction = { band, fresh: false, spent };
           renderBeat(state, lastReaction);
 
-          // Step 5: let the punch play, then dock it and hand control back.
+          // Step 5: a short pause, then the verdict PUNCHES out big…
           setTimeout(() => {
-            lastReaction = { band, fresh: false, spent };
-            finishProbe(tellEvent);
-          }, TIMING.PUNCH);
+            lastReaction = { band, fresh: true, spent };
+            renderBeat(state, lastReaction);
+
+            // …holds long enough to read, then docks small.
+            setTimeout(() => {
+              lastReaction = { band, fresh: false, spent };
+              renderBeat(state, lastReaction);
+
+              // Step 6: a final breath on the resting scene, then re-arm.
+              setTimeout(() => finishProbe(tellEvent), TIMING.POST);
+            }, TIMING.PUNCH);
+          }, TIMING.PRE_PUNCH);
         }, TIMING.SETTLE);
       });
     }, TIMING.FLY_IN);
@@ -200,7 +217,11 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
     const result = apply(state, { kind: 'pressTell' }, opp, script);
     state = result.state;
     if (state.end !== 'ongoing') { showAftermath(); return; }
+    // Pressing a tell is a hard hit — punch the verdict so the drop lands
+    // visibly, then leave it docked so re-renders don't re-punch it.
+    lastReaction = { band: 'lands', fresh: true, spent: false };
     showDuel();
+    lastReaction = { band: 'lands', fresh: false, spent: false };
   }
 
   function openRecord(): void {
@@ -224,20 +245,22 @@ export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDo
       if (lev) leakField = lev.targets;
     }
 
+    const before = state.hisComposure;
     const result = apply(state, { kind: 'catch', contradictionId }, opp, script);
     state = result.state;
     const next = state.end !== 'ongoing' ? showAftermath : showDuel;
-    renderCatch(root, said, against, leakField, { continue: next });
+    renderCatch(root, said, against, leakField, { continue: next }, { before, after: state.hisComposure });
   }
 
   function doDeploy(leverageId: string): void {
     const lev = state.record.heldLeverage.find((l) => l.id === leverageId);
     if (!lev) { openRecord(); return; }
 
+    const before = state.hisComposure;
     const result = apply(state, { kind: 'deploy', leverageId }, opp, script);
     state = result.state;
     const next = state.end !== 'ongoing' ? showAftermath : showDuel;
-    renderDeploy(root, lev, { continue: next });
+    renderDeploy(root, lev, { continue: next }, { before, after: state.hisComposure });
   }
 
   function walk(): void {

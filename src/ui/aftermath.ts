@@ -103,6 +103,35 @@ export function renderAftermath(
   who.textContent = `${opp.name} · ${opp.role}`;
   wrap.appendChild(who);
 
+  // ---- the break payoff: only when you ground him to zero (folded). This is
+  // the promised reward — he stops lying, and he names who's above him. ----
+  if (state.end === 'folded' && opp.breakReveal) {
+    const reveal = document.createElement('div');
+    reveal.className = 'reveal';
+
+    const rk = document.createElement('div');
+    rk.className = 'blabel';
+    rk.textContent = 'he breaks';
+
+    const quote = document.createElement('div');
+    quote.className = 'reveal-quote';
+    quote.textContent = `“${opp.breakReveal.quote}”`;
+
+    const names = document.createElement('div');
+    names.className = 'reveal-names';
+    const nk = document.createElement('span');
+    nk.className = 'nk';
+    nk.textContent = 'he names ▸ ';
+    names.append(nk, document.createTextNode(opp.breakReveal.names));
+
+    const teach = document.createElement('div');
+    teach.className = 'reveal-teach';
+    teach.textContent = opp.breakReveal.teach;
+
+    reveal.append(rk, quote, names, teach);
+    wrap.appendChild(reveal);
+  }
+
   // ---- what you walked away with ----
   const { cost, label } = payout(state.end, opp.debtAmount);
   const gotBlock = document.createElement('div');

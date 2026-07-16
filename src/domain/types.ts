@@ -23,6 +23,7 @@ export interface Opponent {
   objective?: { goal: string; why: string };            // on-screen stakes
   expressions?: Record<MoodState, string>;              // his face, per mood ("jaw tight · eyes flicking")
   tell?: { text: string; teach: string };               // a live tell + first-time plain-language teach
+  breakReveal?: { quote: string; names: string; teach: string }; // what he coughs up at composure 0 (the fold payoff)
 }
 export interface Script { angles: AngleId[]; lines: Line[]; statements: Statement[]; leverage: Leverage[]; }
 export interface DuelState {

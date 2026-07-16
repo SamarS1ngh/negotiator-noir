@@ -13,6 +13,17 @@ describe('aftermath + spike', () => {
     expect(root.textContent).toMatch(/FOLDED/i);
     expect(root.querySelector('[data-continue]')).not.toBeNull();
   });
+  it('folded aftermath delivers the break payoff — he names who is above him', () => {
+    const s = { ...initDuel(COLLECTOR, COLLECTOR_SCRIPT), end: 'folded' as const, hisComposure: 0 };
+    renderAftermath(root, s, COLLECTOR, { continue(){} });
+    expect(root.querySelector('.reveal')).not.toBeNull();
+    expect(root.querySelector('.reveal')?.textContent).toContain('MARLOWE');
+  });
+  it('a non-fold ending shows no break payoff', () => {
+    const s = { ...initDuel(COLLECTOR, COLLECTOR_SCRIPT), end: 'walked' as const };
+    renderAftermath(root, s, COLLECTOR, { continue(){} });
+    expect(root.querySelector('.reveal')).toBeNull();
+  });
   it('spike (untimed) renders press/pass without a timer', () => {
     renderSpike(root, 'his eyes cut to the door', 'crimson', { press(){}, pass(){} }, false);
     expect(root.querySelector('[data-press]')).not.toBeNull();

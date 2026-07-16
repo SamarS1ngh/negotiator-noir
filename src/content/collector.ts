@@ -40,4 +40,9 @@ export const COLLECTOR: Opponent = {
     text: 'his hand keeps drifting to his watch',
     teach: "A tell — a crack he can't stop. His body says what his mouth won't. Catch it, press it.",
   },
+  breakReveal: {
+    quote: "Alright — ALRIGHT. There's no debt. Marlowe wanted you rattled, wanted you scared enough to pay to make it stop.",
+    names: 'MARLOWE. He owns the paper. He owns me. He\'s the one you want.',
+    teach: 'You ground his composure to zero — so the lie died and he named who\'s above him. That name is your next rung up the ladder.',
+  },
 };

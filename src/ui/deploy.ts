@@ -6,6 +6,55 @@ const AGENDA_TELLS: Record<AgendaField, string> = {
   lie: 'The lie is exposed. Pull the thread.',
 };
 
+// The composure hit a catch/deploy just landed. Shows it plainly — a mini bar
+// with the chunk you just knocked off highlighted, and a word for the size of
+// the hit — so the move reads as cause->effect, not "the number just dropped".
+export interface Impact { before: number; after: number }
+
+function clampPct(n: number): number {
+  return Math.min(100, Math.max(0, Math.round(n)));
+}
+
+function crackWord(drop: number): string {
+  if (drop >= 25) return 'BUCKLES';
+  if (drop >= 12) return 'cracks';
+  if (drop >= 1) return 'gives';
+  return 'holds';
+}
+
+// A labelled mini composure bar: solid fill = what he has LEFT, the striped
+// segment past it = what this move just cost him.
+function composureCrack(impact: Impact): HTMLElement {
+  const before = clampPct(impact.before);
+  const after = clampPct(impact.after);
+  const drop = Math.max(0, before - after);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'crack';
+
+  const lab = document.createElement('div');
+  lab.className = 'crk-lab';
+  lab.append('his composure ');
+  const b = document.createElement('b');
+  b.textContent = crackWord(drop);
+  lab.appendChild(b);
+
+  const bar = document.createElement('div');
+  bar.className = 'crk-bar';
+  const left = document.createElement('i');
+  left.style.width = `${after}%`;
+  const lost = document.createElement('u');
+  lost.style.width = `${drop}%`;
+  bar.append(left, lost);
+
+  const nums = document.createElement('div');
+  nums.className = 'crk-nums';
+  nums.textContent = `was ${before} · now ${after}`;
+
+  wrap.append(lab, bar, nums);
+  return wrap;
+}
+
 /**
  * Renders the "THAT'S NOT WHAT YOU SAID" catch beat — ported from
  * concept/ui/screen_catch.html. The quote he said vs. the fact you know,
@@ -17,6 +66,7 @@ export function renderCatch(
   against: string,
   leakField: AgendaField,
   on: { continue(): void },
+  impact?: Impact,
 ): void {
   root.innerHTML = '';
   root.classList.add('catch-screen');
@@ -61,6 +111,8 @@ export function renderCatch(
   react.textContent = '…how the hell do you know that?';
   root.appendChild(react);
 
+  if (impact) root.appendChild(composureCrack(impact));
+
   const foot = document.createElement('div');
   foot.className = 'foot';
   const leakBox = document.createElement('div');
@@ -83,6 +135,7 @@ export function renderDeploy(
   root: HTMLElement,
   lev: Leverage,
   on: { continue(): void },
+  impact?: Impact,
 ): void {
   root.innerHTML = '';
   root.classList.add('deploy-screen');
@@ -124,6 +177,8 @@ export function renderDeploy(
   react.className = 'react';
   react.textContent = '…okay. Okay. What do you want.';
   root.appendChild(react);
+
+  if (impact) root.appendChild(composureCrack(impact));
 
   root.appendChild(continueButton(on));
 }
