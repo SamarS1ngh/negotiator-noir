@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderAftermath, renderSpike } from './aftermath'; // aftermath.ts re-exports renderSpike from spike.ts, OR import from spike
+import { renderAftermath } from './aftermath';
 import { initDuel } from '../domain/engine';
 import { COLLECTOR } from '../content/collector';
 import { COLLECTOR_SCRIPT } from '../content/script';
@@ -23,10 +23,5 @@ describe('aftermath + spike', () => {
     const s = { ...initDuel(COLLECTOR, COLLECTOR_SCRIPT), end: 'walked' as const };
     renderAftermath(root, s, COLLECTOR, { continue(){} });
     expect(root.querySelector('.reveal')).toBeNull();
-  });
-  it('spike (untimed) renders press/pass without a timer', () => {
-    renderSpike(root, 'his eyes cut to the door', 'crimson', { press(){}, pass(){} }, false);
-    expect(root.querySelector('[data-press]')).not.toBeNull();
-    expect(root.querySelector('[data-pass]')).not.toBeNull();
   });
 });

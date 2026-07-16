@@ -1,8 +1,6 @@
 import type { AgendaField, AngleId, DuelState, EndState, Opponent, OpponentType } from '../domain/types';
 import { payout } from '../domain/outcome';
 
-export { renderSpike } from './spike';
-
 const HEADLINES: Record<Exclude<EndState, 'ongoing'>, string> = {
   folded: 'HE FOLDED',
   walked: 'HE WALKED',
@@ -83,7 +81,7 @@ export function renderAftermath(
   on: { continue(): void },
 ): void {
   root.innerHTML = '';
-  root.classList.add('aftermath-screen');
+  root.className = 'aftermath-screen';
 
   const wrap = document.createElement('div');
   wrap.className = 'wrap';

@@ -29,6 +29,7 @@ export const COLLECTOR: Opponent = {
     goal: 'BREAK RICCI',
     why: "Collector for the empire that took your family. The debt's invented. Crack him → it dies + he names who's above him.",
   },
+  opener: "You know why I'm here. Five hundred — that's the number. I don't haggle, and I don't wait.",
   expressions: {
     guarded: 'still · watching · giving nothing away',
     rattled: 'jaw tight · eyes flicking to the door',

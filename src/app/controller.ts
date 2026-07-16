@@ -1,273 +1,214 @@
-import type { AgendaField, AngleId, Band, DuelEvent, DuelState, Opponent, Script } from '../domain/types';
-import { initDuel, apply } from '../domain/engine';
-import { renderDuel, GENERIC_REACTION } from '../ui/duel';
-import type { ConvoTurn, CutToHim, DuelHandlers, DuelReaction } from '../ui/duel';
-import { renderRecord } from '../ui/record';
-import { renderCatch, renderDeploy } from '../ui/deploy';
-import { renderSpike } from '../ui/spike';
+import type { AngleId, Band, DuelState, Opponent, Script } from '../domain/types';
+import { initDuel, apply, riskOf } from '../domain/engine';
+import { renderCine } from '../ui/scene';
+import type { Choice, CineHandlers, Exchange } from '../ui/scene';
 import { renderAftermath } from '../ui/aftermath';
 
-// Vitest sets MODE to 'test' for every run — gate every animation timer on it
-// so tests drive the duel synchronously (render the final state immediately,
-// no setTimeout) while the live app (dev/build -> MODE 'production') runs the
-// full choreography below.
+// Vitest sets MODE 'test' — gate the typewriter so tests drive the duel
+// synchronously (final state rendered at once, no setTimeout). The live app
+// runs the unhurried reveal below.
 const TEST = import.meta.env.MODE === 'test';
+const TIMING = { TYPE_MS: 34, PRE_CHOICES: 550 };
 
-// Beat timings (ms) for the live animated flow — see the brief's "animated
-// flow" section. Deliberately UNHURRIED (slow auto-play): the player needs
-// time to read his reply, the subtext, the tell, and the verdict before the
-// scene moves on. None of these ever fire under Vitest.
-//   FLY_IN   — how long your line sits before he answers
-//   TYPE_MS  — ms per character of his reply (42 ≈ readable, not a crawl)
-//   PRE_PUNCH— beat after his line settles, before the verdict punches
-//   PUNCH    — how long the verdict holds big on screen before docking
-//   POST     — final breath on the resting scene before the dial re-arms
-const TIMING = { MODAL_CLOSE: 300, FLY_IN: 700, TYPE_MS: 42, SETTLE: 900, PRE_PUNCH: 350, PUNCH: 2600, POST: 700 };
+// The felt intent behind each angle — this is the choice's tag, so the move
+// reads as a manipulation ("hit his fear") not a mechanic ("lean").
+const INTENT: Record<AngleId, string> = {
+  lean: 'hit his fear',
+  flatter: 'flatter him',
+  plant_doubt: 'plant doubt',
+  bluff: 'bluff him',
+  offer_out: 'offer a way out',
+};
+
+// Fallback reaction + read for a probe whose line emits no scripted statement.
+const GENERIC_REACTION: Record<Band, string> = {
+  lands: "He doesn't answer right away — but something in his face just gave.",
+  neutral: 'He just looks at you. Nothing given away.',
+  backfires: 'He almost laughs in your face.',
+};
+const GENERIC_SUBTEXT: Record<Band, string> = {
+  lands: "That got under the collar — he's rattled.",
+  neutral: 'Nothing moved. He held.',
+  backfires: 'Wrong move — that only steadied him.',
+};
+
+// His composure, said in plain language instead of a raw number.
+function nerveWord(composure: number): string {
+  if (composure > 75) return 'steady';
+  if (composure > 50) return 'shaken';
+  if (composure > 30) return 'rattled';
+  if (composure > 0) return 'cornered';
+  return 'breaking';
+}
 
 /**
- * Wires the domain engine to the UI screens into one playable duel.
- * Owns the live `DuelState`, the dial's `selectedAngle`, and the on-screen
- * conversation transcript (the domain keeps no per-turn history, so the
- * controller grows its own as the duel plays). See
- * .superpowers/sdd/v3ui-brief.md for the full choreography this wires up:
- * dial wedge -> cyan modal -> pick a word -> your line flies into the
- * conversation -> cut to him (typewriter) -> his line settles into the log
- * -> reads update -> verdict punches out then docks.
+ * The cinematic manipulation duel. Reuses the domain engine (composure /
+ * agenda / statements / leverage / tells / outcome) unchanged — this owns the
+ * lived-scene flow over it: his line reads out, you pick a manipulation move
+ * (a normal line, or a hot catch/deploy/press opening when it's live), his
+ * reaction plays, his nerve shifts, repeat until he breaks. See
+ * docs/superpowers/specs/2026-07-16-cinematic-manipulation-duel-design.md.
  */
 export function startDuel(root: HTMLElement, opp: Opponent, script: Script, onDone?: () => void): void {
   let state: DuelState = initDuel(opp, script);
-  let selectedAngle: AngleId | null = null;
-  let transcript: ConvoTurn[] = [];
-  // The last probe's verdict — rendered inline (punches out once, then sits
-  // docked top-right as a "last read" marker) instead of a separate screen.
-  let lastReaction: DuelReaction | null = null;
+  const history: Exchange[] = [];
+  let hisLine: string = opp.opener ?? 'Well? You wanted this meeting.';
+  let read: string | undefined;
+  let teach: string | undefined =
+    'Break his nerve to zero. Every line you pick is a move — read him, work him.';
+  let tellLive = false;
+  let movesMade = 0;
+  const shown = new Set<string>();
 
-  const handlers: DuelHandlers = { probe, pickAngle, openRecord, closeModal };
+  const handlers: CineHandlers = { choose, walk };
 
-  // renderDuel always lists angle wedges in script.angles order; an angle
-  // that's already spent lands with zero effect (see matrix.ts), so wedges
-  // are presented fresh-angles-first for whichever state is on screen right
-  // now — a display-only reorder (engine logic keys off angleId, never wedge
-  // position) that keeps the obvious "try the next thing" affordance pointed
-  // at an angle that still does something.
-  function angleFreshFirst(s: DuelState): Script {
-    const fresh = script.angles.filter((a) => !s.spentAngles.includes(a));
-    const spent = script.angles.filter((a) => s.spentAngles.includes(a));
-    return { ...script, angles: [...fresh, ...spent] };
+  // Every move the player has this beat: the hot openings (catch / deploy /
+  // press) first, then a manipulation line for each angle he hasn't shut down.
+  function choicesFor(): Choice[] {
+    const cs: Choice[] = [];
+    for (const c of state.record.openContradictions) {
+      cs.push({ id: c.id, kind: 'catch', text: '"That’s not what you said."' });
+    }
+    // Leverage surfaces only once you've sized him up — the opening beat stays
+    // a clean set of manipulation moves, then your hold appears a beat in.
+    if (movesMade >= 1) {
+      for (const l of state.record.heldLeverage) {
+        cs.push({ id: l.id, kind: 'deploy', text: `Use what you know — ${l.label.toLowerCase()}.` });
+      }
+    }
+    if (tellLive) cs.push({ id: 'press', kind: 'press', text: 'Lean in. Say nothing. Let it sit.' });
+    for (const a of script.angles) {
+      if (state.spentAngles.includes(a)) continue;
+      const line = script.lines.find((l) => l.angleId === a);
+      if (!line) continue;
+      cs.push({ id: line.id, kind: 'move', text: `"${line.text}"`, intent: INTENT[a], risk: riskOf(state, opp, line) });
+    }
+    return cs;
   }
 
-  function showDuel(): void {
-    renderDuel(root, state, opp, angleFreshFirst(state), handlers, {
-      selectedAngle, transcript, reaction: lastReaction ?? undefined,
-    });
-    appendWalkAffordance();
-  }
-
-  // Renders a resting-scene snapshot mid-animation: the modal is always
-  // closed here (selectedAngle null) — only the state/reaction/cutToHim
-  // vary between beats. Interactions are inert (see inertHandlers) so a tap
-  // mid-flight can't stack a second animation on top of this one.
-  function renderBeat(s: DuelState, reaction?: DuelReaction, cutToHim?: CutToHim): void {
-    renderDuel(root, s, opp, angleFreshFirst(s), inertHandlers, {
-      selectedAngle: null, transcript, reaction, cutToHim,
-    });
-    appendWalkAffordance();
-  }
-
-  const inertHandlers: DuelHandlers = {
-    probe() {}, pickAngle() {}, openRecord() {}, closeModal() {},
-  };
-
-  function appendWalkAffordance(): void {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'walk-btn';
-    btn.dataset.walk = '';
-    btn.textContent = 'WALK AWAY';
-    btn.addEventListener('click', walk);
-    root.appendChild(btn);
+  function showBeat(opts: { typing?: number; choices?: boolean } = {}): void {
+    renderCine(root, opp, {
+      objective: opp.objective?.goal ?? 'BREAK HIM',
+      hisName: opp.name,
+      mood: state.mood,
+      nerveWord: nerveWord(state.hisComposure),
+      nervePct: state.hisComposure,
+      history: history.slice(-4),
+      hisLine,
+      typedLen: opts.typing,
+      read,
+      teach,
+      choices: opts.choices ? choicesFor() : [],
+    }, handlers);
   }
 
   function showAftermath(): void {
     renderAftermath(root, state, opp, { continue: () => onDone?.() });
   }
 
-  function pickAngle(a: AngleId): void {
-    selectedAngle = a;
-    showDuel();
+  // Reveal his reply — typewritered live, instant under test — then either the
+  // aftermath (if the duel just ended) or the next set of choices.
+  function play(reply: string, newRead: string | undefined, newTeach: string | undefined): void {
+    hisLine = reply;
+    read = newRead;
+    teach = newTeach;
+    const done = (): void => {
+      if (state.end !== 'ongoing') showAftermath();
+      else showBeat({ choices: true });
+    };
+    if (TEST) { done(); return; }
+    typeThen(reply, done);
   }
 
-  function closeModal(): void {
-    closeModalWithAnimation(() => {
-      selectedAngle = null;
-      showDuel();
-    });
-  }
-
-  // Fakes the modal's exit transition: flags the just-rendered .modal/.veil
-  // as closing (their CSS plays a short fade/scale-down), waits for it, then
-  // runs `after` — which re-renders without the modal. Skipped entirely
-  // under test (no timers, no DOM peeking).
-  function closeModalWithAnimation(after: () => void): void {
-    if (TEST) { after(); return; }
-    const modal = root.querySelector<HTMLElement>('.modal');
-    const veil = root.querySelector<HTMLElement>('.veil');
-    if (!modal) { after(); return; }
-    modal.classList.add('closing');
-    veil?.classList.add('closing');
-    setTimeout(after, TIMING.MODAL_CLOSE);
-  }
-
-  function probe(lineId: string): void {
-    closeModalWithAnimation(() => doProbe(lineId));
-  }
-
-  function doProbe(lineId: string): void {
-    const line = script.lines.find((l) => l.id === lineId);
-    if (!line) { selectedAngle = null; showDuel(); return; }
-
-    // reciprocity check must read spentAngles BEFORE apply mutates it
-    const spent = state.spentAngles.includes(line.angleId);
-    const prevState = state;
-
-    const result = apply(state, { kind: 'probe', lineId }, opp, script);
-    state = result.state;
-    selectedAngle = null;
-
-    const bandEvent = result.events.find((e) => e.type === 'band');
-    const saidEvent = result.events.find((e) => e.type === 'said');
-    const tellEvent = result.events.find((e) => e.type === 'tell');
-    const band = (bandEvent?.text ?? 'neutral') as Band;
-    const quoted = Boolean(saidEvent);
-    const hisReply = saidEvent?.text ?? GENERIC_REACTION[band];
-
-    const youTurn: ConvoTurn = { who: 'you', text: line.text };
-    const himTurn: ConvoTurn = { who: 'him', text: hisReply, quoted };
-
-    if (TEST) {
-      transcript = [...transcript, youTurn, himTurn];
-      lastReaction = { band, fresh: false, spent };
-      finishProbe(tellEvent);
-      return;
-    }
-
-    // ---- LIVE: the choreographed reveal, UNHURRIED (see the brief's
-    // animated flow). Each beat holds long enough to actually read. ----
-    // Step 2: your line flies into the conversation; reads/mood stay on the
-    // PRE-reaction state until he's actually replied.
-    transcript = [...transcript, youTurn];
-    renderBeat(prevState, lastReaction ?? undefined);
-
-    setTimeout(() => {
-      // Step 3: cut to him — his reply typewriters out at the bottom.
-      typewriter(hisReply, (typed, done) => {
-        renderBeat(prevState, lastReaction ?? undefined, { text: hisReply, typed, done, quoted });
-        if (!done) return;
-
-        // Step 4: hold on his fully-typed reply so it can be read in full…
-        setTimeout(() => {
-          // …then his line settles up into the log and the reads update to
-          // the NEW state (face/subtext/tell/composure), but the verdict is
-          // still just DOCKED — giving a beat to take in what he gave away.
-          transcript = [...transcript, himTurn];
-          lastReaction = { band, fresh: false, spent };
-          renderBeat(state, lastReaction);
-
-          // Step 5: a short pause, then the verdict PUNCHES out big…
-          setTimeout(() => {
-            lastReaction = { band, fresh: true, spent };
-            renderBeat(state, lastReaction);
-
-            // …holds long enough to read, then docks small.
-            setTimeout(() => {
-              lastReaction = { band, fresh: false, spent };
-              renderBeat(state, lastReaction);
-
-              // Step 6: a final breath on the resting scene, then re-arm.
-              setTimeout(() => finishProbe(tellEvent), TIMING.POST);
-            }, TIMING.PUNCH);
-          }, TIMING.PRE_PUNCH);
-        }, TIMING.SETTLE);
-      });
-    }, TIMING.FLY_IN);
-  }
-
-  function typewriter(text: string, onTick: (typed: string, done: boolean) => void): void {
+  function typeThen(text: string, done: () => void): void {
     let i = 0;
     const step = (): void => {
       i += 1;
-      const done = i >= text.length;
-      onTick(text.slice(0, i), done);
-      if (!done) setTimeout(step, TIMING.TYPE_MS);
+      showBeat({ typing: i });
+      if (i >= text.length) { setTimeout(done, TIMING.PRE_CHOICES); return; }
+      setTimeout(step, TIMING.TYPE_MS);
     };
-    step();
+    showBeat({ typing: 0 });
+    setTimeout(step, TIMING.TYPE_MS);
   }
 
-  function finishProbe(tellEvent?: DuelEvent): void {
-    if (state.end !== 'ongoing') { showAftermath(); return; }
-    if (tellEvent) { showSpike(tellEvent.text); return; }
-    showDuel();
+  function choose(c: Choice): void {
+    teach = undefined; // any action clears the standing teach/steer
+    if (c.kind === 'move') resolveMove(c);
+    else if (c.kind === 'catch') resolveCatch(c);
+    else if (c.kind === 'deploy') resolveDeploy(c);
+    else resolvePress();
   }
 
-  function showSpike(tellText: string): void {
-    renderSpike(root, tellText, opp.palette, { press: pressTell, pass: showDuel });
+  function pushExchange(yourLine: string): void {
+    history.push({ who: 'him', text: hisLine });
+    history.push({ who: 'you', text: yourLine });
   }
 
-  function pressTell(): void {
-    const result = apply(state, { kind: 'pressTell' }, opp, script);
-    state = result.state;
-    if (state.end !== 'ongoing') { showAftermath(); return; }
-    // Pressing a tell is a hard hit — punch the verdict so the drop lands
-    // visibly, then leave it docked so re-renders don't re-punch it.
-    lastReaction = { band: 'lands', fresh: true, spent: false };
-    showDuel();
-    lastReaction = { band: 'lands', fresh: false, spent: false };
-  }
+  function resolveMove(c: Choice): void {
+    const line = script.lines.find((l) => l.id === c.id);
+    if (!line) return;
+    movesMade += 1;
+    const contradictionsBefore = state.record.openContradictions.length;
+    pushExchange(line.text);
 
-  function openRecord(): void {
-    renderRecord(root, state, { catch: doCatch, deploy: doDeploy, close: showDuel });
-  }
+    const r = apply(state, { kind: 'probe', lineId: line.id }, opp, script);
+    state = r.state;
+    const said = r.events.find((e) => e.type === 'said')?.text;
+    const band = (r.events.find((e) => e.type === 'band')?.text ?? 'neutral') as Band;
+    const tellEvent = r.events.find((e) => e.type === 'tell');
+    tellLive = Boolean(tellEvent);
 
-  function doCatch(contradictionId: string): void {
-    const contradiction = state.record.openContradictions.find((c) => c.id === contradictionId);
-    if (!contradiction) { openRecord(); return; }
+    const reply = said ?? GENERIC_REACTION[band];
+    const lastStmt = state.record.statements[state.record.statements.length - 1];
+    const newRead = (said && lastStmt?.subtext) ? lastStmt.subtext : GENERIC_SUBTEXT[band];
 
-    // Snapshot the beat's copy before apply() consumes the contradiction —
-    // mirrors renderRecord's own lookups (src/ui/record.ts) and the engine's
-    // leakField derivation (src/domain/engine.ts apply/'catch').
-    const said = state.record.statements.find((s) => s.id === contradiction.statementId)?.text ?? '';
-    const against = contradiction.kind === 'leverage'
-      ? (state.record.heldLeverage.find((l) => l.id === contradiction.against)?.label ?? '')
-      : (state.record.statements.find((s) => s.id === contradiction.against)?.text ?? '');
-    let leakField: AgendaField = 'lie';
-    if (contradiction.kind === 'leverage') {
-      const lev = state.record.heldLeverage.find((l) => l.id === contradiction.against);
-      if (lev) leakField = lev.targets;
+    let newTeach: string | undefined;
+    const crackOpened = state.record.openContradictions.length > contradictionsBefore;
+    if (crackOpened && !shown.has('crack')) {
+      shown.add('crack');
+      newTeach = 'He just contradicted himself — that’s a crack. Take "catch him in it" to corner him.';
+    } else if (tellEvent && !shown.has('tell')) {
+      shown.add('tell');
+      newTeach = opp.tell?.teach;
     }
-
-    const before = state.hisComposure;
-    const result = apply(state, { kind: 'catch', contradictionId }, opp, script);
-    state = result.state;
-    const next = state.end !== 'ongoing' ? showAftermath : showDuel;
-    renderCatch(root, said, against, leakField, { continue: next }, { before, after: state.hisComposure });
+    play(reply, newRead, newTeach);
   }
 
-  function doDeploy(leverageId: string): void {
-    const lev = state.record.heldLeverage.find((l) => l.id === leverageId);
-    if (!lev) { openRecord(); return; }
+  function resolveCatch(c: Choice): void {
+    if (!state.record.openContradictions.some((x) => x.id === c.id)) return;
+    pushExchange('"That’s not what you said."');
+    const r = apply(state, { kind: 'catch', contradictionId: c.id }, opp, script);
+    state = r.state;
+    tellLive = false;
+    play('…how the hell do you know that?', 'His lie just broke open — he’s rattled and scrambling.', undefined);
+  }
 
-    const before = state.hisComposure;
-    const result = apply(state, { kind: 'deploy', leverageId }, opp, script);
-    state = result.state;
-    const next = state.end !== 'ongoing' ? showAftermath : showDuel;
-    renderDeploy(root, lev, { continue: next }, { before, after: state.hisComposure });
+  function resolveDeploy(c: Choice): void {
+    const lev = state.record.heldLeverage.find((l) => l.id === c.id);
+    if (!lev) return;
+    pushExchange(`You lay it on the table: ${lev.label.toLowerCase()}.`);
+    const r = apply(state, { kind: 'deploy', leverageId: c.id }, opp, script);
+    state = r.state;
+    tellLive = false;
+    play('…okay. Okay. What do you want.', 'He knows you’ve got him. His guard is dropping.', undefined);
+  }
+
+  function resolvePress(): void {
+    pushExchange('You lean in. Say nothing. Let it sit.');
+    const r = apply(state, { kind: 'pressTell' }, opp, script);
+    state = r.state;
+    tellLive = false;
+    play('He catches himself — but the crack already showed.', 'You pressed the tell. His nerve buckles.', undefined);
   }
 
   function walk(): void {
-    const result = apply(state, { kind: 'walk' }, opp, script);
-    state = result.state;
-    showAftermath(); // walk always ends the duel
+    const r = apply(state, { kind: 'walk' }, opp, script);
+    state = r.state;
+    showAftermath();
   }
 
-  showDuel();
+  // opening beat
+  if (TEST) showBeat({ choices: true });
+  else typeThen(hisLine, () => showBeat({ choices: true }));
 }

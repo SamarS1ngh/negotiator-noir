@@ -21,6 +21,7 @@ export interface Opponent {
   art: { seed: number; states: Record<MoodState, string> };
   // presentation content (optional; UI falls back if absent) —
   objective?: { goal: string; why: string };            // on-screen stakes
+  opener?: string;                                       // his first line before you've moved (cinematic scene)
   expressions?: Record<MoodState, string>;              // his face, per mood ("jaw tight · eyes flicking")
   tell?: { text: string; teach: string };               // a live tell + first-time plain-language teach
   breakReveal?: { quote: string; names: string; teach: string }; // what he coughs up at composure 0 (the fold payoff)
