@@ -1,19 +1,18 @@
-import type { MoodState, Opponent, Risk } from '../domain/types';
+import type { MoodState, Opponent } from '../domain/types';
 import { mountFace } from './face';
 
 // ---- the view model the controller hands this renderer each beat ----
 
-export type ChoiceKind = 'move' | 'catch' | 'deploy' | 'press';
+export type ChoiceKind = 'move' | 'call' | 'deploy' | 'press';
 
-// One thing you can do this beat. A `move` is a line you'd say (with an intent
-// tag + a risk read); catch/deploy/press are the charged manipulation
-// openings that appear only when they're live (styled `hot`).
+// One thing you can do this beat. A `move` is a line you'd say (an angle you
+// read as worth trying — NO risk hint, you judge). call/deploy/press are
+// aggressive gambits you time yourself. Nothing is highlighted as "correct".
 export interface Choice {
   id: string;
   kind: ChoiceKind;
   text: string;
   intent?: string;
-  risk?: Risk;
 }
 
 export interface Exchange { who: 'you' | 'him'; text: string; }
@@ -22,14 +21,15 @@ export interface CineView {
   objective: string;        // "BREAK RICCI"
   hisName: string;
   mood: MoodState;          // drives the background art
-  nerveWord: string;        // steady / shaken / rattled / cornered / breaking
-  nervePct: number;         // 0–100, the bar
+  hisNerveWord: string;     // steady / shaken / rattled / cornered / breaking
+  hisNervePct: number;      // 0–100 — break it to 0 to WIN
+  yourNervePct: number;     // 0–100 — hits 0 and he turns it on you (LOSE)
   history: Exchange[];      // the last few lines, faint, above the current one
   hisLine: string;          // what he's saying right now
-  typedLen?: number;        // if set, only show hisLine.slice(0, typedLen) + caret (typewriter)
-  read?: string;            // what you NOTICE — inline, plain language
-  teach?: string;           // one-time plain teach (first tell / first crack)
-  choices: Choice[];        // empty while he's talking; the moves when it's your turn
+  typedLen?: number;        // if set, only show hisLine.slice(0, typedLen) + caret
+  face?: string;            // his OBSERVABLE tell/expression — your read material
+  teach?: string;           // sparing coach line (intro + first-time only)
+  choices: Choice[];        // empty while he's talking; your moves when it's your turn
 }
 
 export interface CineHandlers {
@@ -37,11 +37,9 @@ export interface CineHandlers {
   walk(): void;
 }
 
-const RISK_DOT: Record<Risk, string> = { safe: 'r-safe', uncertain: 'r-unc', high: 'r-high' };
-
-const INTENT_ICON: Record<ChoiceKind, string> = {
+const GAMBIT_ICON: Record<ChoiceKind, string> = {
   move: '',
-  catch: '⚡',
+  call: '‼',
   deploy: '▸',
   press: '⚡',
 };
@@ -70,12 +68,12 @@ function objectiveEl(objective: string, name: string): HTMLElement {
   return wrap;
 }
 
-function nerveEl(word: string, pct: number): HTMLElement {
-  const wrap = el('div', 'nerve');
-  const lab = el('div', 'nerve-lab');
-  lab.append('his nerve · ');
-  lab.appendChild(el('b', undefined, word));
-  const bar = el('div', 'nerve-bar');
+function barEl(cls: string, label: string, valueText: string, pct: number): HTMLElement {
+  const wrap = el('div', `gauge ${cls}`);
+  const lab = el('div', 'gauge-lab');
+  lab.append(`${label} · `);
+  lab.appendChild(el('b', undefined, valueText));
+  const bar = el('div', 'gauge-bar');
   const fill = el('i');
   fill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
   bar.appendChild(fill);
@@ -86,24 +84,19 @@ function nerveEl(word: string, pct: number): HTMLElement {
 function choiceEl(c: Choice, on: CineHandlers): HTMLElement {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = `choice${c.kind === 'move' ? '' : ' hot'}`;
+  btn.className = `choice${c.kind === 'move' ? '' : ' gambit'}`;
   btn.dataset.choice = c.id;
   btn.dataset.kind = c.kind;
 
   const tag = el('div', 'c-tag');
-  const icon = INTENT_ICON[c.kind];
+  const icon = GAMBIT_ICON[c.kind];
   const label =
     c.kind === 'move' ? (c.intent ?? '') :
-    c.kind === 'catch' ? 'catch him in it' :
+    c.kind === 'call' ? 'call him a liar' :
     c.kind === 'deploy' ? 'play what you know' :
-    'press him — now';
+    'press him';
   if (icon) tag.appendChild(el('span', 'c-icon', icon));
   tag.appendChild(el('span', 'c-intent', label));
-  if (c.kind === 'move' && c.risk) {
-    const dot = el('span', `c-risk ${RISK_DOT[c.risk]}`);
-    dot.dataset.risk = c.risk;
-    tag.appendChild(dot);
-  }
   btn.appendChild(tag);
 
   btn.appendChild(el('div', 'c-text', c.text));
@@ -112,13 +105,13 @@ function choiceEl(c: Choice, on: CineHandlers): HTMLElement {
 }
 
 /**
- * Renders one beat of the cinematic duel — his portrait fills the screen, his
- * line reads out at the bottom, what you NOTICE floats just under it, and your
- * manipulation moves are the choices. No dial, no jargon boxes, no separate
- * Record screen: the charged catch/deploy/press openings appear inline, hot,
- * right when they're live. See docs/superpowers/specs/2026-07-16-cinematic-
- * manipulation-duel-design.md. The controller (src/app/controller.ts) owns the
- * beat-to-beat flow and typewriter timing and calls this at each visual step.
+ * Renders one beat of the cinematic manipulation duel — a game you can lose.
+ * His portrait fills the frame; two nerve gauges sit up top (HIS to break,
+ * YOURS to protect); his line reads out at the bottom; his observable tell is
+ * your read material — NOT an interpreted hint; your moves are the choices,
+ * with no risk telegraph and nothing highlighted as correct. You judge. See
+ * docs/superpowers/specs/2026-07-16-cinematic-manipulation-duel-design.md +
+ * the game-layer notes in src/app/controller.ts.
  */
 export function renderCine(
   root: HTMLElement,
@@ -134,17 +127,18 @@ export function renderCine(
   face.setMood(view.mood);
   root.appendChild(bg);
 
-  // top: objective + his nerve
+  // top: objective + the two nerve gauges
   const top = el('div', 'cine-top');
   top.appendChild(objectiveEl(view.objective, opp.name));
-  top.appendChild(nerveEl(view.nerveWord, view.nervePct));
+  const gauges = el('div', 'gauges');
+  gauges.appendChild(barEl('his', 'his nerve', view.hisNerveWord, view.hisNervePct));
+  gauges.appendChild(barEl('you', 'your nerve', yourWord(view.yourNervePct), view.yourNervePct));
+  top.appendChild(gauges);
   root.appendChild(top);
 
-  // the whole lower cluster — his line, what you notice, then your moves —
-  // stacked and anchored to the bottom of the frame.
+  // the whole lower cluster — his line, your read, then your moves
   const bottom = el('div', 'cine-bottom');
 
-  // the dialogue stage (lower third)
   const stage = el('div', 'cine-stage');
 
   if (view.history.length > 0) {
@@ -169,10 +163,11 @@ export function renderCine(
   say.appendChild(line);
   stage.appendChild(say);
 
-  if (view.read) {
+  // his OBSERVABLE tell — read material, not an interpretation
+  if (view.face) {
     const read = el('div', 'cine-read');
-    read.appendChild(el('span', 'eye', '⌕'));
-    read.append(view.read);
+    read.appendChild(el('span', 'eye', '👁'));
+    read.append(view.face);
     stage.appendChild(read);
   }
   if (view.teach) {
@@ -181,7 +176,6 @@ export function renderCine(
 
   bottom.appendChild(stage);
 
-  // choices (hidden while he's talking)
   if (view.choices.length > 0) {
     const choices = el('div', 'cine-choices');
     choices.appendChild(el('div', 'choose-hint', 'your move'));
@@ -191,7 +185,6 @@ export function renderCine(
 
   root.appendChild(bottom);
 
-  // a quiet exit
   const walk = document.createElement('button');
   walk.type = 'button';
   walk.className = 'cine-walk';
@@ -199,4 +192,12 @@ export function renderCine(
   walk.textContent = 'walk away';
   walk.addEventListener('click', () => on.walk());
   root.appendChild(walk);
+}
+
+// Your own standing, in plain words — so the lose-gauge reads as pressure.
+function yourWord(pct: number): string {
+  if (pct > 66) return 'holding';
+  if (pct > 33) return 'slipping';
+  if (pct > 0) return 'on the ropes';
+  return 'read';
 }

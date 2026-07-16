@@ -75,16 +75,18 @@ body {
 }
 .cine-obj .goal { font-size: clamp(14px, 4vw, 17px); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .cine-obj .goal b { color: var(--crimson); }
-.nerve { margin-top: 11px; max-width: 66%; }
-.nerve-lab { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
-.nerve-lab b { color: var(--crimson); font-weight: 600; letter-spacing: .16em; }
-.nerve-bar { margin-top: 5px; height: 6px; border-radius: 4px; background: rgba(143,31,36,.26); overflow: hidden; }
-.nerve-bar i {
-  display: block; height: 100%;
-  background: linear-gradient(90deg, var(--crimson-deep), var(--crimson));
-  box-shadow: 0 0 10px rgba(226,59,66,.5);
-  transition: width .7s cubic-bezier(.2,.7,.2,1);
-}
+/* two nerve gauges: HIS (break to 0 = win) and YOURS (0 = he turns it = lose) */
+.gauges { margin-top: 11px; display: flex; flex-direction: column; gap: 7px; max-width: 78%; }
+.gauge-lab { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.gauge-lab b { font-weight: 600; letter-spacing: .16em; }
+.gauge-bar { margin-top: 4px; height: 6px; border-radius: 4px; overflow: hidden; }
+.gauge-bar i { display: block; height: 100%; transition: width .7s cubic-bezier(.2,.7,.2,1); }
+.gauge.his .gauge-lab b { color: var(--crimson); }
+.gauge.his .gauge-bar { background: rgba(143,31,36,.26); }
+.gauge.his .gauge-bar i { background: linear-gradient(90deg, var(--crimson-deep), var(--crimson)); box-shadow: 0 0 10px rgba(226,59,66,.5); }
+.gauge.you .gauge-lab b { color: var(--steel); }
+.gauge.you .gauge-bar { background: rgba(43,113,128,.24); }
+.gauge.you .gauge-bar i { background: linear-gradient(90deg, var(--steel-deep), var(--steel)); box-shadow: 0 0 9px rgba(111,211,230,.45); }
 
 /* the lower cluster: history, his line + read, then your choices */
 .cine-bottom {
@@ -142,17 +144,14 @@ body {
 .choice .c-risk.r-unc { background: var(--gold); box-shadow: 0 0 7px rgba(224,178,74,.5); }
 .choice .c-risk.r-high { background: var(--crimson); box-shadow: 0 0 7px rgba(226,59,66,.5); }
 .choice .c-text { font-family: 'JetBrains Mono', monospace; font-size: clamp(13px, 3.5vw, 15px); line-height: 1.4; color: #eef3f6; }
-/* hot openings: catch / deploy / press — the charged manipulation moments */
-.choice.hot {
-  border-color: var(--crimson);
-  background: linear-gradient(180deg, rgba(34,12,14,.86), rgba(20,9,11,.9));
-  box-shadow: 0 0 16px rgba(226,59,66,.28);
+/* gambits: call his lie / play your leverage — aggressive power moves, marked
+   amber (a gamble). NOT pulsing and NOT flagged as "correct now" — you judge
+   when to spend one. */
+.choice.gambit {
+  border-color: rgba(224,178,74,.5);
+  background: linear-gradient(180deg, rgba(34,26,10,.82), rgba(20,15,7,.88));
 }
-.choice.hot .c-intent, .choice.hot .c-icon { color: var(--crimson); }
-@media (prefers-reduced-motion: no-preference) {
-  .choice.hot { animation: choice-pulse 1.6s ease-in-out infinite; }
-}
-@keyframes choice-pulse { 0%, 100% { box-shadow: 0 0 10px rgba(226,59,66,.22); } 50% { box-shadow: 0 0 20px rgba(226,59,66,.5); } }
+.choice.gambit .c-intent, .choice.gambit .c-icon { color: var(--gold); }
 
 /* quiet exit */
 .cine-walk {

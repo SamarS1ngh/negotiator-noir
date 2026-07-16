@@ -8,11 +8,12 @@ function baseView(over: Partial<CineView> = {}): CineView {
     objective: 'BREAK RICCI',
     hisName: 'Ricci',
     mood: 'guarded',
-    nerveWord: 'steady',
-    nervePct: 100,
+    hisNerveWord: 'steady',
+    hisNervePct: 100,
+    yourNervePct: 100,
     history: [],
     hisLine: 'Five hundred. That’s the number.',
-    read: undefined,
+    face: undefined,
     teach: undefined,
     choices: [],
     ...over,
@@ -24,31 +25,39 @@ describe('cinematic scene', () => {
   const noop = { choose() {}, walk() {} };
   beforeEach(() => { root = document.createElement('div'); document.body.appendChild(root); });
 
-  it('renders his line, the objective and his nerve gauge', () => {
-    renderCine(root, COLLECTOR, baseView(), noop);
+  it('renders his line, the objective and BOTH nerve gauges', () => {
+    renderCine(root, COLLECTOR, baseView({ hisNervePct: 70, yourNervePct: 40 }), noop);
     expect(root.querySelector('.cine-say')?.textContent).toContain('Five hundred');
     expect(root.querySelector('.cine-obj')?.textContent).toContain('RICCI');
-    expect(root.querySelector('.nerve')?.textContent).toContain('steady');
-    expect(root.querySelector('.nerve-bar i')?.getAttribute('style')).toContain('100%');
+    expect(root.querySelector('.gauge.his .gauge-bar i')?.getAttribute('style')).toContain('70%');
+    expect(root.querySelector('.gauge.you .gauge-bar i')?.getAttribute('style')).toContain('40%');
   });
 
-  it('renders moves with intent + risk, and hot openings for catch/deploy/press', () => {
+  it('renders moves with an intent and NO risk telegraph; gambits are marked but not "hot"', () => {
     const choices: Choice[] = [
-      { id: 'c1', kind: 'catch', text: 'That’s not what you said.' },
+      { id: 'call', kind: 'call', text: 'You’re lying.' },
       { id: 'lev1', kind: 'deploy', text: 'Use what you know.' },
-      { id: 'l1', kind: 'move', text: 'Flatter.', intent: 'flatter him', risk: 'uncertain' },
+      { id: 'l1', kind: 'move', text: 'Flatter.', intent: 'flatter him' },
     ];
     renderCine(root, COLLECTOR, baseView({ choices }), noop);
     expect(root.querySelectorAll('[data-choice]').length).toBe(3);
-    expect(root.querySelector('[data-kind="catch"]')?.classList.contains('hot')).toBe(true);
-    expect(root.querySelector('[data-kind="move"]')?.classList.contains('hot')).toBe(false);
+    // no risk dots leaked anywhere — you judge, the game doesn't tell you
+    expect(root.querySelector('[data-risk]')).toBeNull();
+    expect(root.querySelector('.c-risk')).toBeNull();
+    // gambits are styled distinct (amber), moves are plain
+    expect(root.querySelector('[data-kind="call"]')?.classList.contains('gambit')).toBe(true);
+    expect(root.querySelector('[data-kind="move"]')?.classList.contains('gambit')).toBe(false);
     expect(root.querySelector('[data-kind="move"] .c-intent')?.textContent).toContain('flatter');
-    expect(root.querySelector('[data-risk="uncertain"]')).not.toBeNull();
+  });
+
+  it('shows his observable tell as read material (not an interpretation)', () => {
+    renderCine(root, COLLECTOR, baseView({ face: 'his hand keeps drifting to his watch' }), noop);
+    expect(root.querySelector('.cine-read')?.textContent).toContain('watch');
   });
 
   it('fires choose() with the chosen choice', () => {
     let picked: Choice | null = null;
-    const choices: Choice[] = [{ id: 'l1', kind: 'move', text: 'x', intent: 'bluff him', risk: 'high' }];
+    const choices: Choice[] = [{ id: 'l1', kind: 'move', text: 'x', intent: 'bluff him' }];
     renderCine(root, COLLECTOR, baseView({ choices }), { choose: (c) => { picked = c; }, walk() {} });
     root.querySelector<HTMLElement>('[data-choice="l1"]')!.click();
     expect(picked).not.toBeNull();
@@ -57,8 +66,7 @@ describe('cinematic scene', () => {
 
   it('typewriter mode shows a partial line with a caret and no choices', () => {
     renderCine(root, COLLECTOR, baseView({ typedLen: 4, choices: [] }), noop);
-    const line = root.querySelector('.cine-say .line')!;
-    expect(line.textContent).toContain('Five'.slice(0, 4));
+    expect(root.querySelector('.cine-say .line')?.textContent).toContain('Five');
     expect(root.querySelector('.caret')).not.toBeNull();
     expect(root.querySelector('.cine-choices')).toBeNull();
   });
