@@ -1,0 +1,107 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08090c;--line:#2a2e38;--bone:#eef0f4;--dim:#9096a4;--faint:#5a6070;
+  --crimson:#e23b42;--crimson-deep:#8f1f24;--steel:#6fd3e6;--gold:#e0b24a;--good:#63c088;
+  --pad:clamp(14px,4vw,20px);--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#000;font-family:'Oswald',sans-serif;color:var(--bone);-webkit-font-smoothing:antialiased}
+.screen{position:relative;height:100dvh;overflow:hidden}
+.bg{position:absolute;inset:0;overflow:hidden}
+.bg img{width:100%;height:100%;object-fit:cover;object-position:center 30%;transform:scale(1.22);transform-origin:center 32%}
+.bg::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 75% at 50% 40%,transparent 50%,rgba(8,9,12,.55)),linear-gradient(180deg,rgba(8,9,12,.6),transparent 20%,transparent 62%,rgba(8,9,12,.92))}
+
+/* top */
+.top{position:absolute;top:0;left:0;right:0;z-index:5;padding:calc(10px + var(--safe-t)) var(--pad) 10px;background:linear-gradient(180deg,rgba(8,9,12,.78),transparent)}
+.obj{display:flex;align-items:center;gap:10px}
+.obj .b{flex:none;width:24px;height:24px;border-radius:7px;border:1px solid var(--crimson-deep);background:rgba(226,59,66,.14);display:grid;place-items:center;color:var(--crimson);font-size:12px}
+.obj .g{font-size:clamp(13px,3.8vw,16px);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.obj .g b{color:var(--crimson)}
+.obj .c{margin-left:auto;font-family:'JetBrains Mono';font-size:12px;color:var(--dim)}
+.cbar{margin-top:7px;height:5px;border-radius:4px;background:rgba(143,31,36,.3);overflow:hidden}
+.cbar i{display:block;height:100%;width:62%;background:linear-gradient(90deg,var(--crimson-deep),var(--crimson));box-shadow:0 0 10px rgba(226,59,66,.5)}
+.cl{font-size:9px;letter-spacing:.16em;color:var(--faint);text-transform:uppercase;margin-top:4px}
+
+/* CONVERSATION — defined LIMITED area (no border), scrollable for history */
+.convo{position:absolute;left:0;bottom:calc(150px + var(--safe-b));width:min(56%,250px);height:24%;z-index:4;
+  padding:8px 12px 8px var(--pad);overflow-y:auto;scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 14%,#000 100%)}
+.convo::-webkit-scrollbar{display:none}
+.convo .turn{margin-bottom:12px;font-family:'JetBrains Mono';line-height:1.35}
+.convo .turn .w{font-family:'Oswald';font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;margin-bottom:3px}
+.convo .you .w{color:var(--steel)}.convo .you{color:var(--dim);font-size:clamp(10px,2.6vw,12px)}
+.convo .him .w{color:var(--crimson)}.convo .him{color:var(--bone);font-size:clamp(11px,3vw,13px)}
+.convo .him.cur .said{border-left:2px solid var(--crimson);padding-left:8px}
+
+/* READS — RIGHT, floating IN AIR (no box), each its own color, smaller than dialogue */
+.reads{position:absolute;inset:0;z-index:4;pointer-events:none}
+.read{position:absolute;max-width:46%;text-shadow:0 2px 10px #000,0 0 3px #000}
+.read .k{display:block;font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;margin-bottom:3px}
+.read .t{font-size:clamp(10px,2.7vw,12px);line-height:1.35;font-weight:400}
+/* scattered to different places on screen */
+.r-verdict{top:calc(72px + var(--safe-t));right:var(--pad);text-align:right}
+.r-verdict .k{color:var(--faint)}.r-verdict .v{font-size:clamp(13px,3.6vw,16px);font-weight:700;color:var(--good);text-shadow:0 0 14px rgba(99,192,136,.45),0 2px 8px #000}
+.r-face{top:calc(72px + var(--safe-t));left:var(--pad);text-align:left;max-width:52%}
+.r-face .k{color:var(--steel);text-shadow:0 0 10px rgba(111,211,230,.5)}.r-face .t{color:#dbf3f8;text-shadow:0 0 10px rgba(111,211,230,.35),0 2px 8px #000}
+/* subtext: WHITE text, YELLOW neon glow */
+.r-sub{top:38%;right:var(--pad);text-align:right}
+.r-sub .k{color:var(--gold);text-shadow:0 0 12px rgba(224,178,74,.7)}
+.r-sub .t{color:#fff;text-shadow:0 0 7px var(--gold),0 0 16px rgba(224,178,74,.8),0 2px 6px #000}.r-sub .t b{font-weight:600}
+/* tell: WHITE text, RED neon glow */
+.r-tell{top:52%;left:var(--pad);text-align:left}
+.r-tell .k{color:#ff5a60;text-shadow:0 0 12px rgba(226,59,66,.85)}
+.r-tell .t{color:#fff;font-weight:500;text-shadow:0 0 7px var(--crimson),0 0 16px rgba(226,59,66,.85),0 2px 6px #000}
+.r-tell .teach{display:block;margin-top:2px;font-size:9px;color:var(--dim);font-weight:300;text-shadow:0 2px 6px #000}
+
+/* DIAL — small glassy circle, bottom */
+.dialwrap{position:absolute;left:0;right:0;bottom:calc(14px + var(--safe-b));z-index:5;display:flex;flex-direction:column;align-items:center;gap:7px}
+.dhint{font-size:9.5px;letter-spacing:.16em;color:var(--steel);text-transform:uppercase;text-shadow:0 1px 8px #000}
+.dial{width:158px;height:158px;filter:drop-shadow(0 6px 18px rgba(0,0,0,.55))}
+.dial .seg{fill:rgba(111,211,230,.06);stroke:rgba(111,211,230,.32);stroke-width:1}
+.dial .hub{fill:rgba(8,11,14,.85);stroke:rgba(111,211,230,.5)}
+.dial text{font-family:'Oswald';text-anchor:middle;fill:#bfe6ee;font-size:11px;font-weight:500}
+.dial .hublbl{fill:var(--steel);font-size:9px;font-weight:600;letter-spacing:.14em}
+</style></head><body>
+<div class="screen">
+  <div class="bg"><img src="collector/wide.jpg" alt=""></div>
+
+  <div class="top">
+    <div class="obj"><span class="b">◎</span><span class="g">Break <b>Ricci</b></span><span class="c">his composure 62</span></div>
+    <div class="cbar"><i></i></div><div class="cl">break it to 0</div>
+  </div>
+
+  <!-- conversation: LEFT -->
+  <div class="convo">
+    <div class="turn you"><div class="w">You</div>Marlowe quoted me different terms than you did.</div>
+    <div class="turn him"><div class="w">Ricci</div>"Twelve grand. Not a penny less."</div>
+    <div class="turn you"><div class="w">You</div>Funny — your own crew doesn't back that number.</div>
+    <div class="turn him cur"><div class="w">Ricci</div><span class="said">"I run my own book. I don't answer to Marlowe."</span></div>
+  </div>
+
+  <!-- reads: RIGHT, floating in air, own colors -->
+  <div class="reads">
+    <div class="read r-verdict"><span class="k">last read</span><span class="v">HE FLINCHED</span></div>
+    <div class="read r-face"><span class="k">👁 his face</span><span class="t">jaw tight · eyes flicking to the door</span></div>
+    <div class="read r-sub"><span class="k">⌕ what it means</span><span class="t">He's <b>overselling it</b> — nobody defends the truth this hard.</span></div>
+    <div class="read r-tell"><span class="k">▲ a tell</span><span class="t">his hand keeps drifting to his watch</span><span class="teach">a crack he can't stop — press it</span></div>
+  </div>
+
+  <div class="dialwrap">
+    <div class="dhint">tap an angle</div>
+    <svg class="dial" viewBox="0 0 200 200">
+      <defs><clipPath id="wheel"><circle cx="100" cy="100" r="90"/></clipPath></defs>
+      <g clip-path="url(#wheel)">
+        <path class="seg" d="M100,100 L100,12 A88,88 0 0,1 183.6,71.6 Z"/>
+        <path class="seg" d="M100,100 L183.6,71.6 A88,88 0 0,1 151.7,170.9 Z"/>
+        <path class="seg" d="M100,100 L151.7,170.9 A88,88 0 0,1 48.3,170.9 Z"/>
+        <path class="seg" d="M100,100 L48.3,170.9 A88,88 0 0,1 16.4,71.6 Z"/>
+        <path class="seg" d="M100,100 L16.4,71.6 A88,88 0 0,1 100,12 Z"/>
+      </g>
+      <circle class="hub" cx="100" cy="100" r="24"/>
+      <text x="132" y="58">Lean</text><text x="149" y="122">Bluff</text><text x="100" y="152">Doubt</text><text x="51" y="122">Offer</text><text x="66" y="58">Flat</text>
+      <text class="hublbl" x="100" y="104">PICK</text>
+    </svg>
+  </div>
+</div>
+</body></html>

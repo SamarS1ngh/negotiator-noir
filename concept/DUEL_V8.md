@@ -15,3 +15,8 @@ Tap dial → modal pops up → pick a line → modal closes, your line flies int
 ## v9 tweak — closer + glowing reads
 ![v9 scene](ui/duel_v9a.png)
 Character pulled a bit closer; subtext (gold) and tell (crimson) now **glow in their own colour** so they pop off the scene.
+
+---
+## v10 — scattered reads, white+neon glow, defined convo, bigger dial
+![v10 scene](ui/duel_v10a.png)
+Reads scattered (face TL · last-read TR · subtext MR · tell ML). Subtext = **white text, yellow neon**; tell = **white text, red neon**. Conversation = defined limited area, no border, scrollable. Dial bigger, splash clipped inside the wheel.
