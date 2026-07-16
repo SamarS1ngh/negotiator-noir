@@ -20,3 +20,8 @@ Character pulled a bit closer; subtext (gold) and tell (crimson) now **glow in t
 ## v10 — scattered reads, white+neon glow, defined convo, bigger dial
 ![v10 scene](ui/duel_v10a.png)
 Reads scattered (face TL · last-read TR · subtext MR · tell ML). Subtext = **white text, yellow neon**; tell = **white text, red neon**. Conversation = defined limited area, no border, scrollable. Dial bigger, splash clipped inside the wheel.
+
+---
+## v11 — annotation lines + final scatter
+![v11 scene](ui/duel_v11a.png)
+Conversation centred on the left (nothing beside it). Subtext just below his face; tell at the bottom (clear of the dial). Subtle **annotation lines** angle from each read to his body (steel→face, yellow→chin, red→hands), ending in a small colour-matched dot. No line on last-read.
