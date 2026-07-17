@@ -3,11 +3,8 @@ import { mountFace } from './face';
 
 // ---- the view model the controller hands this renderer each beat ----
 
-export type ChoiceKind = 'move' | 'call' | 'deploy' | 'press';
+export type ChoiceKind = 'move' | 'call' | 'deploy';
 
-// One thing you can do this beat. A `move` is a line you'd say (an angle you
-// read as worth trying — NO risk hint, you judge). call/deploy/press are
-// aggressive gambits you time yourself. Nothing is highlighted as "correct".
 export interface Choice {
   id: string;
   kind: ChoiceKind;
@@ -16,34 +13,38 @@ export interface Choice {
 }
 
 export interface Exchange { who: 'you' | 'him'; text: string; }
+export interface PushOptionView { id: string; text: string; }
 
 export interface CineView {
-  objective: string;        // "BREAK RICCI"
+  objective: string;
   hisName: string;
-  mood: MoodState;          // drives the background art
-  hisNerveWord: string;     // steady / shaken / rattled / cornered / breaking
-  hisNervePct: number;      // 0–100 — break it to 0 to WIN
-  yourNervePct: number;     // 0–100 — hits 0 and he turns it on you (LOSE)
-  patiencePct: number;      // 0–100 — his patience; hits 0 and he walks (LOSE)
-  history: Exchange[];      // the last few lines, faint, above the current one
-  hisLine: string;          // what he's saying right now
-  typedLen?: number;        // if set, only show hisLine.slice(0, typedLen) + caret
-  face?: string;            // his OBSERVABLE tell/expression — your read material
-  teach?: string;           // sparing coach line (intro + first-time only)
-  choices: Choice[];        // empty while he's talking; your moves when it's your turn
+  mood: MoodState;
+  hisNerveWord: string;
+  hisNervePct: number;
+  yourNervePct: number;
+  patiencePct: number;
+  history: Exchange[];
+  hisLine: string;
+  typedLen?: number;
+  face?: string;                 // his OBSERVABLE tell/expression — read material
+  teach?: string;
+  choices: Choice[];             // your moves (empty while he talks / during a push)
+  reaction?: 'hit' | 'lean' | 'settle'; // physical beat animation on his portrait
+  flashTell?: string;            // pop his tell on him, live
+  pushOptions?: PushOptionView[]; // when set, HE is pressing you — render responses, not moves
+  dossier: string[];             // what you dug up in recon
+  dossierOpen?: boolean;
 }
 
 export interface CineHandlers {
   choose(choice: Choice): void;
+  respond(optionId: string): void;
   walk(): void;
+  openDossier(): void;
+  closeDossier(): void;
 }
 
-const GAMBIT_ICON: Record<ChoiceKind, string> = {
-  move: '',
-  call: '‼',
-  deploy: '▸',
-  press: '⚡',
-};
+const GAMBIT_ICON: Record<ChoiceKind, string> = { move: '', call: '‼', deploy: '▸' };
 
 function el(tag: string, className?: string, text?: string): HTMLElement {
   const node = document.createElement(tag);
@@ -52,7 +53,6 @@ function el(tag: string, className?: string, text?: string): HTMLElement {
   return node;
 }
 
-// Bolds the opponent's name inside the objective goal ("BREAK RICCI").
 function objectiveEl(objective: string, name: string): HTMLElement {
   const wrap = el('div', 'cine-obj');
   wrap.appendChild(el('span', 'badge', '◎'));
@@ -94,8 +94,7 @@ function choiceEl(c: Choice, on: CineHandlers): HTMLElement {
   const label =
     c.kind === 'move' ? (c.intent ?? '') :
     c.kind === 'call' ? 'call him a liar' :
-    c.kind === 'deploy' ? 'play what you know' :
-    'press him';
+    'play what you know';
   if (icon) tag.appendChild(el('span', 'c-icon', icon));
   tag.appendChild(el('span', 'c-intent', label));
   btn.appendChild(tag);
@@ -105,32 +104,65 @@ function choiceEl(c: Choice, on: CineHandlers): HTMLElement {
   return btn;
 }
 
+function dossierPanel(lines: string[], on: CineHandlers): HTMLElement {
+  const veil = el('div', 'dossier-veil');
+  const panel = el('div', 'dossier-panel');
+  const head = el('div', 'dossier-head');
+  head.appendChild(el('span', 't', 'WHAT YOU DUG UP'));
+  const x = document.createElement('button');
+  x.type = 'button'; x.className = 'x'; x.dataset.closeDossier = ''; x.textContent = '✕';
+  x.addEventListener('click', () => on.closeDossier());
+  head.appendChild(x);
+  panel.appendChild(head);
+  if (lines.length === 0) {
+    panel.appendChild(el('div', 'dossier-empty', "You walked in cold. Nothing on him — read him at the table, and pray."));
+  } else {
+    for (const line of lines) panel.appendChild(el('div', 'dossier-line', line));
+  }
+  veil.appendChild(panel);
+  veil.addEventListener('click', (e) => { if (e.target === veil) on.closeDossier(); });
+  return veil;
+}
+
 /**
- * Renders one beat of the cinematic manipulation duel — a game you can lose.
- * His portrait fills the frame; two nerve gauges sit up top (HIS to break,
- * YOURS to protect); his line reads out at the bottom; his observable tell is
- * your read material — NOT an interpreted hint; your moves are the choices,
- * with no risk telegraph and nothing highlighted as correct. You judge. See
- * docs/superpowers/specs/2026-07-16-cinematic-manipulation-duel-design.md +
- * the game-layer notes in src/app/controller.ts.
+ * Renders one beat of the LIVING duel. His portrait fills the frame and reacts
+ * with his body (flinch on a hit, lean-in when he presses you); his tell can
+ * flash live; and he pushes back — when `pushOptions` is set he's coming at
+ * YOU and the choices become your responses (hold firm / give ground). Your
+ * hand is what you dug up in recon (the dossier). See the recon spec.
  */
-export function renderCine(
-  root: HTMLElement,
-  opp: Opponent,
-  view: CineView,
-  on: CineHandlers,
-): void {
+export function renderCine(root: HTMLElement, opp: Opponent, view: CineView, on: CineHandlers): void {
   root.innerHTML = '';
   root.className = 'cine';
 
   const bg = el('div', 'bg');
+  if (view.reaction) bg.classList.add(`react-${view.reaction}`);
   const face = mountFace(bg, opp);
   face.setMood(view.mood);
   root.appendChild(bg);
+  if (view.flashTell) face.flashTell(view.flashTell);
 
-  // top: objective + the two nerve gauges
+  // top: objective + gauges, with the dossier + walk chips on the right
   const top = el('div', 'cine-top');
-  top.appendChild(objectiveEl(view.objective, opp.name));
+  const objRow = el('div', 'cine-objrow');
+  objRow.appendChild(objectiveEl(view.objective, opp.name));
+  const controls = el('div', 'cine-controls');
+  const dossierBtn = document.createElement('button');
+  dossierBtn.type = 'button';
+  dossierBtn.className = 'dossier-btn';
+  dossierBtn.dataset.dossier = '';
+  dossierBtn.textContent = `DOSSIER${view.dossier.length ? ` · ${view.dossier.length}` : ''}`;
+  dossierBtn.addEventListener('click', () => on.openDossier());
+  const walk = document.createElement('button');
+  walk.type = 'button';
+  walk.className = 'cine-walk';
+  walk.dataset.walk = '';
+  walk.textContent = 'walk';
+  walk.addEventListener('click', () => on.walk());
+  controls.append(dossierBtn, walk);
+  objRow.appendChild(controls);
+  top.appendChild(objRow);
+
   const gauges = el('div', 'gauges');
   gauges.appendChild(barEl('his', 'his nerve', view.hisNerveWord, view.hisNervePct));
   gauges.appendChild(barEl('you', 'your nerve', yourWord(view.yourNervePct), view.yourNervePct));
@@ -138,9 +170,8 @@ export function renderCine(
   top.appendChild(gauges);
   root.appendChild(top);
 
-  // the whole lower cluster — his line, your read, then your moves
+  // lower cluster
   const bottom = el('div', 'cine-bottom');
-
   const stage = el('div', 'cine-stage');
 
   if (view.history.length > 0) {
@@ -154,7 +185,7 @@ export function renderCine(
     stage.appendChild(hist);
   }
 
-  const say = el('div', 'cine-say');
+  const say = el('div', `cine-say${view.pushOptions ? ' pressing' : ''}`);
   say.appendChild(el('div', 'who', opp.name));
   const line = el('div', 'line');
   const shownText = view.typedLen === undefined ? view.hisLine : view.hisLine.slice(0, view.typedLen);
@@ -165,20 +196,31 @@ export function renderCine(
   say.appendChild(line);
   stage.appendChild(say);
 
-  // his OBSERVABLE tell — read material, not an interpretation
   if (view.face) {
     const read = el('div', 'cine-read');
     read.appendChild(el('span', 'eye', '👁'));
     read.append(view.face);
     stage.appendChild(read);
   }
-  if (view.teach) {
-    stage.appendChild(el('div', 'cine-teach', view.teach));
-  }
+  if (view.teach) stage.appendChild(el('div', 'cine-teach', view.teach));
 
   bottom.appendChild(stage);
 
-  if (view.choices.length > 0) {
+  // his PUSH — you respond (hold firm / give ground), not attack
+  if (view.pushOptions) {
+    const push = el('div', 'cine-choices push');
+    push.appendChild(el('div', 'choose-hint press', 'he\'s pressing you — hold your ground'));
+    for (const opt of view.pushOptions) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'choice respond';
+      btn.dataset.push = opt.id;
+      btn.appendChild(el('div', 'c-text', opt.text));
+      btn.addEventListener('click', () => on.respond(opt.id));
+      push.appendChild(btn);
+    }
+    bottom.appendChild(push);
+  } else if (view.choices.length > 0) {
     const choices = el('div', 'cine-choices');
     choices.appendChild(el('div', 'choose-hint', 'your move'));
     for (const c of view.choices) choices.appendChild(choiceEl(c, on));
@@ -187,16 +229,9 @@ export function renderCine(
 
   root.appendChild(bottom);
 
-  const walk = document.createElement('button');
-  walk.type = 'button';
-  walk.className = 'cine-walk';
-  walk.dataset.walk = '';
-  walk.textContent = 'walk away';
-  walk.addEventListener('click', () => on.walk());
-  root.appendChild(walk);
+  if (view.dossierOpen) root.appendChild(dossierPanel(view.dossier, on));
 }
 
-// Your own standing, in plain words — so the lose-gauge reads as pressure.
 function yourWord(pct: number): string {
   if (pct > 66) return 'holding';
   if (pct > 33) return 'slipping';
@@ -204,7 +239,6 @@ function yourWord(pct: number): string {
   return 'read';
 }
 
-// How long he'll keep sitting — the clock on you.
 function patienceWord(pct: number): string {
   if (pct > 66) return 'hearing you out';
   if (pct > 33) return 'thinning';

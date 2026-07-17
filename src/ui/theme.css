@@ -158,11 +158,102 @@ body {
 
 /* quiet exit */
 .cine-walk {
-  position: absolute; top: calc(10px + var(--safe-t)); right: var(--pad); z-index: 6;
-  border: 1px solid var(--faint); background: rgba(14,14,17,.5); color: var(--dim);
-  font-family: 'Oswald', sans-serif; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
-  padding: 6px 10px; border-radius: 6px; cursor: pointer; opacity: .7;
+  flex: none; border: 1px solid var(--faint); background: rgba(14,14,17,.5); color: var(--dim);
+  font-family: 'Oswald', sans-serif; font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  padding: 5px 9px; border-radius: 6px; cursor: pointer; opacity: .7;
 }
+
+/* objective row: objective on the left, dossier + walk chips on the right */
+.cine-objrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.cine-controls { flex: none; display: flex; gap: 7px; }
+.dossier-btn {
+  flex: none; margin-top: 1px;
+  border: 1px solid var(--steel-deep); background: rgba(12,20,23,.55); color: var(--steel);
+  font-family: 'Oswald', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  padding: 5px 9px; border-radius: 6px; cursor: pointer;
+}
+
+/* #2 PHYSICAL REACTIONS — his portrait moves with the beat (transforms on the
+   stage container so they don't fight the stage-img breathe). */
+@media (prefers-reduced-motion: no-preference) {
+  .bg.react-hit { animation: react-hit .5s ease-out; }
+  .bg.react-lean { animation: react-lean .6s ease-out; }
+  .bg.react-settle { animation: react-settle .6s ease-out; }
+}
+@keyframes react-hit {
+  0% { transform: none; } 12% { transform: translateX(-6px) scale(1.015); }
+  30% { transform: translateX(5px) scale(1.02); } 55% { transform: translateX(-3px); }
+  100% { transform: none; }
+}
+@keyframes react-lean { 0% { transform: none; } 45% { transform: scale(1.05) translateY(6px); } 100% { transform: none; } }
+@keyframes react-settle { 0% { transform: none; } 45% { transform: scale(.985) translateY(-4px); } 100% { transform: none; } }
+
+/* his PUSH — he's coming at YOU. His line reads hotter; your responses are steel. */
+.cine-say.pressing .who { color: var(--gold); }
+.cine-say.pressing .line { color: #fff; text-shadow: 0 0 12px rgba(224,178,74,.3), 0 2px 14px #000; }
+.choose-hint.press { color: var(--gold); }
+.choice.respond { border-color: rgba(111,211,230,.4); background: linear-gradient(180deg, rgba(14,24,28,.85), rgba(9,15,19,.9)); }
+.choice.respond .c-text { color: #dff3f8; }
+
+/* DOSSIER panel — what you dug up in recon */
+.dossier-veil { position: fixed; inset: 0; z-index: 10; background: rgba(6,10,12,.68); display: grid; place-items: center; padding: var(--pad); }
+.dossier-panel {
+  width: min(92%, 420px); max-height: 78dvh; overflow-y: auto;
+  border-radius: 16px; border: 1px solid rgba(111,211,230,.35);
+  background: linear-gradient(180deg, rgba(12,20,24,.97), rgba(9,14,18,.98));
+  box-shadow: 0 24px 70px rgba(0,0,0,.6);
+}
+.dossier-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 8px; }
+.dossier-head .t { font-size: clamp(13px, 3.6vw, 15px); font-weight: 700; letter-spacing: .14em; color: var(--steel); }
+.dossier-head .x { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--dim); cursor: pointer; }
+.dossier-line { padding: 12px 16px; margin: 0 12px 10px; border-left: 2px solid var(--gold); background: rgba(200,162,58,.07); border-radius: 4px; font-size: clamp(12px, 3vw, 13.5px); line-height: 1.5; color: #ece7df; }
+.dossier-empty { padding: 16px; color: var(--dim); font-size: 13px; line-height: 1.5; }
+
+/* ================= RECON BOARD (the prep phase) ================= */
+.recon {
+  --pad: clamp(15px, 4.6vw, 22px);
+  position: relative; min-height: 100vh; min-height: 100dvh;
+  background: radial-gradient(120% 80% at 50% 0%, #12141b, #08090c 70%);
+  color: var(--bone); font-family: 'Oswald', sans-serif;
+  padding: calc(18px + var(--safe-t)) var(--pad) calc(18px + var(--safe-b));
+}
+.recon-wrap { max-width: 560px; margin: 0 auto; }
+.rc-kicker { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--steel); margin-bottom: 8px; }
+.rc-head { line-height: 1; }
+.rc-name { font-size: clamp(26px, 8vw, 40px); font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--crimson); }
+.rc-role { font-size: clamp(13px, 3.6vw, 16px); color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.rc-why { margin-top: 10px; font-size: clamp(12px, 3vw, 14px); line-height: 1.5; color: var(--dim); font-weight: 300; }
+.rc-digs { margin: 18px 0 12px; display: flex; align-items: center; justify-content: space-between; }
+.rc-digs-lab { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.rc-pips { display: flex; gap: 6px; }
+.rc-pips .pip { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--steel-deep); }
+.rc-pips .pip.on { background: var(--steel); border-color: var(--steel); box-shadow: 0 0 8px rgba(111,211,230,.5); }
+.rc-leads { display: flex; flex-direction: column; gap: 10px; }
+.lead {
+  text-align: left; width: 100%; cursor: pointer; font-family: inherit; color: inherit;
+  padding: 14px 15px; border-radius: 12px;
+  border: 1px solid var(--line); background: linear-gradient(180deg, rgba(20,23,30,.7), rgba(12,15,20,.75));
+  transition: border-color .15s, transform .1s;
+}
+.lead:not(:disabled):active { transform: scale(.99); }
+.lead:not(:disabled):hover { border-color: rgba(111,211,230,.4); }
+.lead:disabled { cursor: default; }
+.lead.taken { border-color: rgba(200,162,58,.45); background: linear-gradient(180deg, rgba(26,22,10,.7), rgba(16,13,7,.8)); opacity: 1; }
+.lead-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lead-label { font-size: clamp(14px, 3.9vw, 16px); font-weight: 600; letter-spacing: .02em; color: #eef3f6; }
+.lead-check { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+.lead-blurb { margin-top: 6px; font-size: clamp(11px, 2.9vw, 12.5px); line-height: 1.45; color: var(--dim); font-weight: 300; }
+.lead-dossier { margin-top: 8px; font-size: clamp(11px, 2.9vw, 12.5px); line-height: 1.5; color: #ece7df; font-family: 'JetBrains Mono', monospace; }
+.rc-foot { margin-top: 22px; }
+.rc-foot-hint { font-size: clamp(11px, 2.9vw, 12.5px); line-height: 1.45; color: var(--faint); margin-bottom: 12px; }
+.rc-sit {
+  width: 100%; cursor: pointer; font-family: 'Oswald', sans-serif;
+  padding: 16px; border-radius: 12px; border: 1px solid var(--crimson);
+  background: linear-gradient(180deg, rgba(34,12,14,.9), rgba(20,9,11,.95));
+  color: #fff; font-size: clamp(14px, 3.8vw, 16px); font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  box-shadow: 0 0 18px rgba(226,59,66,.22);
+}
+.rc-sit:active { transform: scale(.995); }
 
 /* film grain */
 .duel-screen::after {

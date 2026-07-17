@@ -17,13 +17,14 @@ function baseView(over: Partial<CineView> = {}): CineView {
     face: undefined,
     teach: undefined,
     choices: [],
+    dossier: [],
     ...over,
   };
 }
 
 describe('cinematic scene', () => {
   let root: HTMLElement;
-  const noop = { choose() {}, walk() {} };
+  const noop = { choose() {}, walk() {}, respond() {}, openDossier() {}, closeDossier() {} };
   beforeEach(() => { root = document.createElement('div'); document.body.appendChild(root); });
 
   it('renders his line, the objective and all three gauges (his nerve, your nerve, his patience)', () => {
@@ -60,10 +61,28 @@ describe('cinematic scene', () => {
   it('fires choose() with the chosen choice', () => {
     let picked: Choice | null = null;
     const choices: Choice[] = [{ id: 'l1', kind: 'move', text: 'x', intent: 'bluff him' }];
-    renderCine(root, COLLECTOR, baseView({ choices }), { choose: (c) => { picked = c; }, walk() {} });
+    renderCine(root, COLLECTOR, baseView({ choices }), { ...noop, choose: (c) => { picked = c; } });
     root.querySelector<HTMLElement>('[data-choice="l1"]')!.click();
     expect(picked).not.toBeNull();
     expect(picked!.id).toBe('l1');
+  });
+
+  it('when he is pressing you, renders his push responses instead of moves', () => {
+    let responded: string | null = null;
+    renderCine(root, COLLECTOR, baseView({
+      pushOptions: [{ id: '0', text: 'Hold firm.' }, { id: '1', text: 'Give ground.' }],
+      choices: [{ id: 'l1', kind: 'move', text: 'x', intent: 'bluff him' }],
+    }), { ...noop, respond: (id) => { responded = id; } });
+    expect(root.querySelector('[data-choice]')).toBeNull();       // no attack moves during a push
+    expect(root.querySelectorAll('[data-push]').length).toBe(2);
+    root.querySelector<HTMLElement>('[data-push="1"]')!.click();
+    expect(responded).toBe('1');
+  });
+
+  it('opens the dossier panel with your dug-up intel', () => {
+    renderCine(root, COLLECTOR, baseView({ dossier: ['PROUD. Feed his ego.'], dossierOpen: true }), noop);
+    expect(root.querySelector('.dossier-panel')?.textContent).toContain('PROUD');
+    expect(root.querySelector('[data-close-dossier]')).not.toBeNull();
   });
 
   it('typewriter mode shows a partial line with a caret and no choices', () => {

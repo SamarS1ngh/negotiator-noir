@@ -14,6 +14,19 @@ export interface Contradiction { id: string; statementId: string; against: strin
 export interface Leverage { id: string; label: string; text: string; targets: AgendaField; heldAtStart: boolean; }
 
 export interface Line { id: string; angleId: AngleId; text: string; emits?: string; }
+
+// ---- RECON: intel you dig up before the sit-down. What you find becomes your
+// hand at the table (see the recon spec). `lev:<leverageId>` unlocks that
+// leverage card; 'type'/'tell'/'lie' fill your dossier on him. ----
+export type IntelId = 'type' | 'tell' | 'lie' | `lev:${string}`;
+export interface Lead { id: string; label: string; blurb: string; grants: IntelId; dossier: string; }
+export interface Recon { digs: number; leads: Lead[]; }
+
+// ---- his PUSHES: moves he makes against YOU, so the duel volleys both ways.
+// `hold` = standing firm (the right read); `cave` = giving ground (bleeds you). ----
+export interface PushOption { text: string; kind: 'hold' | 'cave'; reply: string; dossier?: string; }
+export interface Push { id: string; line: string; options: PushOption[]; }
+
 export interface Opponent {
   id: string; name: string; role: string; type: OpponentType; palette: string;
   moodStart: number; composureStart: number; yourComposureStart: number;
@@ -25,6 +38,8 @@ export interface Opponent {
   expressions?: Record<MoodState, string>;              // his face, per mood ("jaw tight · eyes flicking")
   tell?: { text: string; teach: string };               // a live tell + first-time plain-language teach
   breakReveal?: { quote: string; names: string; teach: string }; // what he coughs up at composure 0 (the fold payoff)
+  recon?: Recon;                                        // leads you can chase before the sit-down
+  pushes?: Push[];                                       // his moves against you (the volley)
 }
 export interface Script { angles: AngleId[]; lines: Line[]; statements: Statement[]; leverage: Leverage[]; }
 export interface DuelState {
