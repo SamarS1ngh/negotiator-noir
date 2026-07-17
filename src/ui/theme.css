@@ -509,41 +509,40 @@ body {
 /* ---- BG / STAGE (v0.8.0 "he moves"): a real camera + cut-animated frames ---- */
 .bg { position: absolute; inset: 0; overflow: hidden; }
 
-/* THE CAMERA — the whole world hangs off this. It was a dead tripod before. */
+/* THE CAMERA — CONDITIONAL. It holds perfectly still and only moves when
+   something actually happens. (It used to drift on a loop, which just read as
+   noise.) Still frame, then the beat hits: that's the comic-panel energy.  */
 .cam {
   position: absolute; inset: 0;
   transform: scale(1.18);
   transform-origin: center 34%;
   will-change: transform;
-  animation: cam-drift 14s ease-in-out infinite;   /* never perfectly still */
+  /* no idle animation. dead still until a beat lands. */
 }
-@keyframes cam-drift {
-  0%, 100% { transform: scale(1.18) translate(0, 0); }
-  50%      { transform: scale(1.21) translate(-1.2%, .6%); }
-}
-/* push in when you lean on him */
-.cam.cam-push { animation: cam-push .85s cubic-bezier(.2,.8,.2,1) forwards; }
+/* push in when you lean on him — slow enough to feel */
+.cam.cam-push { animation: cam-push 1.5s cubic-bezier(.22,.7,.2,1) forwards; }
 @keyframes cam-push {
   0%   { transform: scale(1.18); }
-  55%  { transform: scale(1.34) translateY(1%); }
-  100% { transform: scale(1.28) translateY(.6%); }
+  60%  { transform: scale(1.30) translateY(.8%); }
+  100% { transform: scale(1.26) translateY(.5%); }
 }
 /* whip back when it goes wrong */
-.cam.cam-pull { animation: cam-pull .85s cubic-bezier(.2,.8,.2,1) forwards; }
+.cam.cam-pull { animation: cam-pull 1.4s cubic-bezier(.22,.7,.2,1) forwards; }
 @keyframes cam-pull {
   0%   { transform: scale(1.18); }
-  45%  { transform: scale(1.10) translateY(-1%); }
+  40%  { transform: scale(1.09) translateY(-1%); }
   100% { transform: scale(1.16); }
 }
-/* the blow */
-.cam.cam-shake { animation: cam-shake .5s cubic-bezier(.36,.07,.19,.97); }
+/* the blow — a hard jolt that settles, not a buzz */
+.cam.cam-shake { animation: cam-shake 1.1s cubic-bezier(.2,.7,.2,1); }
 @keyframes cam-shake {
-  0%,100% { transform: scale(1.22) translate(0,0) rotate(0deg); }
-  10%  { transform: scale(1.30) translate(-2.4%, 1.2%) rotate(-.6deg); }
-  25%  { transform: scale(1.30) translate(2.2%, -1%) rotate(.5deg); }
-  40%  { transform: scale(1.27) translate(-1.6%, .6%) rotate(-.35deg); }
-  60%  { transform: scale(1.25) translate(1%, -.4%) rotate(.2deg); }
-  80%  { transform: scale(1.23) translate(-.5%, .2%) rotate(-.1deg); }
+  0%   { transform: scale(1.18) translate(0,0) rotate(0deg); }
+  6%   { transform: scale(1.30) translate(-2.2%, 1.1%) rotate(-.55deg); }
+  16%  { transform: scale(1.29) translate(1.9%, -.9%) rotate(.45deg); }
+  28%  { transform: scale(1.27) translate(-1.3%, .5%) rotate(-.3deg); }
+  42%  { transform: scale(1.25) translate(.8%, -.3%) rotate(.16deg); }
+  60%  { transform: scale(1.23) translate(-.3%, .1%) rotate(-.06deg); }
+  100% { transform: scale(1.18) translate(0,0) rotate(0deg); }
 }
 
 /* HIM — frames CUT, they never cross-fade (a tween between two AI stills reads
@@ -568,32 +567,32 @@ body {
 }
 .stage-fallback.on { opacity: 1; }
 
-/* THE ROOM — the bulb overhead swings, smoke drifts through the light. The
-   room is alive even when nobody moves. */
+/* THE ROOM — light and haze, STILL. They used to swing and drift on loops,
+   which was the same constant-motion noise as the camera. The room only reacts
+   when a blow lands (the lamp kicks with the shake). */
 .lamp-glow {
   position: absolute; left: 50%; top: -6%; width: 62%; height: 52%;
   transform: translateX(-50%);
   background: radial-gradient(closest-side, rgba(226,59,66,.20), transparent 72%);
   mix-blend-mode: screen; pointer-events: none;
   transform-origin: 50% 0%;
-  animation: lamp-swing 7s ease-in-out infinite;
 }
-@keyframes lamp-swing {
-  0%, 100% { transform: translateX(-50%) rotate(-1.1deg); opacity: .85; }
-  50%      { transform: translateX(-50%) rotate(1.1deg); opacity: 1; }
+/* the one exception: a real hit rocks the bulb, then it settles */
+.cam.cam-shake .lamp-glow { animation: lamp-kick 1.6s cubic-bezier(.2,.7,.2,1); }
+@keyframes lamp-kick {
+  0%   { transform: translateX(-50%) rotate(0deg); }
+  14%  { transform: translateX(-50%) rotate(-2.2deg); }
+  38%  { transform: translateX(-50%) rotate(1.6deg); }
+  62%  { transform: translateX(-50%) rotate(-.9deg); }
+  82%  { transform: translateX(-50%) rotate(.4deg); }
+  100% { transform: translateX(-50%) rotate(0deg); }
 }
 .smoke {
-  position: absolute; inset: 0; pointer-events: none; opacity: .16;
+  position: absolute; inset: 0; pointer-events: none; opacity: .12;
   background:
-    radial-gradient(38% 22% at 30% 62%, rgba(255,235,220,.55), transparent 70%),
-    radial-gradient(30% 18% at 68% 48%, rgba(255,240,225,.4), transparent 70%);
+    radial-gradient(38% 22% at 30% 62%, rgba(255,235,220,.5), transparent 70%),
+    radial-gradient(30% 18% at 68% 48%, rgba(255,240,225,.36), transparent 70%);
   mix-blend-mode: screen;
-  animation: smoke-drift 19s ease-in-out infinite alternate;
-}
-@keyframes smoke-drift {
-  0%   { transform: translate(0, 0) scale(1); opacity: .1; }
-  50%  { transform: translate(3%, -4%) scale(1.14); opacity: .2; }
-  100% { transform: translate(-2%, -8%) scale(1.24); opacity: .08; }
 }
 
 /* THE BLOW — you see the damage. A flash, and speed lines on a real hit. */
@@ -601,10 +600,10 @@ body {
   position: absolute; inset: 0; z-index: 4; pointer-events: none;
   opacity: 0; mix-blend-mode: screen;
 }
-.hitflash.on { animation: hit-flash .42s ease-out; }
+.hitflash.on { animation: hit-flash .7s ease-out; }
 .hitflash.lands { background: radial-gradient(circle at 50% 38%, rgba(255,255,255,.85), rgba(255,120,120,.25) 40%, transparent 70%); }
 .hitflash.backfires { background: radial-gradient(circle at 50% 38%, rgba(226,59,66,.7), transparent 65%); }
-@keyframes hit-flash { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes hit-flash { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
 
 .speedlines {
   position: absolute; inset: -20%; z-index: 4; pointer-events: none; opacity: 0;
@@ -613,10 +612,10 @@ body {
   -webkit-mask-image: radial-gradient(circle at 50% 40%, transparent 26%, #000 62%);
   mask-image: radial-gradient(circle at 50% 40%, transparent 26%, #000 62%);
 }
-.speedlines.on { animation: speed-burst .46s ease-out; }
+.speedlines.on { animation: speed-burst .85s ease-out; }
 @keyframes speed-burst {
   0%   { opacity: 0; transform: scale(1.3); }
-  18%  { opacity: .55; transform: scale(1); }
+  14%  { opacity: .55; transform: scale(1); }
   100% { opacity: 0; transform: scale(.9); }
 }
 
@@ -779,13 +778,13 @@ body {
 .verdict-punch.v-neutral { color: var(--faint); }
 .verdict-punch.v-backfires { color: var(--gold); }
 @media (prefers-reduced-motion: no-preference) {
-  .verdict-punch { animation: verdict-punch .8s ease-out forwards; }
+  .verdict-punch { animation: verdict-punch 2s ease-out forwards; }
 }
 @keyframes verdict-punch {
   0%   { transform: translate(-50%, -50%) scale(.6); opacity: 0; }
-  28%  { transform: translate(-50%, -50%) scale(2.2); opacity: 1; }
-  65%  { transform: translate(-50%, -50%) scale(2.2); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+  12%  { transform: translate(-50%, -50%) scale(2.2); opacity: 1; }
+  78%  { transform: translate(-50%, -50%) scale(2.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.3); opacity: 0; }
 }
 
 /* ---- the "cut to him" bottom bar — his reply typewriters here before it

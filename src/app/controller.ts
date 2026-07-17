@@ -7,7 +7,14 @@ import { renderRecord } from '../ui/record';
 import { renderAftermath } from '../ui/aftermath';
 
 const TEST = import.meta.env.MODE === 'test';
-const TIMING = { MODAL_CLOSE: 220, FLY_IN: 600, TYPE_MS: 34, SETTLE: 800, PUNCH: 1600, POST: 500 };
+// Unhurried on purpose. Each beat gets room: your line lands, he answers, the
+// scene reacts, the verdict holds. Nothing here should feel snatched away.
+//   FLY_IN — your line sits before he answers
+//   TYPE_MS— per character of his reply
+//   SETTLE — his fully-typed line holds before the scene reacts
+//   REACT  — the cinematic (shake / snap / flash) plays out before the verdict
+//   PUNCH  — the verdict holds big
+const TIMING = { MODAL_CLOSE: 220, FLY_IN: 700, TYPE_MS: 40, SETTLE: 950, REACT: 900, PUNCH: 2000, POST: 700 };
 
 // ---- the economy. Hard on purpose: only a correct read moves him, and every
 // wrong pull costs you. Nothing here is handed over — the player earns it. ----
@@ -115,13 +122,20 @@ export function startDuel(
     appendWalk();
   }
 
-  // The scene ACTS on a beat: the camera moves, he snaps to a reaction pose,
-  // and a real hit flashes + throws speed lines.
+  // The scene is STILL until something happens — then it acts, hard. Nothing
+  // here runs on a loop; every move below is caused by a beat landing.
   function cinematic(band: Band): void {
     if (TEST || !stage) return;
-    if (band === 'lands') { stage.shot('shake'); stage.impact(); stage.strike('lands'); }
-    else if (band === 'backfires') { stage.shot('pull'); stage.strike('backfires'); }
-    else stage.shot('push');
+    if (band === 'lands') {
+      // the blow: camera jolts, the bulb rocks, he snaps to his reaction
+      stage.shot('shake'); stage.impact(); stage.strike('lands');
+    } else if (band === 'backfires') {
+      // it goes wrong: the camera gives him the room back
+      stage.shot('pull'); stage.impact(); stage.strike('backfires');
+    } else {
+      // nothing got in — he just shifts, and the camera leans a little closer
+      stage.shot('push'); stage.shift();
+    }
   }
 
   const inert: DuelHandlers = { probe() {}, pickAngle() {}, openRecord() {}, closeModal() {} };
@@ -177,18 +191,21 @@ export function startDuel(
         renderBeat(prev, lastReaction ?? undefined, { text: him.text, typed, done, quoted: him.quoted ?? false });
         if (!done) return;
         setTimeout(() => {
+          // his line settles into the log, the reads update — and the SCENE
+          // reacts here: camera, his body, the flash. It gets its own moment.
           transcript = [...transcript, him];
           lastReaction = { band, fresh: false, spent };
           renderBeat(state, lastReaction);
+          cinematic(band);
           setTimeout(() => {
+            // only once you've seen him react does the verdict punch out
             lastReaction = { band, fresh: true, spent };
             renderBeat(state, lastReaction);
-            cinematic(band);   // the camera hits, he snaps, the frame flashes
             setTimeout(() => {
               lastReaction = { band, fresh: false, spent };
               setTimeout(finish, TIMING.POST);
             }, TIMING.PUNCH);
-          }, 300);
+          }, TIMING.REACT);   // let him finish reacting before the verdict lands
         }, TIMING.SETTLE);
       });
     }, TIMING.FLY_IN);

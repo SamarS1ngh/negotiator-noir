@@ -22,6 +22,8 @@ export interface Stage {
   setMood(m: MoodState): void;
   /** hard-cut to his reaction pose, then settle back */
   impact(): void;
+  /** a smaller beat: he shifts, but nothing got in */
+  shift(): void;
   /** camera move */
   shot(s: Shot): void;
   /** the white/red hit flash + speed lines */
@@ -96,27 +98,33 @@ export function mountFace(root: HTMLElement, opp: Opponent): Stage {
     current = mood; frame = want;
   }
 
-  // slow idle: cut between his two resting poses so he's never truly still
-  let idleTimer: ReturnType<typeof setInterval> | undefined;
-  function startIdle(): void {
-    if (idleTimer) clearInterval(idleTimer);
-    idleTimer = setInterval(() => {
-      if (frame === 'hit') return;                 // don't fight a reaction
-      if (!has(current, 'b')) return;
-      show(current, frame === 'a' ? 'b' : 'a');
-    }, 2600);
-  }
-
+  // NO IDLE CUTTING. He used to flip between poses on a timer to "breathe" —
+  // but two AI frames differ enough that it read as the character CHANGING for
+  // no reason. He now holds absolutely still and only moves when something
+  // actually happens to him: a blow lands, or his mood breaks to a new state.
   let settleTimer: ReturnType<typeof setTimeout> | undefined;
   let flashTimer: ReturnType<typeof setTimeout> | undefined;
   let shotTimer: ReturnType<typeof setTimeout> | undefined;
 
   const stage: Stage = {
-    setMood(m) { show(m, 'a'); },
+    // only cut when his STATE actually changed — a re-render with the same mood
+    // must not disturb him (and must never interrupt a reaction mid-hold)
+    setMood(m) {
+      if (m === current) return;
+      if (settleTimer) clearTimeout(settleTimer);
+      show(m, 'a');
+    },
     impact() {
       show(current, 'hit');
       if (settleTimer) clearTimeout(settleTimer);
-      settleTimer = setTimeout(() => show(current, 'a'), 520);
+      // hold the reaction long enough to actually see him react
+      settleTimer = setTimeout(() => show(current, 'a'), 1300);
+    },
+    shift() {
+      if (!has(current, 'b')) return;
+      show(current, 'b');
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => show(current, 'a'), 1100);
     },
     shot(s) {
       cam.classList.remove('cam-push', 'cam-pull', 'cam-shake');
@@ -134,17 +142,16 @@ export function mountFace(root: HTMLElement, opp: Opponent): Stage {
       void flash.offsetWidth; void speed.offsetWidth;
       flash.classList.add('on');
       if (kind === 'lands') speed.classList.add('on');
-      setTimeout(() => { flash.classList.remove('on'); speed.classList.remove('on'); }, 480);
+      setTimeout(() => { flash.classList.remove('on'); speed.classList.remove('on'); }, 900);
     },
     flashTell(text) {
       tellFlash.textContent = text;
       tellFlash.classList.add('on');
       if (flashTimer) clearTimeout(flashTimer);
-      flashTimer = setTimeout(() => tellFlash.classList.remove('on'), 2000);
+      flashTimer = setTimeout(() => tellFlash.classList.remove('on'), 2400);
     },
   };
 
   show('guarded', 'a');
-  startIdle();
   return stage;
 }
