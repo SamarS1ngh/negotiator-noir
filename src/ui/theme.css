@@ -216,6 +216,125 @@ body {
 .dossier-line { padding: 12px 16px; margin: 0 12px 10px; border-left: 2px solid var(--gold); background: rgba(200,162,58,.07); border-radius: 4px; font-size: clamp(12px, 3vw, 13.5px); line-height: 1.5; color: #ece7df; }
 .dossier-empty { padding: 16px; color: var(--dim); font-size: 13px; line-height: 1.5; }
 
+/* ================= HANDS-ON DUEL — his face IS the interface =================
+   No option list. You act on him with gestures inside a live window. Spec:
+   docs/superpowers/specs/2026-07-17-hands-on-duel-design.md */
+.hands {
+  --bg: #08090c; --bone: #eef0f4; --dim: #9096a4; --faint: #5a6070;
+  --crimson: #e23b42; --crimson-deep: #8f1f24; --crimson-soft: rgba(226,59,66,.16);
+  --steel: #6fd3e6; --steel-deep: #2b7180;
+  --gold: #e0b24a; --good: #63c088;
+  --pad: clamp(15px, 4.6vw, 22px);
+  position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden;
+  background: var(--bg); color: var(--bone);
+  font-family: 'Oswald', sans-serif; -webkit-font-smoothing: antialiased;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.hands::after { /* grain */
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 7;
+  opacity: .045; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+.hands .bg::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(120% 70% at 50% 34%, transparent 48%, rgba(8,9,12,.5)),
+    linear-gradient(180deg, rgba(8,9,12,.7), transparent 24%, transparent 58%, rgba(8,9,12,.95) 92%);
+}
+
+/* the gesture surface — his face. Sits above the art, below the HUD. */
+.hands .surface { position: absolute; inset: 0; z-index: 3; cursor: grab; }
+.hands.live .surface { cursor: crosshair; }
+
+/* the window: a thin bar across the top of the frame that drains while the
+   moment is live. No numbers — you feel it. */
+.window-ring {
+  position: absolute; left: 0; right: 0; top: 0; height: 3px; z-index: 6;
+  background: transparent; pointer-events: none;
+}
+.window-ring.draining::before {
+  content: ""; display: block; height: 100%; width: 100%;
+  background: linear-gradient(90deg, var(--steel), var(--gold), var(--crimson));
+  transform-origin: left center;
+  animation: window-drain var(--win, 3800ms) linear forwards;
+  box-shadow: 0 0 12px rgba(111,211,230,.5);
+}
+@keyframes window-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* the stare pressure bar — builds while you hold his eyes */
+.hold-bar {
+  position: absolute; left: 50%; bottom: 26%; transform: translateX(-50%);
+  width: min(58vw, 240px); height: 5px; border-radius: 3px; z-index: 6;
+  background: rgba(255,255,255,.08); opacity: 0; transition: opacity .12s;
+  pointer-events: none; overflow: hidden;
+}
+.hold-bar.on { opacity: 1; }
+.hold-bar i { display: block; height: 100%; width: 0%; background: var(--steel); transition: width .05s linear; }
+.hold-bar.peak i { background: var(--good); box-shadow: 0 0 14px rgba(99,192,136,.9); }
+.hold-bar.over i { background: var(--crimson); box-shadow: 0 0 14px rgba(226,59,66,.9); }
+.hold-bar.peak { box-shadow: 0 0 18px rgba(99,192,136,.5); }
+
+.hands-top {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+  padding: calc(10px + var(--safe-t)) var(--pad) 14px;
+  background: linear-gradient(180deg, rgba(8,9,12,.8), transparent);
+  pointer-events: none;
+}
+.hands-top .dossier-btn, .hands-top .cine-walk { pointer-events: auto; }
+
+/* his line + your read — low, out of the face's way */
+.hands-lower {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
+  padding: 0 var(--pad) calc(16px + var(--safe-b));
+  pointer-events: none;
+}
+.hands-say .who { font-size: 10px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--crimson); margin-bottom: 5px; }
+.hands-say .line { font-family: 'JetBrains Mono', monospace; font-size: clamp(15px, 4.3vw, 20px); line-height: 1.45; color: var(--bone); text-shadow: 0 2px 14px #000; }
+.hands-say .caret { display: inline-block; margin-left: 2px; color: var(--steel); animation: cursor-blink 1s step-end infinite; }
+.hands-read {
+  margin-top: 9px; font-size: clamp(11px, 2.9vw, 13px); line-height: 1.4;
+  color: #fff; font-weight: 300;
+  text-shadow: 0 0 7px var(--gold), 0 0 15px rgba(224,178,74,.5), 0 2px 6px #000;
+}
+.hands-read .eye { color: var(--gold); margin-right: 7px; }
+.hands-note {
+  margin-top: 7px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--steel); font-weight: 600;
+}
+
+/* your leverage card — peeks at the bottom edge; DRAG IT UP to slam it down */
+.lev-card-hand {
+  position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 62%);
+  z-index: 6; width: min(64vw, 260px);
+  padding: 12px 14px 22px; border-radius: 12px 12px 0 0;
+  border: 1px solid rgba(224,178,74,.5); border-bottom: 0;
+  background: linear-gradient(180deg, rgba(44,34,12,.96), rgba(24,18,7,.98));
+  box-shadow: 0 -8px 30px rgba(0,0,0,.6), 0 0 24px rgba(224,178,74,.16);
+  cursor: grab; touch-action: none;
+  transition: transform .18s ease;
+}
+.lev-card-hand:active { cursor: grabbing; transform: translate(-50%, 40%); }
+.lc-label { font-size: clamp(11px, 3vw, 13px); font-weight: 700; letter-spacing: .1em; color: #f6e2b0; text-transform: uppercase; }
+.lc-hint { margin-top: 3px; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: rgba(224,178,74,.6); }
+
+/* first-run gesture card — taught once, in a handful of words */
+.teach-veil { position: fixed; inset: 0; z-index: 11; background: rgba(4,6,8,.88); display: grid; place-items: center; padding: var(--pad); }
+.teach-card {
+  width: min(92%, 400px); padding: 24px 22px; border-radius: 16px;
+  border: 1px solid rgba(111,211,230,.35);
+  background: linear-gradient(180deg, rgba(12,20,24,.98), rgba(9,14,18,.99));
+}
+.tc-head { font-size: clamp(15px, 4.2vw, 18px); font-weight: 700; letter-spacing: .08em; color: var(--steel); margin-bottom: 18px; }
+.tc-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.tc-icon { flex: none; width: 26px; text-align: center; font-size: 15px; color: var(--gold); }
+.tc-text { font-size: clamp(12px, 3.2vw, 14px); color: #e6ecef; }
+.tc-foot { margin: 18px 0; font-size: clamp(11px, 3vw, 12.5px); color: var(--dim); line-height: 1.5; }
+.tc-go {
+  width: 100%; padding: 14px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--crimson); background: linear-gradient(180deg, rgba(34,12,14,.9), rgba(20,9,11,.95));
+  color: #fff; font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .14em;
+}
+
 /* ================= RECON BOARD (the prep phase) ================= */
 .recon {
   --pad: clamp(15px, 4.6vw, 22px);
