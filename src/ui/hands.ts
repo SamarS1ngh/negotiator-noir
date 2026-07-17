@@ -11,6 +11,15 @@ export type Act =
   | { kind: 'catch' }
   | { kind: 'slam' };
 
+// What you'd SAY for each register. Shown live as you aim the gesture — you
+// always know your own words before you commit (you're aiming, not picking).
+export interface Previews {
+  press: { label: string; line: string };
+  stare: { label: string; line: string };
+  ease: { label: string; line: string };
+  card?: { label: string; line: string };
+}
+
 export interface HandsView {
   objective: string;
   mood: MoodState;
@@ -24,8 +33,9 @@ export interface HandsView {
   live: boolean;            // is the window open (gestures armed)?
   windowMs: number;         // how long the window lasts (for the drain animation)
   flash?: string;           // his tell is flashing RIGHT NOW — tap it
-  hasCard: boolean;         // leverage in hand → the card peeks at the bottom
+  hasCard: boolean;         // leverage in hand → the card sits at the bottom
   cardLabel?: string;
+  previews: Previews;
   note?: string;            // short beat note ("that landed", "he blinked")
   reaction?: 'hit' | 'lean' | 'settle';
   dossier: string[];
@@ -45,7 +55,11 @@ export interface HandsHandlers {
 export const HOLD_PEAK_MIN = 850;
 export const HOLD_PEAK_MAX = 1500;
 const SWIPE_MIN = 40;      // px before a drag counts as a swipe
+const AIM_MIN = 14;        // px before we show you what you'd say
 const TAP_MAX_MS = 220;    // quick press with no travel = a tap
+const AIM_HOLD_MS = 260;   // holding still this long = you're aiming the stare
+
+export type Aim = 'press' | 'stare' | 'ease' | null;
 
 function el(tag: string, className?: string, text?: string): HTMLElement {
   const node = document.createElement(tag);
@@ -65,25 +79,42 @@ export function attachGestures(
   flashing: () => boolean,
   on: HandsHandlers,
   onHoldTick?: (ms: number) => void,
+  onAim?: (aim: Aim) => void,
+  onEngage?: (engaged: boolean) => void,
 ): () => void {
   let downX = 0, downY = 0, downT = 0, down = false, moved = false;
   let tick: ReturnType<typeof setInterval> | undefined;
+  let aim: Aim = null;
 
   const stopTick = (): void => { if (tick) { clearInterval(tick); tick = undefined; } };
+  const setAim = (a: Aim): void => { if (a !== aim) { aim = a; onAim?.(a); } };
 
   const onDown = (e: MouseEvent): void => {
     if (!isLive()) return;
     down = true; moved = false;
+    // your hand is on him — the clock is for hesitation, not for while you act
+    onEngage?.(true);
     downX = e.clientX; downY = e.clientY; downT = Date.now();
-    if (onHoldTick) {
-      stopTick();
-      tick = setInterval(() => { if (down && !moved) onHoldTick(Date.now() - downT); }, 40);
-    }
+    stopTick();
+    // while you're holding/aiming: fill the pressure bar, and once you've held
+    // still a beat, show that a stare is what you're lining up.
+    tick = setInterval(() => {
+      if (!down) return;
+      const held = Date.now() - downT;
+      if (!moved) {
+        onHoldTick?.(held);
+        if (held >= AIM_HOLD_MS) setAim('stare');
+      }
+    }, 40);
   };
 
   const onMove = (e: MouseEvent): void => {
     if (!down) return;
-    if (Math.abs(e.clientY - downY) > SWIPE_MIN || Math.abs(e.clientX - downX) > SWIPE_MIN) moved = true;
+    const dy = e.clientY - downY;
+    if (Math.abs(dy) > SWIPE_MIN || Math.abs(e.clientX - downX) > SWIPE_MIN) moved = true;
+    // aiming: as soon as you pull, you see the words you'd say
+    if (Math.abs(dy) >= AIM_MIN) { onHoldTick?.(0); setAim(dy < 0 ? 'press' : 'ease'); }
+    else if (moved) setAim(null);
   };
 
   const onUp = (e: MouseEvent): void => {
@@ -91,6 +122,8 @@ export function attachGestures(
     down = false;
     stopTick();
     onHoldTick?.(0);
+    setAim(null);
+    onEngage?.(false);
     if (!isLive()) return;
 
     const dy = e.clientY - downY;
@@ -111,7 +144,9 @@ export function attachGestures(
   surface.addEventListener('pointerdown', onDown as EventListener);
   surface.addEventListener('pointermove', onMove as EventListener);
   surface.addEventListener('pointerup', onUp as EventListener);
-  surface.addEventListener('pointercancel', (() => { down = false; stopTick(); }) as EventListener);
+  surface.addEventListener('pointercancel', (() => {
+    down = false; stopTick(); setAim(null); onHoldTick?.(0); onEngage?.(false);
+  }) as EventListener);
 
   return () => {
     stopTick();
@@ -139,11 +174,12 @@ function teachCard(on: HandsHandlers): HTMLElement {
   const card = el('div', 'teach-card');
   card.appendChild(el('div', 'tc-head', 'YOU DON’T PICK. YOU ACT.'));
   const rows: [string, string][] = [
-    ['↑', 'swipe up — press him'],
-    ['↓', 'swipe down — ease off'],
-    ['◉', 'hold his eyes — stare him down, let go at the peak'],
+    ['↑', 'pull UP on him — press him'],
+    ['↓', 'pull DOWN — ease off'],
+    ['◉', 'hold his eyes — let it sit, then say it at the peak'],
     ['⚡', 'his tell flashes — tap it'],
     ['▤', 'drag your card up — finish him'],
+    ['“', 'aim first — you SEE your words before you say them'],
   ];
   for (const [icon, text] of rows) {
     const row = el('div', 'tc-row');
@@ -190,7 +226,7 @@ export function renderHands(
   opp: Opponent,
   view: HandsView,
   on: HandsHandlers,
-): { surface: HTMLElement; setHold(ms: number): void } {
+): { surface: HTMLElement; setHold(ms: number): void; setAim(aim: Aim): void } {
   root.innerHTML = '';
   root.className = `hands${view.live ? ' live' : ''}`;
 
@@ -253,7 +289,17 @@ export function renderHands(
   top.appendChild(gauges);
   root.appendChild(top);
 
-  // his line + your read of him
+  // WHAT YOU'D SAY — appears the moment you start aiming a gesture. You always
+  // know your own words before you commit.
+  const preview = el('div', 'aim-preview');
+  const pvLabel = el('div', 'pv-label');
+  const pvLine = el('div', 'pv-line');
+  preview.append(pvLabel, pvLine);
+  root.appendChild(preview);
+
+  // his line + your read of him, then your card — one bottom stack so nothing
+  // ever lands off-screen (the card used to be pushed under the fold).
+  const bottom = el('div', 'hands-bottom');
   const lower = el('div', 'hands-lower');
   const say = el('div', 'hands-say');
   say.appendChild(el('div', 'who', opp.name));
@@ -273,17 +319,22 @@ export function renderHands(
     lower.appendChild(read);
   }
   if (view.note) lower.appendChild(el('div', 'hands-note', view.note));
-  root.appendChild(lower);
+  bottom.appendChild(lower);
 
-  // your card — drag it UP to slam it down on the table
+  // your card — sits fully on-screen at the bottom; drag it UP to slam it down
   if (view.hasCard) {
     const card = el('div', 'lev-card-hand');
     card.dataset.card = '';
-    card.appendChild(el('div', 'lc-label', view.cardLabel ?? 'YOUR CARD'));
+    const lcTop = el('div', 'lc-top');
+    lcTop.appendChild(el('span', 'lc-grip', '⌃'));
+    lcTop.appendChild(el('span', 'lc-label', view.cardLabel ?? 'YOUR CARD'));
+    card.appendChild(lcTop);
     card.appendChild(el('div', 'lc-hint', 'drag up to play it'));
     attachCardDrag(card, () => view.live, on);
-    root.appendChild(card);
+    bottom.appendChild(card);
   }
+
+  root.appendChild(bottom);
 
   if (view.dossierOpen) root.appendChild(dossierPanel(view.dossier, on));
   if (view.teachOpen) root.appendChild(teachCard(on));
@@ -298,19 +349,42 @@ export function renderHands(
       hold.classList.toggle('peak', ms >= HOLD_PEAK_MIN && ms <= HOLD_PEAK_MAX);
       hold.classList.toggle('over', ms > HOLD_PEAK_MAX);
     },
+    setAim(aim: Aim) {
+      if (!aim) { preview.classList.remove('on'); return; }
+      const p = view.previews[aim];
+      pvLabel.textContent = p.label;
+      pvLine.textContent = `“${p.line}”`;
+      preview.classList.add('on');
+      preview.dataset.aim = aim;
+    },
   };
 }
 
-// the leverage card: drag it up onto the table (a physical act, not a button)
+// the leverage card: drag it up onto the table (a physical act, not a button).
+// It lifts with your finger so the drag reads as real.
 function attachCardDrag(card: HTMLElement, isLive: () => boolean, on: HandsHandlers): void {
   let y0 = 0, down = false;
-  card.addEventListener('pointerdown', ((e: MouseEvent) => { down = true; y0 = e.clientY; }) as EventListener);
+  const reset = (): void => { card.style.transform = ''; card.classList.remove('lifting'); };
+  card.addEventListener('pointerdown', ((e: MouseEvent) => {
+    down = true; y0 = e.clientY;
+    card.classList.add('lifting');
+    e.stopPropagation();
+  }) as EventListener);
+  card.addEventListener('pointermove', ((e: MouseEvent) => {
+    if (!down) return;
+    const dy = Math.min(0, e.clientY - y0);
+    card.style.transform = `translateY(${dy}px)`;
+    e.stopPropagation();
+  }) as EventListener);
   card.addEventListener('pointerup', ((e: MouseEvent) => {
     if (!down) return;
     down = false;
+    reset();
+    e.stopPropagation();
     if (!isLive()) return;
     if (y0 - e.clientY > SWIPE_MIN) on.act({ kind: 'slam' });
   }) as EventListener);
+  card.addEventListener('pointercancel', (() => { down = false; reset(); }) as EventListener);
 }
 
 function yourWord(pct: number): string {

@@ -122,6 +122,37 @@ describe('hands-on duel (integration)', () => {
     expect(q('.hands-note')?.textContent).toMatch(/nothing/i);
   });
 
+  it('aiming SHOWS you the words before you say them', () => {
+    startDuel(root, COLLECTOR, COLLECTOR_SCRIPT, FULL_INTEL());
+    const s = q('[data-surface]')!;
+    expect(q('.aim-preview')?.classList.contains('on')).toBe(false);
+
+    // start pulling up — the line you'd say appears, and you haven't committed
+    ptr(s, 'pointerdown', 200, 400);
+    ptr(s, 'pointermove', 200, 370);
+    const pv = q('.aim-preview')!;
+    expect(pv.classList.contains('on')).toBe(true);
+    expect(pv.dataset.aim).toBe('press');
+    expect(q('.pv-line')?.textContent).toContain("You're a long way from your boss's office");
+    expect(pct('.gauge.his .gauge-bar i')).toBe(100);   // nothing said yet
+
+    // pulling the other way previews the other line
+    ptr(s, 'pointermove', 200, 440);
+    expect(q('.aim-preview')?.dataset.aim).toBe('ease');
+    expect(q('.pv-line')?.textContent).toContain('Walk with half now');
+    ptr(s, 'pointerup', 200, 440);
+  });
+
+  it('your card sits fully on screen, inside the bottom stack (not under the fold)', () => {
+    startDuel(root, COLLECTOR, COLLECTOR_SCRIPT, FULL_INTEL());
+    const card = q('[data-card]')!;
+    expect(card).not.toBeNull();
+    // it lives in the flow of the bottom stack — nothing can push it off-screen
+    expect(card.closest('.hands-bottom')).not.toBeNull();
+    expect(card.className).not.toMatch(/absolute/);
+    expect(card.textContent).toMatch(/drag up/i);
+  });
+
   it('your card is a card you drag, not a button — and cold it backfires', () => {
     startDuel(root, COLLECTOR, COLLECTOR_SCRIPT, FULL_INTEL());
     expect(q('[data-card]')).not.toBeNull();

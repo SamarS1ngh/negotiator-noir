@@ -282,12 +282,16 @@ body {
 }
 .hands-top .dossier-btn, .hands-top .cine-walk { pointer-events: auto; }
 
-/* his line + your read — low, out of the face's way */
-.hands-lower {
+/* the bottom stack: his line + your read, then your card — a real flow so the
+   card can NEVER end up under the fold (it used to be translated off-screen). */
+.hands-bottom {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
-  padding: 0 var(--pad) calc(16px + var(--safe-b));
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 0 var(--pad) calc(12px + var(--safe-b));
+  max-height: 62dvh;
   pointer-events: none;
 }
+.hands-lower { pointer-events: none; }
 .hands-say .who { font-size: 10px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--crimson); margin-bottom: 5px; }
 .hands-say .line { font-family: 'JetBrains Mono', monospace; font-size: clamp(15px, 4.3vw, 20px); line-height: 1.45; color: var(--bone); text-shadow: 0 2px 14px #000; }
 .hands-say .caret { display: inline-block; margin-left: 2px; color: var(--steel); animation: cursor-blink 1s step-end infinite; }
@@ -302,20 +306,46 @@ body {
   color: var(--steel); font-weight: 600;
 }
 
-/* your leverage card — peeks at the bottom edge; DRAG IT UP to slam it down */
+/* your leverage card — sits FULLY on screen in the bottom stack. Drag it up to
+   slam it down; it lifts with your finger. */
 .lev-card-hand {
-  position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 62%);
-  z-index: 6; width: min(64vw, 260px);
-  padding: 12px 14px 22px; border-radius: 12px 12px 0 0;
-  border: 1px solid rgba(224,178,74,.5); border-bottom: 0;
+  pointer-events: auto;
+  width: 100%;
+  padding: 11px 14px 12px; border-radius: 12px;
+  border: 1px solid rgba(224,178,74,.5);
   background: linear-gradient(180deg, rgba(44,34,12,.96), rgba(24,18,7,.98));
-  box-shadow: 0 -8px 30px rgba(0,0,0,.6), 0 0 24px rgba(224,178,74,.16);
+  box-shadow: 0 -6px 24px rgba(0,0,0,.5), 0 0 22px rgba(224,178,74,.14);
   cursor: grab; touch-action: none;
-  transition: transform .18s ease;
+  will-change: transform;
 }
-.lev-card-hand:active { cursor: grabbing; transform: translate(-50%, 40%); }
+.lev-card-hand.lifting { cursor: grabbing; box-shadow: 0 12px 40px rgba(0,0,0,.7), 0 0 34px rgba(224,178,74,.4); }
+.lc-top { display: flex; align-items: center; gap: 8px; }
+.lc-grip { color: var(--gold); font-size: 13px; line-height: 1; }
 .lc-label { font-size: clamp(11px, 3vw, 13px); font-weight: 700; letter-spacing: .1em; color: #f6e2b0; text-transform: uppercase; }
 .lc-hint { margin-top: 3px; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: rgba(224,178,74,.6); }
+@media (prefers-reduced-motion: no-preference) {
+  .lev-card-hand:not(.lifting) { animation: card-breathe 2.6s ease-in-out infinite; }
+}
+@keyframes card-breathe { 0%,100% { box-shadow: 0 -6px 24px rgba(0,0,0,.5), 0 0 16px rgba(224,178,74,.1); } 50% { box-shadow: 0 -6px 24px rgba(0,0,0,.5), 0 0 26px rgba(224,178,74,.26); } }
+
+/* WHAT YOU'D SAY — appears as you aim a gesture, before you commit */
+.aim-preview {
+  position: absolute; left: var(--pad); right: var(--pad); top: 50%;
+  transform: translateY(-50%) scale(.97);
+  z-index: 6; pointer-events: none;
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px solid rgba(111,211,230,.45);
+  background: linear-gradient(180deg, rgba(10,20,24,.95), rgba(7,13,17,.97));
+  box-shadow: 0 14px 44px rgba(0,0,0,.7);
+  opacity: 0; transition: opacity .1s, transform .1s;
+}
+.aim-preview.on { opacity: 1; transform: translateY(-50%) scale(1); }
+.aim-preview[data-aim="ease"] { border-color: rgba(226,59,66,.5); }
+.aim-preview[data-aim="stare"] { border-color: rgba(224,178,74,.5); }
+.pv-label { font-size: 9.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--steel); margin-bottom: 7px; }
+.aim-preview[data-aim="ease"] .pv-label { color: var(--crimson); }
+.aim-preview[data-aim="stare"] .pv-label { color: var(--gold); }
+.pv-line { font-family: 'JetBrains Mono', monospace; font-size: clamp(14px, 3.8vw, 16px); line-height: 1.45; color: #eef3f6; }
 
 /* first-run gesture card — taught once, in a handful of words */
 .teach-veil { position: fixed; inset: 0; z-index: 11; background: rgba(4,6,8,.88); display: grid; place-items: center; padding: var(--pad); }

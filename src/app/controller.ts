@@ -4,7 +4,7 @@ import { endStateFor } from '../domain/outcome';
 import { bandForRegister, REGISTER_ANGLE } from '../domain/registers';
 import type { Register } from '../domain/registers';
 import { renderHands, attachGestures, HOLD_PEAK_MIN, HOLD_PEAK_MAX } from '../ui/hands';
-import type { Act, HandsHandlers } from '../ui/hands';
+import type { Act, HandsHandlers, Previews } from '../ui/hands';
 import { renderAftermath } from '../ui/aftermath';
 
 const TEST = import.meta.env.MODE === 'test';
@@ -88,8 +88,9 @@ export function startDuel(
   let windowTimer: ReturnType<typeof setTimeout> | undefined;
   let flashTimer: ReturnType<typeof setTimeout> | undefined;
   let acted = false;                   // one act per window
+  let engaged = false;                 // your hand is on him right now
   const usedPerAngle = new Map<AngleId, number>();
-  let hud: { surface: HTMLElement; setHold(ms: number): void } | undefined;
+  let hud: ReturnType<typeof renderHands> | undefined;
   let detach: (() => void) | undefined;
 
   const handlers: HandsHandlers = {
@@ -136,6 +137,26 @@ export function startDuel(
 
   function heldCard() { return state.record.heldLeverage[0]; }
 
+  // The line a register would speak right now — same selection the act uses, so
+  // the preview never lies about what you're about to say.
+  function lineFor(reg: Register): string {
+    const angle = REGISTER_ANGLE[reg] as AngleId;
+    const lines = script.lines.filter((l) => l.angleId === angle);
+    if (lines.length === 0) return '…';
+    const used = usedPerAngle.get(angle) ?? 0;
+    return lines[used % lines.length]!.text;
+  }
+
+  function previews(): Previews {
+    const card = heldCard();
+    return {
+      press: { label: 'PRESS HIM', line: lineFor('press') },
+      stare: { label: 'LET IT SIT, THEN SAY IT', line: lineFor('stare') },
+      ease: { label: 'EASE OFF', line: lineFor('ease') },
+      card: card ? { label: 'PLAY YOUR CARD', line: card.text } : undefined,
+    };
+  }
+
   function draw(typedLen?: number): void {
     hud = renderHands(root, opp, {
       objective: opp.objective?.goal ?? 'BREAK HIM',
@@ -152,6 +173,7 @@ export function startDuel(
       flash: flashLive ? opp.tell?.text : undefined,
       hasCard: Boolean(heldCard()),
       cardLabel: heldCard()?.label.toUpperCase(),
+      previews: previews(),
       note,
       reaction,
       dossier,
@@ -167,6 +189,8 @@ export function startDuel(
       () => flashLive,
       handlers,
       (ms) => hud?.setHold(ms),
+      (aim) => hud?.setAim(aim),
+      (e) => { engaged = e; },
     );
   }
 
@@ -176,8 +200,17 @@ export function startDuel(
     acted = false;
     draw();
     if (TEST) return;
+    armExpiry();
+  }
+
+  // The moment runs out only if you HESITATE. If your hand is on him (aiming,
+  // holding his gaze) or a panel is up, it waits — the clock punishes dithering,
+  // it never yanks the beat out from under a gesture you're mid-way through.
+  function armExpiry(): void {
+    if (windowTimer) clearTimeout(windowTimer);
     windowTimer = setTimeout(() => {
-      if (acted || dossierOpen || teachOpen) return; // never expire behind a panel
+      if (acted) return;
+      if (engaged || dossierOpen || teachOpen) { armExpiry(); return; }
       live = false;
       flashLive = false;
       resettle(MISS_HIS, 0);
