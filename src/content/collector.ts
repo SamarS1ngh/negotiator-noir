@@ -52,31 +52,33 @@ export const COLLECTOR: Opponent = {
   // finisher — brutal. Skip the crew and you won't know he's proud. ----
   recon: {
     digs: 3,
+    // Leads give you RAW OBSERVATIONS — never conclusions. Nobody tells you
+    // what kind of man he is; you work it out from what people saw him do.
     leads: [
       {
         id: 'crew', label: 'HIS CREW', blurb: 'Buy the dock loaders a round.',
         grants: 'type',
-        dossier: 'PROUD — ego runs him. Flatter, plant doubt. Never offer him a way out.',
+        dossier: '"Kid called him a nobody once. Sal put him through a window, then paid his hospital bill so people\'d know he could. He tells the story himself."',
       },
       {
-        id: 'tail', label: 'TAIL HIM', blurb: 'Three nights. See who he fears.',
+        id: 'tail', label: 'TAIL HIM', blurb: 'Three nights. See where he goes.',
         grants: 'tell',
-        dossier: 'TELL — hand to his watch = he\'s lying.',
+        dossier: 'Thursday he told his crew the shipment was clean. While he said it his hand went to his watch. Friday, same story, same hand. Both times he was lying.',
       },
       {
         id: 'bookkeeper', label: 'THE BOOKKEEPER', blurb: 'Nervous. Holds a grudge.',
         grants: 'lev:skims',
-        dossier: 'CARD — he skims his boss. That\'s his fear.',
+        dossier: '"There\'s two sets of books. The one Marlowe reads, and the real one. Sal keeps the difference." — he wouldn\'t say it twice, and he wouldn\'t sign anything.',
       },
       {
         id: 'records', label: 'SHIPPING RECORDS', blurb: 'A long night in the archive.',
         grants: 'lev:ledger',
-        dossier: 'CARD — the second ledger. Hard proof.',
+        dossier: 'Forty crates in. Thirty-three reported. Every month, same gap, his signature at the bottom of each page. You have copies.',
       },
       {
         id: 'file', label: 'HIS FILE', blurb: 'What the union has on him.',
         grants: 'lie',
-        dossier: 'LIE — the debt is fake. "Non-negotiable" is a bluff.',
+        dossier: 'No debt is registered against your father\'s name. No paper, no filing, nothing. Whatever Ricci is collecting, it exists only in his mouth.',
       },
     ],
   },

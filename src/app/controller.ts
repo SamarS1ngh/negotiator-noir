@@ -1,29 +1,23 @@
-import type { AngleId, Band, DuelState, EndState, IntelId, MoodState, Opponent, Script } from '../domain/types';
+import type { AngleId, Band, DuelState, EndState, IntelId, MoodState, Opponent, OpponentType, Script } from '../domain/types';
 import { initDuel, apply, moodFor } from '../domain/engine';
 import { endStateFor } from '../domain/outcome';
-import { bandForRegister, REGISTER_ANGLE } from '../domain/registers';
-import type { Register } from '../domain/registers';
-import { renderHands, attachGestures, HOLD_PEAK_MIN, HOLD_PEAK_MAX } from '../ui/hands';
-import type { Act, HandsHandlers, Previews } from '../ui/hands';
+import { renderDuel } from '../ui/duel';
+import type { ConvoTurn, DuelHandlers, DuelReaction } from '../ui/duel';
+import { renderRecord } from '../ui/record';
 import { renderAftermath } from '../ui/aftermath';
 
 const TEST = import.meta.env.MODE === 'test';
-const TIMING = { TYPE_MS: 30, WINDOW_MS: 3800, FLASH_MS: 1400, BEAT_PAUSE: 700 };
+const TIMING = { MODAL_CLOSE: 220, FLY_IN: 600, TYPE_MS: 34, SETTLE: 800, PUNCH: 1600, POST: 500 };
 
-// ---- the economy (carried from v0.5.1) ----
+// ---- the economy. Hard on purpose: only a correct read moves him, and every
+// wrong pull costs you. Nothing here is handed over — the player earns it. ----
 const LAND_HIT = 20;
 const NEUTRAL_HIS = 4;
 const NEUTRAL_YOU = 6;
 const BACKFIRE_HIS = 8;
 const BACKFIRE_YOU = 20;
 const CATCH_HIT = 28;
-// Letting a moment pass costs you the beat: he re-composes and his patience
-// burns. It does NOT bleed your nerve — otherwise idling (reading the dossier,
-// looking away, putting the phone down) death-spirals you, which is nonsense.
-// His patience is already the clock: sit there long enough and he walks out.
-const MISS_HIS = 4;
-const BLINK_YOU = 14;       // you held the stare too long and looked away first
-const WEAK_STARE_YOU = 6;   // flinched off the stare early
+const CATCH_WRONG_YOU = 18;   // called him a liar with nothing → you look desperate
 const LEVERAGE_FINISH = 50;
 const LEVERAGE_READY = 45;
 const COLD_DEPLOY_HIS = 4;
@@ -31,40 +25,32 @@ const COLD_DEPLOY_YOU = 16;
 const PATIENCE_START = 7;
 const PATIENCE_MISFIRE = 2;
 
-const NOTE: Record<Band, string> = {
-  lands: 'that got in',
-  neutral: 'nothing',
-  backfires: 'wrong read',
-};
-
 const TELL_MOODS: MoodState[] = ['rattled', 'cornered', 'folding'];
-
-function nerveWord(c: number): string {
-  if (c > 75) return 'steady';
-  if (c > 50) return 'shaken';
-  if (c > 30) return 'rattled';
-  if (c > 0) return 'cornered';
-  return 'breaking';
-}
 
 function clamp(n: number, lo: number, hi: number): number { return Math.min(hi, Math.max(lo, n)); }
 
 /**
- * The HANDS-ON duel. No option list: his face is the interface and you act on
- * him with gestures inside a live window — swipe up to press, hold his eyes to
- * stare him down (release at the peak), swipe down to ease off, tap his tell
- * the instant it flashes, drag your card up to finish him.
+ * The duel — the wheel, the cyan word modal, the floating reads (his face, what
+ * you notice, his tell), the record. What's different from the old build is
+ * what the game REFUSES to do for you:
  *
- * The read MOVES: recon gives you his nature (the rule), his face gives you his
- * state, and which register lands changes as he cracks (see domain/registers).
- * Miss the window and he takes it. Break his nerve to win; lose yours or his
- * patience and it's over. Spec: docs/superpowers/specs/2026-07-17-hands-on-duel-design.md
+ *  - it never tells you what kind of man he is (you called that yourself in
+ *    the read gate — and the risk dots here are computed from YOUR call, so a
+ *    wrong read means your own instruments lie to you all night),
+ *  - it never interprets him (the reads are what you SEE, not what it means),
+ *  - it never lights up "catch him" (you have to notice the contradiction in
+ *    his own words and decide to call it — and calling wrong costs you),
+ *  - leverage only finishes a man already breaking, and only if you dug it up.
+ *
+ * Break his nerve to 0 to win. Your nerve hits 0 → he turns it on you. His
+ * patience hits 0 → he walks. Spec: docs/superpowers/specs/2026-07-17-*.
  */
 export function startDuel(
   root: HTMLElement,
   opp: Opponent,
   script: Script,
   intel: Set<IntelId>,
+  believedType: OpponentType,
   onDone?: () => void,
 ): void {
   let state: DuelState = initDuel(opp, script);
@@ -75,39 +61,14 @@ export function startDuel(
       heldLeverage: script.leverage.filter((l) => intel.has(`lev:${l.id}` as IntelId)),
     },
   };
-  const dossier: string[] = (opp.recon?.leads ?? []).filter((l) => intel.has(l.grants)).map((l) => l.dossier);
 
   let patience = PATIENCE_START;
-  let hisLine = opp.opener ?? 'Well? You wanted this meeting.';
-  let note: string | undefined;
-  let live = false;
-  let flashLive = false;
-  let dossierOpen = false;
-  let teachOpen = !TEST;              // the gesture card, once
-  let reaction: 'hit' | 'lean' | 'settle' | undefined;
-  let windowTimer: ReturnType<typeof setTimeout> | undefined;
-  let flashTimer: ReturnType<typeof setTimeout> | undefined;
-  let acted = false;                   // one act per window
-  let engaged = false;                 // your hand is on him right now
-  const usedPerAngle = new Map<AngleId, number>();
-  let hud: ReturnType<typeof renderHands> | undefined;
-  let detach: (() => void) | undefined;
+  let selectedAngle: AngleId | null = null;
+  let transcript: ConvoTurn[] = [];
+  let lastReaction: DuelReaction | null = null;
+  let stage: ReturnType<typeof renderDuel> | undefined;
 
-  const handlers: HandsHandlers = {
-    act, walk,
-    // Checking what you know is free — the moment pauses while the panel is up,
-    // and the window restarts clean when you close it.
-    openDossier: () => {
-      dossierOpen = true;
-      if (windowTimer) clearTimeout(windowTimer);
-      draw();
-    },
-    closeDossier: () => {
-      dossierOpen = false;
-      if (live && !acted) openWindow(); else draw();
-    },
-    closeTeach: () => { teachOpen = false; openWindow(); },
-  };
+  const handlers: DuelHandlers = { probe, pickAngle, openRecord, closeModal };
 
   function resettle(hisDelta: number, yourDelta: number): void {
     const his = clamp(state.hisComposure + hisDelta, 0, 100);
@@ -122,6 +83,8 @@ export function startDuel(
     if (patience <= 0 && state.end === 'ongoing') state = { ...state, end: 'walked' };
   }
 
+  // engine for bookkeeping (statements, contradictions, spent angles, leverage);
+  // the controller keeps its own nerve numbers.
   function bookkeep(action: Parameters<typeof apply>[1]): ReturnType<typeof apply>['events'] {
     const prevHis = state.hisComposure;
     const prevYour = state.yourComposure;
@@ -130,235 +93,189 @@ export function startDuel(
     return r.events;
   }
 
-  function observedFace(): string | undefined {
-    if (opp.tell && TELL_MOODS.includes(state.mood)) return opp.tell.text;
-    return opp.expressions?.[state.mood];
-  }
-
-  function heldCard() { return state.record.heldLeverage[0]; }
-
-  // The line a register would speak right now — same selection the act uses, so
-  // the preview never lies about what you're about to say.
-  function lineFor(reg: Register): string {
-    const angle = REGISTER_ANGLE[reg] as AngleId;
-    const lines = script.lines.filter((l) => l.angleId === angle);
-    if (lines.length === 0) return '…';
-    const used = usedPerAngle.get(angle) ?? 0;
-    return lines[used % lines.length]!.text;
-  }
-
-  function previews(): Previews {
-    const card = heldCard();
+  function view(extra: Partial<Parameters<typeof renderDuel>[5]> = {}) {
     return {
-      press: { label: 'PRESS HIM', line: lineFor('press') },
-      stare: { label: 'LET IT SIT, THEN SAY IT', line: lineFor('stare') },
-      ease: { label: 'EASE OFF', line: lineFor('ease') },
-      card: card ? { label: 'PLAY YOUR CARD', line: card.text } : undefined,
-    };
-  }
-
-  function draw(typedLen?: number): void {
-    hud = renderHands(root, opp, {
-      objective: opp.objective?.goal ?? 'BREAK HIM',
-      mood: state.mood,
-      hisNerveWord: nerveWord(state.hisComposure),
-      hisNervePct: state.hisComposure,
+      selectedAngle,
+      transcript,
+      reaction: lastReaction ?? undefined,
+      believedType,
       yourNervePct: state.yourComposure,
       patiencePct: clamp((patience / PATIENCE_START) * 100, 0, 100),
-      hisLine,
-      typedLen,
-      face: observedFace(),
-      live,
-      windowMs: TIMING.WINDOW_MS,
-      flash: flashLive ? opp.tell?.text : undefined,
-      hasCard: Boolean(heldCard()),
-      cardLabel: heldCard()?.label.toUpperCase(),
-      previews: previews(),
-      note,
-      reaction,
-      dossier,
-      dossierOpen,
-      teachOpen,
-    }, handlers);
-    reaction = undefined;
-
-    detach?.();
-    detach = attachGestures(
-      hud.surface,
-      () => live && !acted && !dossierOpen && !teachOpen,
-      () => flashLive,
-      handlers,
-      (ms) => hud?.setHold(ms),
-      (aim) => hud?.setAim(aim),
-      (e) => { engaged = e; },
-    );
-  }
-
-  function openWindow(): void {
-    if (state.end !== 'ongoing') { showAftermath(); return; }
-    live = true;
-    acted = false;
-    draw();
-    if (TEST) return;
-    armExpiry();
-  }
-
-  // The moment runs out only if you HESITATE. If your hand is on him (aiming,
-  // holding his gaze) or a panel is up, it waits — the clock punishes dithering,
-  // it never yanks the beat out from under a gesture you're mid-way through.
-  function armExpiry(): void {
-    if (windowTimer) clearTimeout(windowTimer);
-    windowTimer = setTimeout(() => {
-      if (acted) return;
-      if (engaged || dossierOpen || teachOpen) { armExpiry(); return; }
-      live = false;
-      flashLive = false;
-      resettle(MISS_HIS, 0);
-      spendPatience(1);
-      say('The silence goes nowhere. He settles back.', 'lean', 'moment gone');
-    }, TIMING.WINDOW_MS);
-  }
-
-  function closeWindow(): void {
-    live = false;
-    acted = true;
-    if (windowTimer) clearTimeout(windowTimer);
-    if (flashTimer) clearTimeout(flashTimer);
-    hud?.setHold(0);
-  }
-
-  // his reply lands, then the next moment goes live
-  function say(line: string, react?: 'hit' | 'lean' | 'settle', beatNote?: string): void {
-    hisLine = line;
-    note = beatNote;
-    reaction = react;
-    if (state.end !== 'ongoing') { draw(); showAftermath(); return; }
-    if (TEST) { openWindow(); return; }
-    typeThen(line, () => setTimeout(openWindow, TIMING.BEAT_PAUSE));
-  }
-
-  function typeThen(text: string, done: () => void): void {
-    let i = 0;
-    const step = (): void => {
-      i += 1;
-      draw(i);
-      if (i >= text.length) { done(); return; }
-      setTimeout(step, TIMING.TYPE_MS);
+      ...extra,
     };
-    draw(0);
-    setTimeout(step, TIMING.TYPE_MS);
   }
 
-  function showAftermath(): void {
-    detach?.();
-    renderAftermath(root, state, opp, { continue: () => onDone?.() });
+  function showDuel(): void {
+    stage = renderDuel(root, state, opp, script, handlers, view());
+    appendWalk();
   }
 
-  // ---- acts ----
-
-  function act(a: Act): void {
-    if (!live || acted) return;
-    if (a.kind === 'catch') { doCatch(); return; }
-    if (a.kind === 'slam') { doSlam(); return; }
-    if (a.kind === 'stare') { doStare(a.holdMs); return; }
-    doRegister(a.kind === 'press' ? 'press' : 'ease');
+  function renderBeat(s: DuelState, reaction?: DuelReaction, cutToHim?: Parameters<typeof renderDuel>[5]['cutToHim']): void {
+    stage = renderDuel(root, s, opp, script, inert, view({ selectedAngle: null, reaction, cutToHim }));
+    appendWalk();
   }
 
-  // press / ease / (a well-timed stare) — the read is which fits his state NOW
-  function doRegister(reg: Register): void {
-    closeWindow();
-    const band = bandForRegister(opp.type, state.mood, reg);
-    const angle = REGISTER_ANGLE[reg] as AngleId;
-    const lines = script.lines.filter((l) => l.angleId === angle);
-    const used = usedPerAngle.get(angle) ?? 0;
-    const line = lines[used % Math.max(1, lines.length)];
-    usedPerAngle.set(angle, used + 1);
+  // The scene ACTS on a beat: the camera moves, he snaps to a reaction pose,
+  // and a real hit flashes + throws speed lines.
+  function cinematic(band: Band): void {
+    if (TEST || !stage) return;
+    if (band === 'lands') { stage.shot('shake'); stage.impact(); stage.strike('lands'); }
+    else if (band === 'backfires') { stage.shot('pull'); stage.strike('backfires'); }
+    else stage.shot('push');
+  }
 
-    let said: string | undefined;
-    let tellFired = false;
-    if (line) {
-      const events = bookkeep({ kind: 'probe', lineId: line.id });
-      said = events.find((e) => e.type === 'said')?.text;
-      tellFired = events.some((e) => e.type === 'tell');
-    }
+  const inert: DuelHandlers = { probe() {}, pickAngle() {}, openRecord() {}, closeModal() {} };
+
+  function appendWalk(): void {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'walk-btn';
+    btn.dataset.walk = '';
+    btn.textContent = 'WALK AWAY';
+    btn.addEventListener('click', walk);
+    root.appendChild(btn);
+  }
+
+  function showAftermath(): void { renderAftermath(root, state, opp, { continue: () => onDone?.() }); }
+
+  function pickAngle(a: AngleId): void { selectedAngle = a; showDuel(); }
+  function closeModal(): void { selectedAngle = null; showDuel(); }
+
+  function probe(lineId: string): void {
+    const line = script.lines.find((l) => l.id === lineId);
+    if (!line) return;
+    selectedAngle = null;
+
+    const prev = state;
+    const events = bookkeep({ kind: 'probe', lineId });
+    const said = events.find((e) => e.type === 'said')?.text;
+    const band = (events.find((e) => e.type === 'band')?.text ?? 'neutral') as Band;
+    const quoted = Boolean(said);
 
     if (band === 'lands') { resettle(-LAND_HIT, 0); spendPatience(1); }
     else if (band === 'neutral') { resettle(NEUTRAL_HIS, -NEUTRAL_YOU); spendPatience(1); }
     else { resettle(BACKFIRE_HIS, -BACKFIRE_YOU); spendPatience(PATIENCE_MISFIRE); }
 
-    // his tell slips as he cracks — it flashes on the NEXT moment; tap it
-    if (tellFired || (band === 'lands' && TELL_MOODS.includes(state.mood))) armFlash();
-
-    const react = band === 'lands' ? 'hit' : band === 'backfires' ? 'settle' : undefined;
-    say(said ?? fallbackLine(band), react, NOTE[band]);
+    const reply = said ?? GENERIC[band];
+    play({ who: 'you', text: line.text }, { who: 'him', text: reply, quoted }, band, prev);
   }
 
-  function doStare(holdMs: number): void {
-    if (holdMs < HOLD_PEAK_MIN) {
-      closeWindow();
-      resettle(NEUTRAL_HIS, -WEAK_STARE_YOU);
-      spendPatience(1);
-      say('You look away first. He almost smiles.', 'lean', 'you flinched');
+  // the animated reveal: your line flies in, cut to him, his reply types out,
+  // reads update, the verdict punches then docks.
+  function play(you: ConvoTurn, him: ConvoTurn, band: Band, prev: DuelState): void {
+    const spent = false;
+    if (TEST) {
+      transcript = [...transcript, you, him];
+      lastReaction = { band, fresh: false, spent };
+      finish();
       return;
     }
-    if (holdMs > HOLD_PEAK_MAX + 400) {
-      closeWindow();
-      resettle(BACKFIRE_HIS, -BLINK_YOU);
-      spendPatience(1);
-      say('You hold it too long. It turns awkward, and he knows it.', 'lean', 'you overheld');
+    transcript = [...transcript, you];
+    renderBeat(prev, lastReaction ?? undefined);
+    setTimeout(() => {
+      typewriter(him.text, (typed, done) => {
+        renderBeat(prev, lastReaction ?? undefined, { text: him.text, typed, done, quoted: him.quoted ?? false });
+        if (!done) return;
+        setTimeout(() => {
+          transcript = [...transcript, him];
+          lastReaction = { band, fresh: false, spent };
+          renderBeat(state, lastReaction);
+          setTimeout(() => {
+            lastReaction = { band, fresh: true, spent };
+            renderBeat(state, lastReaction);
+            cinematic(band);   // the camera hits, he snaps, the frame flashes
+            setTimeout(() => {
+              lastReaction = { band, fresh: false, spent };
+              setTimeout(finish, TIMING.POST);
+            }, TIMING.PUNCH);
+          }, 300);
+        }, TIMING.SETTLE);
+      });
+    }, TIMING.FLY_IN);
+  }
+
+  function typewriter(text: string, onTick: (typed: string, done: boolean) => void): void {
+    let i = 0;
+    const step = (): void => {
+      i += 1;
+      onTick(text.slice(0, i), i >= text.length);
+      if (i < text.length) setTimeout(step, TIMING.TYPE_MS);
+    };
+    step();
+  }
+
+  function finish(): void {
+    if (state.end !== 'ongoing') { showAftermath(); return; }
+    showDuel();
+  }
+
+  function openRecord(): void {
+    renderRecord(root, state, { accuse, deploy: doDeploy, close: showDuel });
+  }
+
+  // Calling him a liar is a JUDGMENT you assemble yourself. The record lists
+  // what he said and never flags anything — YOU pick the line you think is the
+  // lie and YOU pick what makes it impossible. Land it and he comes apart. Get
+  // it wrong and you've accused a man of lying with nothing in your hand.
+  function accuse(statementId: string, againstId: string): void {
+    const real = state.record.openContradictions.find(
+      (c) => c.statementId === statementId && c.against === againstId,
+    );
+    const said = state.record.statements.find((s) => s.id === statementId)?.text ?? '';
+
+    if (!real) {
+      resettle(0, -CATCH_WRONG_YOU);
+      spendPatience(PATIENCE_MISFIRE);
+      transcript = [...transcript,
+        { who: 'you', text: `"That's a lie — ${said}"` },
+        { who: 'him', text: "Is it? Show me. …No? Then sit down.", quoted: true }];
+      lastReaction = { band: 'backfires', fresh: false };
+      finish();
       return;
     }
-    doRegister('stare');
-  }
 
-  function armFlash(): void {
-    if (!opp.tell) return;
-    flashLive = true;
-    if (TEST) return;
-    if (flashTimer) clearTimeout(flashTimer);
-    flashTimer = setTimeout(() => { flashLive = false; if (live) draw(); }, TIMING.FLASH_MS);
-  }
-
-  function doCatch(): void {
-    if (!flashLive) return;
-    closeWindow();
-    flashLive = false;
-    const contra = state.record.openContradictions[0];
-    if (contra) bookkeep({ kind: 'catch', contradictionId: contra.id });
+    bookkeep({ kind: 'catch', contradictionId: real.id });
     resettle(-CATCH_HIT, 0);
     spendPatience(1);
-    say('…how the hell do you know that?', 'hit', 'caught him');
+    transcript = [...transcript,
+      { who: 'you', text: "That's not what you said." },
+      { who: 'him', text: '…how the hell do you know that?', quoted: true }];
+    lastReaction = { band: 'lands', fresh: false };
+    finish();
   }
 
-  function doSlam(): void {
-    const lev = heldCard();
-    if (!lev) return;
-    closeWindow();
+  function doDeploy(leverageId: string): void {
+    const lev = state.record.heldLeverage.find((l) => l.id === leverageId);
+    if (!lev) { openRecord(); return; }
     if (state.hisComposure > LEVERAGE_READY) {
       resettle(COLD_DEPLOY_HIS, -COLD_DEPLOY_YOU);
       spendPatience(PATIENCE_MISFIRE);
-      say('Cute. That’s all you’ve got?', 'settle', 'too early');
+      transcript = [...transcript, { who: 'you', text: `You put it on the table: ${lev.label.toLowerCase()}.` },
+        { who: 'him', text: 'Cute. That’s all you’ve got?', quoted: true }];
+      lastReaction = { band: 'backfires', fresh: false };
+      finish();
       return;
     }
-    bookkeep({ kind: 'deploy', leverageId: lev.id });
+    bookkeep({ kind: 'deploy', leverageId });
     resettle(-LEVERAGE_FINISH, 0);
     spendPatience(1);
-    say('…okay. Okay. What do you want.', 'hit', 'that broke him');
-  }
-
-  function fallbackLine(band: Band): string {
-    if (band === 'lands') return 'Something in his face gives.';
-    if (band === 'neutral') return 'He just looks at you.';
-    return 'He almost laughs.';
+    transcript = [...transcript, { who: 'you', text: `You put it on the table: ${lev.label.toLowerCase()}.` },
+      { who: 'him', text: '…okay. Okay. What do you want.', quoted: true }];
+    lastReaction = { band: 'lands', fresh: false };
+    finish();
   }
 
   function walk(): void {
-    closeWindow();
     state = { ...state, end: 'walked' };
     showAftermath();
   }
 
-  // open on his line; the teach card gates the first window
-  if (TEST) { draw(); openWindow(); }
-  else typeThen(hisLine, () => { draw(); });
+  void TELL_MOODS;
+  showDuel();
 }
+
+const GENERIC: Record<Band, string> = {
+  lands: 'Something in his face gives.',
+  neutral: 'He just looks at you.',
+  backfires: 'He almost laughs.',
+};

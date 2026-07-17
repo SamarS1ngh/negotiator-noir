@@ -365,6 +365,46 @@ body {
   color: #fff; font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .14em;
 }
 
+/* ================= CALL IT — the read gate. You look at what you turned up
+   and commit to a judgment of the man. Nobody tells you. ================= */
+.callit {
+  --pad: clamp(15px, 4.6vw, 22px);
+  position: relative; min-height: 100vh; min-height: 100dvh;
+  background: radial-gradient(120% 80% at 50% 0%, #14141a, #08090c 68%);
+  color: var(--bone); font-family: 'Oswald', sans-serif;
+  padding: calc(20px + var(--safe-t)) var(--pad) calc(20px + var(--safe-b));
+  overflow-y: auto;
+}
+.ci-wrap { max-width: 560px; margin: 0 auto; }
+.ci-kicker { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--steel); margin-bottom: 8px; }
+.ci-head { font-size: clamp(24px, 7.6vw, 36px); font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: #fff; line-height: 1.05; }
+.ci-head::first-line { color: #fff; }
+.ci-sub { margin-top: 10px; font-size: clamp(12px, 3vw, 13.5px); line-height: 1.5; color: var(--dim); font-weight: 300; }
+
+.ci-clues { margin: 20px 0 24px; }
+.ci-clues-lab { font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+.ci-clue {
+  padding: 12px 14px; margin-bottom: 9px; border-radius: 8px;
+  border-left: 2px solid rgba(224,178,74,.5);
+  background: linear-gradient(90deg, rgba(200,162,58,.09), transparent 85%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(11px, 2.9vw, 12.5px); line-height: 1.55; color: #ece7df;
+}
+.ci-empty { padding: 14px; border: 1px dashed var(--edge); border-radius: 8px; color: var(--faint); font-size: 12.5px; }
+
+.ci-opts { display: flex; flex-direction: column; gap: 9px; }
+.ci-opt {
+  text-align: left; width: 100%; cursor: pointer; font-family: inherit; color: inherit;
+  padding: 13px 15px; border-radius: 11px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(20,23,30,.75), rgba(12,15,20,.8));
+  transition: border-color .15s, transform .1s, box-shadow .15s;
+}
+.ci-opt:hover { border-color: rgba(226,59,66,.55); box-shadow: 0 0 16px rgba(226,59,66,.14); }
+.ci-opt:active { transform: scale(.99); }
+.ci-opt-label { font-size: clamp(14px, 4vw, 17px); font-weight: 700; letter-spacing: .08em; color: #fff; }
+.ci-opt-blurb { margin-top: 4px; font-size: clamp(11px, 2.8vw, 12.5px); color: var(--dim); font-weight: 300; }
+
 /* ================= RECON BOARD (the prep phase) ================= */
 .recon {
   --pad: clamp(15px, 4.6vw, 22px);
@@ -466,8 +506,48 @@ body {
     linear-gradient(180deg, rgba(8,9,12,.6), transparent 20%, transparent 62%, rgba(8,9,12,.92));
 }
 
-/* ---- BG / STAGE: the CinematicFace, full-bleed behind the gradient + reads ---- */
+/* ---- BG / STAGE (v0.8.0 "he moves"): a real camera + cut-animated frames ---- */
 .bg { position: absolute; inset: 0; overflow: hidden; }
+
+/* THE CAMERA — the whole world hangs off this. It was a dead tripod before. */
+.cam {
+  position: absolute; inset: 0;
+  transform: scale(1.18);
+  transform-origin: center 34%;
+  will-change: transform;
+  animation: cam-drift 14s ease-in-out infinite;   /* never perfectly still */
+}
+@keyframes cam-drift {
+  0%, 100% { transform: scale(1.18) translate(0, 0); }
+  50%      { transform: scale(1.21) translate(-1.2%, .6%); }
+}
+/* push in when you lean on him */
+.cam.cam-push { animation: cam-push .85s cubic-bezier(.2,.8,.2,1) forwards; }
+@keyframes cam-push {
+  0%   { transform: scale(1.18); }
+  55%  { transform: scale(1.34) translateY(1%); }
+  100% { transform: scale(1.28) translateY(.6%); }
+}
+/* whip back when it goes wrong */
+.cam.cam-pull { animation: cam-pull .85s cubic-bezier(.2,.8,.2,1) forwards; }
+@keyframes cam-pull {
+  0%   { transform: scale(1.18); }
+  45%  { transform: scale(1.10) translateY(-1%); }
+  100% { transform: scale(1.16); }
+}
+/* the blow */
+.cam.cam-shake { animation: cam-shake .5s cubic-bezier(.36,.07,.19,.97); }
+@keyframes cam-shake {
+  0%,100% { transform: scale(1.22) translate(0,0) rotate(0deg); }
+  10%  { transform: scale(1.30) translate(-2.4%, 1.2%) rotate(-.6deg); }
+  25%  { transform: scale(1.30) translate(2.2%, -1%) rotate(.5deg); }
+  40%  { transform: scale(1.27) translate(-1.6%, .6%) rotate(-.35deg); }
+  60%  { transform: scale(1.25) translate(1%, -.4%) rotate(.2deg); }
+  80%  { transform: scale(1.23) translate(-.5%, .2%) rotate(-.1deg); }
+}
+
+/* HIM — frames CUT, they never cross-fade (a tween between two AI stills reads
+   as morphing; a cut reads as limited animation). */
 .stage-img {
   position: absolute;
   inset: 0;
@@ -475,12 +555,10 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center 30%;
-  transform: scale(1.22);
-  transform-origin: center 32%;
   opacity: 0;
-  transition: opacity .6s ease;
+  visibility: hidden;
 }
-.stage-img.on { opacity: 1; }
+.stage-img.on { opacity: 1; visibility: visible; }
 .stage-fallback {
   position: absolute;
   inset: 0;
@@ -490,12 +568,56 @@ body {
 }
 .stage-fallback.on { opacity: 1; }
 
-@media (prefers-reduced-motion: no-preference) {
-  .stage-img.on, .stage-fallback.on { animation: breathe 6s ease-in-out infinite; }
+/* THE ROOM — the bulb overhead swings, smoke drifts through the light. The
+   room is alive even when nobody moves. */
+.lamp-glow {
+  position: absolute; left: 50%; top: -6%; width: 62%; height: 52%;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(226,59,66,.20), transparent 72%);
+  mix-blend-mode: screen; pointer-events: none;
+  transform-origin: 50% 0%;
+  animation: lamp-swing 7s ease-in-out infinite;
 }
-@keyframes breathe {
-  0%, 100% { transform: scale(1.22); }
-  50% { transform: scale(1.26); }
+@keyframes lamp-swing {
+  0%, 100% { transform: translateX(-50%) rotate(-1.1deg); opacity: .85; }
+  50%      { transform: translateX(-50%) rotate(1.1deg); opacity: 1; }
+}
+.smoke {
+  position: absolute; inset: 0; pointer-events: none; opacity: .16;
+  background:
+    radial-gradient(38% 22% at 30% 62%, rgba(255,235,220,.55), transparent 70%),
+    radial-gradient(30% 18% at 68% 48%, rgba(255,240,225,.4), transparent 70%);
+  mix-blend-mode: screen;
+  animation: smoke-drift 19s ease-in-out infinite alternate;
+}
+@keyframes smoke-drift {
+  0%   { transform: translate(0, 0) scale(1); opacity: .1; }
+  50%  { transform: translate(3%, -4%) scale(1.14); opacity: .2; }
+  100% { transform: translate(-2%, -8%) scale(1.24); opacity: .08; }
+}
+
+/* THE BLOW — you see the damage. A flash, and speed lines on a real hit. */
+.hitflash {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  opacity: 0; mix-blend-mode: screen;
+}
+.hitflash.on { animation: hit-flash .42s ease-out; }
+.hitflash.lands { background: radial-gradient(circle at 50% 38%, rgba(255,255,255,.85), rgba(255,120,120,.25) 40%, transparent 70%); }
+.hitflash.backfires { background: radial-gradient(circle at 50% 38%, rgba(226,59,66,.7), transparent 65%); }
+@keyframes hit-flash { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+
+.speedlines {
+  position: absolute; inset: -20%; z-index: 4; pointer-events: none; opacity: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 40%,
+    rgba(255,255,255,.5) 0deg .5deg, transparent .5deg 4deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, transparent 26%, #000 62%);
+  mask-image: radial-gradient(circle at 50% 40%, transparent 26%, #000 62%);
+}
+.speedlines.on { animation: speed-burst .46s ease-out; }
+@keyframes speed-burst {
+  0%   { opacity: 0; transform: scale(1.3); }
+  18%  { opacity: .55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(.9); }
 }
 
 .vignette {
@@ -555,6 +677,18 @@ body {
 }
 .top .cl { font-size: 9px; letter-spacing: .16em; color: var(--faint); text-transform: uppercase; margin-top: 4px; }
 
+/* the two clocks that can end YOU — compact, side by side under his composure */
+.minebars { display: flex; gap: 14px; margin-top: 9px; }
+.minebars .mini { flex: 1; min-width: 0; }
+.minebars .ml {
+  display: block; font-size: 8px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 3px; white-space: nowrap;
+}
+.minebars .mbar { height: 3px; border-radius: 2px; overflow: hidden; background: rgba(255,255,255,.08); }
+.minebars .mbar i { display: block; height: 100%; transition: width .6s cubic-bezier(.2,.7,.2,1); }
+.minebars .you .mbar i { background: var(--steel); box-shadow: 0 0 6px rgba(111,211,230,.5); }
+.minebars .pat .mbar i { background: var(--gold); box-shadow: 0 0 6px rgba(224,178,74,.45); }
+
 /* ---- CONVERSATION: centred-left, a defined LIMITED area (no border),
    masked fade top+bottom, scrollbar hidden — scrollable for history ---- */
 .convo {
@@ -595,13 +729,15 @@ body {
 .read .k { display: block; font-size: 9px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 3px; }
 .read .t, .read .v { font-size: clamp(10px, 2.7vw, 12px); line-height: 1.35; font-weight: 400; }
 
-.r-verdict { top: calc(112px + var(--safe-t)); right: var(--pad); text-align: right; }
+/* the top block now carries his composure + your nerve + his patience, so the
+   floating reads start below it */
+.r-verdict { top: calc(152px + var(--safe-t)); right: var(--pad); text-align: right; }
 .r-verdict .k { color: var(--faint); }
 .r-verdict .v { display: block; font-size: clamp(13px, 3.6vw, 16px); font-weight: 700; color: var(--good); text-shadow: 0 0 14px rgba(99,192,136,.45), 0 2px 8px #000; }
 .r-verdict .v.v-neutral { color: var(--faint); text-shadow: 0 2px 8px #000; }
 .r-verdict .v.v-backfires { color: var(--gold); text-shadow: 0 0 14px rgba(224,178,74,.45), 0 2px 8px #000; }
 
-.r-face { top: calc(112px + var(--safe-t)); left: var(--pad); text-align: left; max-width: 52%; }
+.r-face { top: calc(152px + var(--safe-t)); left: var(--pad); text-align: left; max-width: 52%; }
 .r-face .k { color: var(--steel); text-shadow: 0 0 10px rgba(111,211,230,.5); }
 .r-face .t { color: #dbf3f8; text-shadow: 0 0 10px rgba(111,211,230,.35), 0 2px 8px #000; }
 

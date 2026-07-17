@@ -30,19 +30,22 @@ export const COLLECTOR_SCRIPT: Script = {
     { id: 'l_offer3', angleId: 'offer_out', text: 'This is the easy way out, Ricci. Take it.' },
   ],
 
+  // `subtext` is what you OBSERVE, never what it means. The game does not do
+  // your thinking: it shows you the flicker, the repeat, the glance at the
+  // door. Whether that's fear, ego, or a lie is your call to make.
   statements: [
     { id: 's_leash', text: "He doesn't need to know how I collect.", truth: 'evasion',
-      subtext: "He's protecting the boss's blind spot — that's the string you can pull." },
+      subtext: 'He says "he" without a name. His eyes go to the door on the word.' },
     { id: 's_efficient', text: "I don't miss. I don't negotiate. Not with anyone.", truth: 'lie',
-      subtext: 'Pure ego. He wants you to believe he has no give — so there IS give.' },
+      subtext: 'He sits up straighter saying it. Waits — like he wants you to react to it.' },
     { id: 's_book', text: "I run my own book. I don't answer to Marlowe.", truth: 'lie', contradicts: 'skims',
-      subtext: "He's overselling it — nobody defends the truth this hard. He answers to Marlowe, and it scares him." },
+      subtext: 'Louder than the rest of the sentence. His hand moves to his watch.' },
     { id: 's_number', text: "The number's the number. Nobody argues it twice.", truth: 'lie',
-      subtext: 'Repeating it to convince himself. The number is exactly what he\'d move on.' },
+      subtext: "That's twice he's said the number without you asking." },
     { id: 's_count_self', text: 'I count every crate myself, down to the last case.', truth: 'lie',
-      subtext: "Planting his own alibi — remember it, he'll trip on it." },
+      subtext: 'Volunteered. You never asked who counts.' },
     { id: 's_count_never', text: "Counting? I've never once touched a crate myself.", truth: 'lie', contradicts: 's_count_self',
-      subtext: "He just contradicted himself. He forgot what he told you." },
+      subtext: 'Said flat and easy, like it costs him nothing.' },
   ],
 
   leverage: [
