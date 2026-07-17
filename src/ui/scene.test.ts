@@ -36,11 +36,11 @@ describe('cinematic scene', () => {
     expect(root.querySelector('.gauge.patience .gauge-bar i')?.getAttribute('style')).toContain('50%');
   });
 
-  it('renders moves with an intent and NO risk telegraph; gambits are marked but not "hot"', () => {
+  it('renders moves LABEL-FIRST (no dialogue to read) with no risk telegraph', () => {
     const choices: Choice[] = [
-      { id: 'call', kind: 'call', text: 'You’re lying.' },
-      { id: 'lev1', kind: 'deploy', text: 'Use what you know.' },
-      { id: 'l1', kind: 'move', text: 'Flatter.', intent: 'flatter him' },
+      { id: 'call', kind: 'call', label: 'CALL HIS LIE' },
+      { id: 'lev1', kind: 'deploy', label: 'PLAY YOUR CARD', hint: 'the ledger' },
+      { id: 'l1', kind: 'move', label: 'FLATTER', hint: 'feed his ego' },
     ];
     renderCine(root, COLLECTOR, baseView({ choices }), noop);
     expect(root.querySelectorAll('[data-choice]').length).toBe(3);
@@ -50,7 +50,10 @@ describe('cinematic scene', () => {
     // gambits are styled distinct (amber), moves are plain
     expect(root.querySelector('[data-kind="call"]')?.classList.contains('gambit')).toBe(true);
     expect(root.querySelector('[data-kind="move"]')?.classList.contains('gambit')).toBe(false);
-    expect(root.querySelector('[data-kind="move"] .c-intent')?.textContent).toContain('flatter');
+    // the MOVE is the button — a label + a short hint, never a sentence to read
+    expect(root.querySelector('[data-kind="move"] .c-label')?.textContent).toBe('FLATTER');
+    expect(root.querySelector('[data-kind="move"] .c-hint')?.textContent).toBe('feed his ego');
+    expect(root.querySelector('[data-kind="move"]')?.textContent).not.toContain('"');
   });
 
   it('shows his observable tell as read material (not an interpretation)', () => {
@@ -60,7 +63,7 @@ describe('cinematic scene', () => {
 
   it('fires choose() with the chosen choice', () => {
     let picked: Choice | null = null;
-    const choices: Choice[] = [{ id: 'l1', kind: 'move', text: 'x', intent: 'bluff him' }];
+    const choices: Choice[] = [{ id: 'l1', kind: 'move', label: 'BLUFF', hint: 'claim you have it' }];
     renderCine(root, COLLECTOR, baseView({ choices }), { ...noop, choose: (c) => { picked = c; } });
     root.querySelector<HTMLElement>('[data-choice="l1"]')!.click();
     expect(picked).not.toBeNull();
@@ -71,7 +74,7 @@ describe('cinematic scene', () => {
     let responded: string | null = null;
     renderCine(root, COLLECTOR, baseView({
       pushOptions: [{ id: '0', text: 'Hold firm.' }, { id: '1', text: 'Give ground.' }],
-      choices: [{ id: 'l1', kind: 'move', text: 'x', intent: 'bluff him' }],
+      choices: [{ id: 'l1', kind: 'move', label: 'BLUFF', hint: 'claim you have it' }],
     }), { ...noop, respond: (id) => { responded = id; } });
     expect(root.querySelector('[data-choice]')).toBeNull();       // no attack moves during a push
     expect(root.querySelectorAll('[data-push]').length).toBe(2);

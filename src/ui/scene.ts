@@ -5,11 +5,14 @@ import { mountFace } from './face';
 
 export type ChoiceKind = 'move' | 'call' | 'deploy';
 
+// A move you can make. You pick by the LABEL (the move itself) — the full line
+// you'd say is only spoken once you commit, so choosing never means reading
+// five sentences. `hint` is a 2-3 word nudge, not prose.
 export interface Choice {
   id: string;
   kind: ChoiceKind;
-  text: string;
-  intent?: string;
+  label: string;   // FLATTER · HIT HIS FEAR · CALL HIS LIE
+  hint?: string;   // "feed his ego"
 }
 
 export interface Exchange { who: 'you' | 'him'; text: string; }
@@ -82,6 +85,8 @@ function barEl(cls: string, label: string, valueText: string, pct: number): HTML
   return wrap;
 }
 
+// A move reads as a BUTTON, not a paragraph: the label is the move, with a
+// 2-3 word hint. You commit, then you hear yourself say it.
 function choiceEl(c: Choice, on: CineHandlers): HTMLElement {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -89,17 +94,13 @@ function choiceEl(c: Choice, on: CineHandlers): HTMLElement {
   btn.dataset.choice = c.id;
   btn.dataset.kind = c.kind;
 
-  const tag = el('div', 'c-tag');
+  const row = el('div', 'c-row');
   const icon = GAMBIT_ICON[c.kind];
-  const label =
-    c.kind === 'move' ? (c.intent ?? '') :
-    c.kind === 'call' ? 'call him a liar' :
-    'play what you know';
-  if (icon) tag.appendChild(el('span', 'c-icon', icon));
-  tag.appendChild(el('span', 'c-intent', label));
-  btn.appendChild(tag);
+  if (icon) row.appendChild(el('span', 'c-icon', icon));
+  row.appendChild(el('span', 'c-label', c.label));
+  if (c.hint) row.appendChild(el('span', 'c-hint', c.hint));
+  btn.appendChild(row);
 
-  btn.appendChild(el('div', 'c-text', c.text));
   btn.addEventListener('click', () => on.choose(c));
   return btn;
 }
@@ -108,14 +109,14 @@ function dossierPanel(lines: string[], on: CineHandlers): HTMLElement {
   const veil = el('div', 'dossier-veil');
   const panel = el('div', 'dossier-panel');
   const head = el('div', 'dossier-head');
-  head.appendChild(el('span', 't', 'WHAT YOU DUG UP'));
+  head.appendChild(el('span', 't', 'WHAT YOU KNOW'));
   const x = document.createElement('button');
   x.type = 'button'; x.className = 'x'; x.dataset.closeDossier = ''; x.textContent = '✕';
   x.addEventListener('click', () => on.closeDossier());
   head.appendChild(x);
   panel.appendChild(head);
   if (lines.length === 0) {
-    panel.appendChild(el('div', 'dossier-empty', "You walked in cold. Nothing on him — read him at the table, and pray."));
+    panel.appendChild(el('div', 'dossier-empty', 'Nothing. You walked in cold.'));
   } else {
     for (const line of lines) panel.appendChild(el('div', 'dossier-line', line));
   }
@@ -209,13 +210,13 @@ export function renderCine(root: HTMLElement, opp: Opponent, view: CineView, on:
   // his PUSH — you respond (hold firm / give ground), not attack
   if (view.pushOptions) {
     const push = el('div', 'cine-choices push');
-    push.appendChild(el('div', 'choose-hint press', 'he\'s pressing you — hold your ground'));
+    push.appendChild(el('div', 'choose-hint press', 'he\'s pressing you'));
     for (const opt of view.pushOptions) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'choice respond';
       btn.dataset.push = opt.id;
-      btn.appendChild(el('div', 'c-text', opt.text));
+      btn.appendChild(el('div', 'c-row', opt.text));
       btn.addEventListener('click', () => on.respond(opt.id));
       push.appendChild(btn);
     }

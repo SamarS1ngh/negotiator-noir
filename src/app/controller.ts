@@ -30,18 +30,27 @@ const HOLD_HIS = 4;
 const CAVE_HIS = 6;
 const CAVE_YOU = 16;
 
-const INTENT: Record<AngleId, string> = {
-  lean: 'hit his fear',
-  flatter: 'flatter him',
-  plant_doubt: 'plant doubt',
-  bluff: 'bluff him',
-  offer_out: 'offer a way out',
+// The move, as a button: a hard label + a 2-3 word hint. You pick the MOVE,
+// not a sentence — the line you say is spoken after you commit.
+const MOVE_LABEL: Record<AngleId, string> = {
+  lean: 'HIT HIS FEAR',
+  flatter: 'FLATTER',
+  plant_doubt: 'PLANT DOUBT',
+  bluff: 'BLUFF',
+  offer_out: 'OFFER A WAY OUT',
+};
+const MOVE_HINT: Record<AngleId, string> = {
+  lean: 'his boss',
+  flatter: 'feed his ego',
+  plant_doubt: 'crack his story',
+  bluff: 'claim you have it',
+  offer_out: 'let him off',
 };
 
 const GENERIC_REACTION: Record<Band, string> = {
-  lands: "He doesn't answer right away — but something in his face just gave.",
-  neutral: 'He just looks at you. Nothing given away.',
-  backfires: 'He almost laughs in your face.',
+  lands: 'Something in his face gives.',
+  neutral: 'He just looks at you.',
+  backfires: 'He almost laughs.',
 };
 
 const TELL_MOODS: MoodState[] = ['rattled', 'cornered', 'folding'];
@@ -86,8 +95,8 @@ export function startDuel(
   let hisLine: string = opp.opener ?? 'Well? You wanted this meeting.';
   let face: string | undefined;
   let teach: string | undefined = intel.has('type')
-    ? 'You did your homework — your DOSSIER says how to play him. Break his nerve before he reads you or loses patience.'
-    : "You walked in half-blind. Read him at the table — the wrong lever bleeds you, and he won't sit long.";
+    ? 'Break his nerve. Your dossier says how.'
+    : "You came in blind. Read him — wrong move bleeds you.";
   let movesMade = 0;
   const shown = new Set<string>();
   const calledLies = new Set<string>();
@@ -129,16 +138,16 @@ export function startDuel(
   function choicesFor(): Choice[] {
     const cs: Choice[] = [];
     if (movesMade >= 1) {
-      cs.push({ id: 'call', kind: 'call', text: '"You’re lying. I can see it in your face."' });
+      cs.push({ id: 'call', kind: 'call', label: 'CALL HIS LIE' });
       for (const l of state.record.heldLeverage) {
-        cs.push({ id: l.id, kind: 'deploy', text: `Use what you know — ${l.label.toLowerCase()}.` });
+        cs.push({ id: l.id, kind: 'deploy', label: 'PLAY YOUR CARD', hint: l.label.toLowerCase() });
       }
     }
     for (const a of script.angles) {
       if (state.spentAngles.includes(a)) continue;
       const line = script.lines.find((l) => l.angleId === a);
       if (!line) continue;
-      cs.push({ id: line.id, kind: 'move', text: `"${line.text}"`, intent: INTENT[a] });
+      cs.push({ id: line.id, kind: 'move', label: MOVE_LABEL[a], hint: MOVE_HINT[a] });
     }
     return cs;
   }
@@ -255,7 +264,7 @@ export function startDuel(
       pendingFlash = opp.tell?.text;
       if (!shown.has('tell')) {
         shown.add('tell');
-        newTeach = 'His hand drifts to his watch — a tell. His body betrays a lie his mouth won’t. That’s the moment to call him, or to finish him.';
+        newTeach = 'A tell. He’s lying — call him.';
       }
     }
     play(said ?? GENERIC_REACTION[band], observedFace(), newTeach);
@@ -299,7 +308,7 @@ export function startDuel(
       resettle(COLD_DEPLOY_HIS, -COLD_DEPLOY_YOU);
       spendPatience(PATIENCE_MISFIRE);
       pendingReaction = 'settle';
-      play("Cute. That’s all you’ve got? You’ll have to do better than that.", observedFace(), undefined);
+      play('Cute. That’s all you’ve got?', observedFace(), undefined);
       return;
     }
 

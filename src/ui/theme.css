@@ -57,8 +57,8 @@ body {
 .cine .bg::after {
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
-    radial-gradient(120% 68% at 50% 30%, transparent 44%, rgba(8,9,12,.55)),
-    linear-gradient(180deg, rgba(8,9,12,.74), transparent 20%, transparent 34%, rgba(8,9,12,.97) 80%);
+    radial-gradient(120% 68% at 50% 30%, transparent 46%, rgba(8,9,12,.5)),
+    linear-gradient(180deg, rgba(8,9,12,.72), transparent 22%, transparent 46%, rgba(8,9,12,.96) 86%);
 }
 
 /* top: objective + his nerve */
@@ -92,11 +92,13 @@ body {
 .gauge.patience .gauge-bar i { background: linear-gradient(90deg, #7a5f1e, var(--gold)); box-shadow: 0 0 8px rgba(224,178,74,.4); }
 
 /* the lower cluster: history, his line + read, then your choices */
+/* Fewer words = his face gets the frame. The move list is compact and sits low;
+   the portrait owns the top two-thirds. */
 .cine-bottom {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 4;
   padding: 0 var(--pad) calc(14px + var(--safe-b));
   display: flex; flex-direction: column;
-  max-height: 74dvh; overflow-y: auto; scrollbar-width: none;
+  max-height: 58dvh; overflow-y: auto; scrollbar-width: none;
 }
 .cine-bottom::-webkit-scrollbar { display: none; }
 
@@ -129,24 +131,25 @@ body {
 }
 
 /* the choices — your manipulation moves */
-.cine-choices { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.cine-choices { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
 .choose-hint { font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--steel); margin-bottom: 3px; }
 .choice {
   text-align: left; width: 100%; cursor: pointer; font-family: inherit;
-  padding: 11px 13px; border-radius: 11px;
+  padding: 9px 13px; border-radius: 10px;
   border: 1px solid rgba(111,211,230,.24);
   background: linear-gradient(180deg, rgba(16,26,30,.82), rgba(10,15,19,.86));
   color: inherit; transition: transform .1s, border-color .15s, box-shadow .15s;
 }
 .choice:active { transform: scale(.99); }
-.choice .c-tag { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
-.choice .c-intent { font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--steel); font-weight: 600; }
-.choice .c-icon { color: var(--steel); font-size: 11px; }
-.choice .c-risk { width: 8px; height: 8px; border-radius: 50%; margin-left: auto; }
-.choice .c-risk.r-safe { background: var(--good); box-shadow: 0 0 7px rgba(99,192,136,.5); }
-.choice .c-risk.r-unc { background: var(--gold); box-shadow: 0 0 7px rgba(224,178,74,.5); }
-.choice .c-risk.r-high { background: var(--crimson); box-shadow: 0 0 7px rgba(226,59,66,.5); }
-.choice .c-text { font-family: 'JetBrains Mono', monospace; font-size: clamp(13px, 3.5vw, 15px); line-height: 1.4; color: #eef3f6; }
+/* label-first: the MOVE is the button. A hard label + a 2-3 word hint — you
+   never read a sentence to choose (the line is spoken after you commit). */
+.choice .c-row { display: flex; align-items: baseline; gap: 9px; }
+.choice .c-label {
+  font-size: clamp(15px, 4.2vw, 18px); font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: #eaf6f9;
+}
+.choice .c-hint { font-size: clamp(10px, 2.7vw, 12px); color: var(--faint); font-weight: 300; margin-left: auto; text-align: right; }
+.choice .c-icon { color: var(--steel); font-size: 13px; }
 /* gambits: call his lie / play your leverage — aggressive power moves, marked
    amber (a gamble). NOT pulsing and NOT flagged as "correct now" — you judge
    when to spend one. */
@@ -154,7 +157,8 @@ body {
   border-color: rgba(224,178,74,.5);
   background: linear-gradient(180deg, rgba(34,26,10,.82), rgba(20,15,7,.88));
 }
-.choice.gambit .c-intent, .choice.gambit .c-icon { color: var(--gold); }
+.choice.gambit .c-label { color: #f6e2b0; }
+.choice.gambit .c-icon { color: var(--gold); }
 
 /* quiet exit */
 .cine-walk {
@@ -193,7 +197,10 @@ body {
 .cine-say.pressing .line { color: #fff; text-shadow: 0 0 12px rgba(224,178,74,.3), 0 2px 14px #000; }
 .choose-hint.press { color: var(--gold); }
 .choice.respond { border-color: rgba(111,211,230,.4); background: linear-gradient(180deg, rgba(14,24,28,.85), rgba(9,15,19,.9)); }
-.choice.respond .c-text { color: #dff3f8; }
+.choice.respond .c-row {
+  font-size: clamp(14px, 3.9vw, 16px); font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: #dff3f8;
+}
 
 /* DOSSIER panel — what you dug up in recon */
 .dossier-veil { position: fixed; inset: 0; z-index: 10; background: rgba(6,10,12,.68); display: grid; place-items: center; padding: var(--pad); }

@@ -48,7 +48,7 @@ export function renderRecon(root: HTMLElement, view: ReconView, on: ReconHandler
 
   // digs counter
   const digs = el('div', 'rc-digs');
-  digs.appendChild(el('span', 'rc-digs-lab', 'leads you can still chase'));
+  digs.appendChild(el('span', 'rc-digs-lab', 'digs left'));
   const pips = el('div', 'rc-pips');
   for (let i = 0; i < view.digsTotal; i += 1) {
     pips.appendChild(el('span', `pip${i < view.digsLeft ? ' on' : ''}`));
@@ -87,8 +87,8 @@ export function renderRecon(root: HTMLElement, view: ReconView, on: ReconHandler
   // sit down
   const foot = el('div', 'rc-foot');
   const hint = el('div', 'rc-foot-hint',
-    outOfDigs ? "That's all the time you have. Walk in with what you've got."
-      : 'Chase what matters — you can walk in early, but you go in only as ready as you made yourself.');
+    outOfDigs ? "Out of time. Go in with what you have."
+      : 'What you dig up is your hand at the table.');
   foot.appendChild(hint);
   const sit = document.createElement('button');
   sit.type = 'button';
