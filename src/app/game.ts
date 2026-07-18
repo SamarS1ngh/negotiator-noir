@@ -1,7 +1,8 @@
-import type { IntelId, Opponent, OpponentType, Script } from '../domain/types';
+import type { IntelId, Opponent, OpponentType } from '../domain/types';
 import { renderRecon } from '../ui/recon';
 import { renderCallIt, TYPE_OPTIONS } from '../ui/callit';
-import { startDuel } from './controller';
+import { startDeal } from './controller';
+import { COLLECTOR_DEAL, LEVERAGE_TERM } from '../content/collector_deal';
 
 /**
  * One target's loop:
@@ -13,7 +14,7 @@ import { startDuel } from './controller';
  *   DUEL    — the wheel, his words, your notebook.
  * The mold for every person in the story.
  */
-export function startGame(root: HTMLElement, opp: Opponent, script: Script, onFinish?: () => void): void {
+export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => void): void {
   void onFinish;
 
   function runRecon(): void {
@@ -56,8 +57,9 @@ export function startGame(root: HTMLElement, opp: Opponent, script: Script, onFi
       }, { call });
     }
 
+    // then the table: the deal itself
     function call(believed: OpponentType): void {
-      startDuel(root, opp, script, found, believed, () => runRecon());
+      startDeal(root, opp, COLLECTOR_DEAL, LEVERAGE_TERM, found, believed, () => runRecon());
     }
 
     showRecon();

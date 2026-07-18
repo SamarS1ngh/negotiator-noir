@@ -6,7 +6,6 @@ import '@fontsource/jetbrains-mono/400.css';
 import '../ui/theme.css';
 import { startGame } from './game';
 import { COLLECTOR } from '../content/collector';
-import { COLLECTOR_SCRIPT } from '../content/script';
 
 const app = document.querySelector<HTMLDivElement>('#app');
-if (app) startGame(app, COLLECTOR, COLLECTOR_SCRIPT);
+if (app) startGame(app, COLLECTOR);

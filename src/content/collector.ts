@@ -44,7 +44,7 @@ export const COLLECTOR: Opponent = {
   breakReveal: {
     quote: "Alright — ALRIGHT. There's no debt. Marlowe wanted you rattled, wanted you scared enough to pay to make it stop.",
     names: 'MARLOWE. He owns the paper. He owns me. He\'s the one you want.',
-    teach: 'You ground his composure to zero — so the lie died and he named who\'s above him. That name is your next rung up the ladder.',
+    teach: "You gave him what he could live with and took what you came for. The name is your next rung up the ladder.",
   },
 
   // ---- RECON: 5 leads, 3 digs. What you find becomes your hand at the table.

@@ -1,298 +1,244 @@
-import type { AngleId, Band, DuelState, EndState, IntelId, MoodState, Opponent, OpponentType, Script } from '../domain/types';
-import { initDuel, apply, moodFor } from '../domain/engine';
-import { endStateFor } from '../domain/outcome';
-import { renderDuel } from '../ui/duel';
-import type { ConvoTurn, DuelHandlers, DuelReaction } from '../ui/duel';
-import { renderRecord } from '../ui/record';
-import { renderAftermath } from '../ui/aftermath';
+import type { IntelId, MoodState, Opponent, OpponentType } from '../domain/types';
+import { moodFor } from '../domain/engine';
+import type { DealSpec, Offer, Leverage, TermReaction } from '../domain/deal';
+import { evaluate, scoreDeal, grade } from '../domain/deal';
+import { renderDeal } from '../ui/dealsheet';
+import type { DealHandlers, TermRow, LeverageChip } from '../ui/dealsheet';
+import { renderDealOutcome } from '../ui/dealoutcome';
 
 const TEST = import.meta.env.MODE === 'test';
-// Unhurried on purpose. Each beat gets room: your line lands, he answers, the
-// scene reacts, the verdict holds. Nothing here should feel snatched away.
-//   FLY_IN — your line sits before he answers
-//   TYPE_MS— per character of his reply
-//   SETTLE — his fully-typed line holds before the scene reacts
-//   REACT  — the cinematic (shake / snap / flash) plays out before the verdict
-//   PUNCH  — the verdict holds big
-const TIMING = { MODAL_CLOSE: 220, FLY_IN: 700, TYPE_MS: 40, SETTLE: 950, REACT: 900, PUNCH: 2000, POST: 700 };
+const TIMING = { REACT: 1100 };
+const COMPOSURE_PER_ROUND = 6;   // he wears down as the sit-down drags on
 
-// ---- the economy. Hard on purpose: only a correct read moves him, and every
-// wrong pull costs you. Nothing here is handed over — the player earns it. ----
-const LAND_HIT = 20;
-const NEUTRAL_HIS = 4;
-const NEUTRAL_YOU = 6;
-const BACKFIRE_HIS = 8;
-const BACKFIRE_YOU = 20;
-const CATCH_HIT = 28;
-const CATCH_WRONG_YOU = 18;   // called him a liar with nothing → you look desperate
-const LEVERAGE_FINISH = 50;
-const LEVERAGE_READY = 45;
-const COLD_DEPLOY_HIS = 4;
-const COLD_DEPLOY_YOU = 16;
-const PATIENCE_START = 7;
-const PATIENCE_MISFIRE = 2;
-
-const TELL_MOODS: MoodState[] = ['rattled', 'cornered', 'folding'];
-
-function clamp(n: number, lo: number, hi: number): number { return Math.min(hi, Math.max(lo, n)); }
+export interface LevTermMap { [leverageId: string]: { term: string; strength: number } }
 
 /**
- * The duel — the wheel, the cyan word modal, the floating reads (his face, what
- * you notice, his tell), the record. What's different from the old build is
- * what the game REFUSES to do for you:
- *
- *  - it never tells you what kind of man he is (you called that yourself in
- *    the read gate — and the risk dots here are computed from YOUR call, so a
- *    wrong read means your own instruments lie to you all night),
- *  - it never interprets him (the reads are what you SEE, not what it means),
- *  - it never lights up "catch him" (you have to notice the contradiction in
- *    his own words and decide to call it — and calling wrong costs you),
- *  - leverage only finishes a man already breaking, and only if you dug it up.
- *
- * Break his nerve to 0 to win. Your nerve hits 0 → he turns it on you. His
- * patience hits 0 → he walks. Spec: docs/superpowers/specs/2026-07-17-*.
+ * THE DEAL — the negotiation. You and Ricci both want several things, ranked
+ * secretly and differently. You set a package on the deal sheet, lay down the
+ * leverage you dug up, and put it to him; he weighs it against what he actually
+ * cares about and accepts, counters, or walks. You win by trading what's cheap
+ * to you (his pride, a little money) for what's dear (the name, the debt dead).
+ * Spec: docs/superpowers/specs/2026-07-18-the-deal-mechanic-design.md
  */
-export function startDuel(
+export function startDeal(
   root: HTMLElement,
   opp: Opponent,
-  script: Script,
+  spec: DealSpec,
+  levTerm: LevTermMap,
   intel: Set<IntelId>,
-  believedType: OpponentType,
+  believed: OpponentType,
   onDone?: () => void,
 ): void {
-  let state: DuelState = initDuel(opp, script);
-  state = {
-    ...state,
-    record: {
-      ...state.record,
-      heldLeverage: script.leverage.filter((l) => intel.has(`lev:${l.id}` as IntelId)),
-    },
-  };
+  void believed;
 
-  let patience = PATIENCE_START;
-  let selectedAngle: AngleId | null = null;
-  let transcript: ConvoTurn[] = [];
-  let lastReaction: DuelReaction | null = null;
-  let stage: ReturnType<typeof renderDuel> | undefined;
+  const offer: Offer = { ...spec.hisOpening };
+  const hisStance: Offer = { ...spec.hisOpening };
+  const attached: Record<string, string> = {};             // termId -> leverageId
+  // the leverage cards you actually dug up in recon
+  const held: LeverageChip[] = Object.keys(levTerm)
+    .filter((id) => intel.has(`lev:${id}` as IntelId))
+    .map((id) => ({ id, label: cardLabel(id), term: levTerm[id]!.term }));
 
-  const handlers: DuelHandlers = { probe, pickAngle, openRecord, closeModal };
+  let round = 1;
+  let patienceLeft = spec.patience;
+  let composureLost = 0;
+  let reactions: Record<string, TermReaction> = {};
+  let hisLine = opp.opener ?? "Let's hear it. What are you offering?";
+  let reacting = false;
+  let closed = false;
 
-  function resettle(hisDelta: number, yourDelta: number): void {
-    const his = clamp(state.hisComposure + hisDelta, 0, 100);
-    const your = Math.max(0, state.yourComposure + yourDelta);
-    const mood = moodFor(his);
-    const end: EndState = state.end === 'walked' ? 'walked' : endStateFor(his, your);
-    state = { ...state, hisComposure: his, yourComposure: your, mood, end };
+  const handlers: DealHandlers = { setTerm, attach, detach, propose, acceptCounter, walk };
+
+  function cardLabel(id: string): string {
+    const map: Record<string, string> = { skims: 'He skims his boss', ledger: 'The second ledger' };
+    return map[id] ?? id;
   }
 
-  function spendPatience(cost: number): void {
-    patience -= cost;
-    if (patience <= 0 && state.end === 'ongoing') state = { ...state, end: 'walked' };
-  }
-
-  // engine for bookkeeping (statements, contradictions, spent angles, leverage);
-  // the controller keeps its own nerve numbers.
-  function bookkeep(action: Parameters<typeof apply>[1]): ReturnType<typeof apply>['events'] {
-    const prevHis = state.hisComposure;
-    const prevYour = state.yourComposure;
-    const r = apply(state, action, opp, script);
-    state = { ...r.state, hisComposure: prevHis, yourComposure: prevYour };
-    return r.events;
-  }
-
-  function view(extra: Partial<Parameters<typeof renderDuel>[5]> = {}) {
-    return {
-      selectedAngle,
-      transcript,
-      reaction: lastReaction ?? undefined,
-      believedType,
-      yourNervePct: state.yourComposure,
-      patiencePct: clamp((patience / PATIENCE_START) * 100, 0, 100),
-      ...extra,
-    };
-  }
-
-  function showDuel(): void {
-    stage = renderDuel(root, state, opp, script, handlers, view());
-    appendWalk();
-  }
-
-  function renderBeat(s: DuelState, reaction?: DuelReaction, cutToHim?: Parameters<typeof renderDuel>[5]['cutToHim']): void {
-    stage = renderDuel(root, s, opp, script, inert, view({ selectedAngle: null, reaction, cutToHim }));
-    appendWalk();
-  }
-
-  // The scene is STILL until something happens — then it acts, hard. Nothing
-  // here runs on a loop; every move below is caused by a beat landing.
-  function cinematic(band: Band): void {
-    if (TEST || !stage) return;
-    if (band === 'lands') {
-      // the blow: camera jolts, the bulb rocks, he snaps to his reaction
-      stage.shot('shake'); stage.impact(); stage.strike('lands');
-    } else if (band === 'backfires') {
-      // it goes wrong: the camera gives him the room back
-      stage.shot('pull'); stage.impact(); stage.strike('backfires');
-    } else {
-      // nothing got in — he just shifts, and the camera leans a little closer
-      stage.shot('push'); stage.shift();
+  function leverageMap(): Leverage {
+    const l: Leverage = {};
+    for (const [termId, levId] of Object.entries(attached)) {
+      const m = levTerm[levId];
+      if (m) l[termId] = (l[termId] ?? 0) + m.strength;
     }
+    return l;
   }
 
-  const inert: DuelHandlers = { probe() {}, pickAngle() {}, openRecord() {}, closeModal() {} };
+  function mood(): MoodState { return moodFor(100 - composureLost); }
 
-  function appendWalk(): void {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'walk-btn';
-    btn.dataset.walk = '';
-    btn.textContent = 'WALK AWAY';
-    btn.addEventListener('click', walk);
-    root.appendChild(btn);
+  function chipsAvailable(): LeverageChip[] {
+    const used = new Set(Object.values(attached));
+    return held.filter((c) => !used.has(c.id));
   }
 
-  function showAftermath(): void { renderAftermath(root, state, opp, { continue: () => onDone?.() }); }
-
-  function pickAngle(a: AngleId): void { selectedAngle = a; showDuel(); }
-  function closeModal(): void { selectedAngle = null; showDuel(); }
-
-  function probe(lineId: string): void {
-    const line = script.lines.find((l) => l.id === lineId);
-    if (!line) return;
-    selectedAngle = null;
-
-    const prev = state;
-    const events = bookkeep({ kind: 'probe', lineId });
-    const said = events.find((e) => e.type === 'said')?.text;
-    const band = (events.find((e) => e.type === 'band')?.text ?? 'neutral') as Band;
-    const quoted = Boolean(said);
-
-    if (band === 'lands') { resettle(-LAND_HIT, 0); spendPatience(1); }
-    else if (band === 'neutral') { resettle(NEUTRAL_HIS, -NEUTRAL_YOU); spendPatience(1); }
-    else { resettle(BACKFIRE_HIS, -BACKFIRE_YOU); spendPatience(PATIENCE_MISFIRE); }
-
-    const reply = said ?? GENERIC[band];
-    play({ who: 'you', text: line.text }, { who: 'him', text: reply, quoted }, band, prev);
+  function rows(): TermRow[] {
+    return spec.terms.map((t) => {
+      const levId = Object.entries(attached).find(([term]) => term === t.id)?.[1];
+      return {
+        id: t.id,
+        label: t.label,
+        positions: t.positions,
+        yourIdx: offer[t.id] ?? 0,
+        hisIdx: hisStance[t.id] ?? 0,
+        reaction: reactions[t.id],
+        leverageId: levId,
+        leverageLabel: levId ? cardLabel(levId) : undefined,
+      };
+    });
   }
 
-  // the animated reveal: your line flies in, cut to him, his reply types out,
-  // reads update, the verdict punches then docks.
-  function play(you: ConvoTurn, him: ConvoTurn, band: Band, prev: DuelState): void {
-    const spent = false;
-    if (TEST) {
-      transcript = [...transcript, you, him];
-      lastReaction = { band, fresh: false, spent };
-      finish();
+  function hasCounter(): boolean {
+    return spec.terms.some((t) => (hisStance[t.id] ?? 0) !== (offer[t.id] ?? 0));
+  }
+
+  function draw(): void {
+    renderDeal(root, opp, {
+      objective: opp.objective?.goal ?? 'THE DEAL',
+      hisName: opp.name,
+      mood: mood(),
+      rows: rows(),
+      round,
+      patienceLeft,
+      patienceTotal: spec.patience,
+      hisLine,
+      chips: chipsAvailable(),
+      hasCounter: hasCounter(),
+      reacting,
+    }, handlers);
+  }
+
+  function setTerm(termId: string, idx: number): void {
+    if (reacting) return;
+    offer[termId] = idx;
+    reactions = {};   // clear last read once you start rebuilding
+    draw();
+  }
+
+  function attach(leverageId: string): void {
+    if (reacting) return;
+    const m = levTerm[leverageId];
+    if (!m) return;
+    attached[m.term] = leverageId;
+    draw();
+  }
+
+  function detach(termId: string): void {
+    if (reacting) return;
+    delete attached[termId];
+    draw();
+  }
+
+  function propose(): void {
+    if (reacting || closed) return;
+    const res = evaluate(spec, offer, leverageMap(), round, composureLost);
+    reactions = res.reactions;
+
+    if (res.verdict === 'accept') {
+      closeDeal({ ...offer }, 'accept');
       return;
     }
-    transcript = [...transcript, you];
-    renderBeat(prev, lastReaction ?? undefined);
-    setTimeout(() => {
-      typewriter(him.text, (typed, done) => {
-        renderBeat(prev, lastReaction ?? undefined, { text: him.text, typed, done, quoted: him.quoted ?? false });
-        if (!done) return;
-        setTimeout(() => {
-          // his line settles into the log, the reads update — and the SCENE
-          // reacts here: camera, his body, the flash. It gets its own moment.
-          transcript = [...transcript, him];
-          lastReaction = { band, fresh: false, spent };
-          renderBeat(state, lastReaction);
-          cinematic(band);
-          setTimeout(() => {
-            // only once you've seen him react does the verdict punch out
-            lastReaction = { band, fresh: true, spent };
-            renderBeat(state, lastReaction);
-            setTimeout(() => {
-              lastReaction = { band, fresh: false, spent };
-              setTimeout(finish, TIMING.POST);
-            }, TIMING.PUNCH);
-          }, TIMING.REACT);   // let him finish reacting before the verdict lands
-        }, TIMING.SETTLE);
-      });
-    }, TIMING.FLY_IN);
-  }
-
-  function typewriter(text: string, onTick: (typed: string, done: boolean) => void): void {
-    let i = 0;
-    const step = (): void => {
-      i += 1;
-      onTick(text.slice(0, i), i >= text.length);
-      if (i < text.length) setTimeout(step, TIMING.TYPE_MS);
-    };
-    step();
-  }
-
-  function finish(): void {
-    if (state.end !== 'ongoing') { showAftermath(); return; }
-    showDuel();
-  }
-
-  function openRecord(): void {
-    renderRecord(root, state, { accuse, deploy: doDeploy, close: showDuel });
-  }
-
-  // Calling him a liar is a JUDGMENT you assemble yourself. The record lists
-  // what he said and never flags anything — YOU pick the line you think is the
-  // lie and YOU pick what makes it impossible. Land it and he comes apart. Get
-  // it wrong and you've accused a man of lying with nothing in your hand.
-  function accuse(statementId: string, againstId: string): void {
-    const real = state.record.openContradictions.find(
-      (c) => c.statementId === statementId && c.against === againstId,
-    );
-    const said = state.record.statements.find((s) => s.id === statementId)?.text ?? '';
-
-    if (!real) {
-      resettle(0, -CATCH_WRONG_YOU);
-      spendPatience(PATIENCE_MISFIRE);
-      transcript = [...transcript,
-        { who: 'you', text: `"That's a lie — ${said}"` },
-        { who: 'him', text: "Is it? Show me. …No? Then sit down.", quoted: true }];
-      lastReaction = { band: 'backfires', fresh: false };
-      finish();
+    if (res.verdict === 'walk') {
+      hisLine = walkLine(res.reactions);
+      react('settle', () => showOutcome({ walked: true }));
       return;
     }
 
-    bookkeep({ kind: 'catch', contradictionId: real.id });
-    resettle(-CATCH_HIT, 0);
-    spendPatience(1);
-    transcript = [...transcript,
-      { who: 'you', text: "That's not what you said." },
-      { who: 'him', text: '…how the hell do you know that?', quoted: true }];
-    lastReaction = { band: 'lands', fresh: false };
-    finish();
-  }
+    // counter
+    round += 1;
+    patienceLeft -= 1;
+    composureLost += COMPOSURE_PER_ROUND;
+    if (res.counter) for (const t of spec.terms) hisStance[t.id] = res.counter[t.id] ?? hisStance[t.id] ?? 0;
 
-  function doDeploy(leverageId: string): void {
-    const lev = state.record.heldLeverage.find((l) => l.id === leverageId);
-    if (!lev) { openRecord(); return; }
-    if (state.hisComposure > LEVERAGE_READY) {
-      resettle(COLD_DEPLOY_HIS, -COLD_DEPLOY_YOU);
-      spendPatience(PATIENCE_MISFIRE);
-      transcript = [...transcript, { who: 'you', text: `You put it on the table: ${lev.label.toLowerCase()}.` },
-        { who: 'him', text: 'Cute. That’s all you’ve got?', quoted: true }];
-      lastReaction = { band: 'backfires', fresh: false };
-      finish();
+    if (patienceLeft <= 0) {
+      hisLine = "I'm done haggling. Take what's on the table or get out.";
+      react('lean', draw);   // his stance stands; you must accept it or walk
       return;
     }
-    bookkeep({ kind: 'deploy', leverageId });
-    resettle(-LEVERAGE_FINISH, 0);
-    spendPatience(1);
-    transcript = [...transcript, { who: 'you', text: `You put it on the table: ${lev.label.toLowerCase()}.` },
-      { who: 'him', text: '…okay. Okay. What do you want.', quoted: true }];
-    lastReaction = { band: 'lands', fresh: false };
-    finish();
+    hisLine = counterLine(res.reactions);
+    react(worst(res.reactions) === 'fine' ? 'shift' : 'lean', draw);
+  }
+
+  function acceptCounter(): void {
+    if (reacting || closed) return;
+    for (const t of spec.terms) offer[t.id] = hisStance[t.id] ?? 0;
+    closeDeal({ ...hisStance }, 'accept');
   }
 
   function walk(): void {
-    state = { ...state, end: 'walked' };
-    showAftermath();
+    if (closed) return;
+    showOutcome({ walked: true });
   }
 
-  void TELL_MOODS;
-  showDuel();
+  function closeDeal(finalOffer: Offer, _how: 'accept'): void {
+    void _how;
+    closed = true;
+    hisLine = '…Fine. We have a deal.';
+    const frac = scoreDeal(spec, finalOffer);
+    react('impact', () => showOutcome({ finalOffer, frac }));
+  }
+
+  // his reply plays: portrait reacts, controls locked, then `after`
+  function react(shot: 'impact' | 'lean' | 'settle' | 'shift', after: () => void): void {
+    reacting = true;
+    const stage = renderStage();
+    if (stage) {
+      if (shot === 'impact') { stage.shot('shake'); stage.impact(); stage.strike('lands'); }
+      else if (shot === 'lean') stage.shot('push');
+      else if (shot === 'settle') { stage.shot('pull'); stage.strike('backfires'); }
+      else stage.shift();
+    }
+    if (TEST) { reacting = false; after(); return; }
+    setTimeout(() => { reacting = false; after(); }, TIMING.REACT);
+  }
+
+  function renderStage() {
+    return renderDeal(root, opp, {
+      objective: opp.objective?.goal ?? 'THE DEAL',
+      hisName: opp.name, mood: mood(), rows: rows(), round,
+      patienceLeft, patienceTotal: spec.patience, hisLine,
+      chips: chipsAvailable(), hasCounter: hasCounter(), reacting: true,
+    }, handlers);
+  }
+
+  function showOutcome(o: { walked?: boolean; finalOffer?: Offer; frac?: number }): void {
+    if (o.walked) {
+      renderDealOutcome(root, opp, {
+        walked: true, gradeLetter: 'F',
+        terms: spec.terms.map((t) => ({ label: t.label, got: 'no deal' })),
+        namedHim: false,
+      }, () => onDone?.());
+      return;
+    }
+    const frac = o.frac ?? 0;
+    const g = grade(frac);
+    const fin = o.finalOffer!;
+    const nameTerm = spec.terms.find((t) => t.id === 'name');
+    const namedHim = Boolean(nameTerm && (fin.name ?? 0) >= nameTerm.positions.length - 1);
+    renderDealOutcome(root, opp, {
+      walked: false, gradeLetter: g,
+      terms: spec.terms.map((t) => ({ label: t.label, got: t.positions[fin[t.id] ?? 0]! })),
+      namedHim,
+    }, () => onDone?.());
+  }
+
+  draw();
 }
 
-const GENERIC: Record<Band, string> = {
-  lands: 'Something in his face gives.',
-  neutral: 'He just looks at you.',
-  backfires: 'He almost laughs.',
-};
+function worst(r: Record<string, TermReaction>): TermReaction {
+  const v = Object.values(r);
+  if (v.includes('hardline')) return 'hardline';
+  if (v.includes('resists')) return 'resists';
+  return 'fine';
+}
+
+function counterLine(r: Record<string, TermReaction>): string {
+  switch (worst(r)) {
+    case 'hardline': return "No. That part's not happening — and you know it. Here's what I'll do.";
+    case 'resists': return "You're reaching. This is closer to fair.";
+    default: return "…Almost. Meet me here and we're done.";
+  }
+}
+
+function walkLine(r: Record<string, TermReaction>): string {
+  if (worst(r) === 'hardline') return "You've got some nerve. We're finished. Get out.";
+  return "I don't think you're serious. We're done.";
+}
