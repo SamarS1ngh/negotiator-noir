@@ -10,7 +10,7 @@ export interface MeetView {
   role: string;
   portrait?: string;
   beats: Beat[];
-  result: string;
+  result?: string;   // omit for an INTRO scene — it just plays, then onDone()
   ripple?: string;
 }
 
@@ -62,7 +62,9 @@ export function renderMeet(root: HTMLElement, view: MeetView, onDone: () => void
       if (typed < beat.text.length) line.appendChild(el('span', 'meet-caret', '▌'));
       box.appendChild(line);
       root.appendChild(box);
-      root.appendChild(el('div', 'meet-tap', typed < beat.text.length ? '' : 'tap to go on ▸'));
+      const lastBeat = i === view.beats.length - 1;
+      const tapLabel = typed < beat.text.length ? '' : (lastBeat && view.result === undefined ? 'tap to sit down ▸' : 'tap to go on ▸');
+      root.appendChild(el('div', 'meet-tap', tapLabel));
       root.dataset.advance = '';
       root.onclick = advance;
     } else {
@@ -110,8 +112,9 @@ export function renderMeet(root: HTMLElement, view: MeetView, onDone: () => void
       timer = setTimeout(tick, TYPE_MS);
       return;
     }
-    phase = 'result';                 // done talking → what you got
-    draw();
+    // done talking: an action-scene shows what you got; an intro just proceeds
+    if (view.result !== undefined) { phase = 'result'; draw(); }
+    else { stopTimer(); onDone(); }
   }
 
   draw();

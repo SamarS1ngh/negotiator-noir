@@ -2,7 +2,7 @@ import type { Opponent } from '../domain/types';
 import type { Node } from '../domain/board';
 import { initBoard, takeAction, dealPrep, applyDealOutcome } from '../domain/board';
 import { CHAPTER_1 } from '../content/chapter1';
-import { COLLECTOR_DEAL, LEVERAGE_TERM } from '../content/collector_deal';
+import { COLLECTOR_DEAL, LEVERAGE_TERM, RICCI_INTRO_COLD, RICCI_INTRO_WORKED } from '../content/collector_deal';
 import { renderBoard } from '../ui/board';
 import { renderMeet } from '../ui/meet';
 import { startDeal } from './controller';
@@ -59,6 +59,17 @@ export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => voi
 
   function sitDown(): void {
     const prep = dealPrep(st.flags);
+    const worked = st.flags.size > 0;   // you did homework → he knows, he's rattled
+    const ricci = st.nodes.find((n) => n.id === 'ricci');
+
+    // you MEET him first — the immersive sit-down, same as the others — then the table
+    renderMeet(root, {
+      name: 'RICCI', role: 'the collector', portrait: ricci?.portrait,
+      beats: worked ? RICCI_INTRO_WORKED : RICCI_INTRO_COLD,
+    }, () => openTable(prep));
+  }
+
+  function openTable(prep: ReturnType<typeof dealPrep>): void {
     startDeal(
       root, opp, COLLECTOR_DEAL, LEVERAGE_TERM, prep.intel, 'proud',
       { startComposureLost: prep.startComposureLost, patienceDelta: prep.patienceDelta, thresholdDelta: prep.thresholdDelta },

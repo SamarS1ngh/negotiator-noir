@@ -1,4 +1,22 @@
 import type { DealSpec } from '../domain/deal';
+import type { Beat } from '../domain/board';
+
+// The sit-down intro — you meet Ricci face to face before the table, same as
+// the others. Portrait: assets/art/cast/ricci.jpg.
+export const RICCI_INTRO_COLD: Beat[] = [
+  { who: 'them', text: "So. You're the one who wanted a meeting. Brave." },
+  { who: 'you', text: "You collect for Marlowe. I'm here about my father's debt." },
+  { who: 'them', text: "The debt's the debt. Five hundred. Sit down and don't waste my evening." },
+];
+
+// If you worked the board first, he's already rattled — and he knows it's you.
+export const RICCI_INTRO_WORKED: Beat[] = [
+  { who: 'them', text: "You've been busy. Asking about me. Turning my people." },
+  { who: 'you', text: "Word travels. Sit down, Ricci — we both know why I'm here." },
+  { who: 'them', text: "…Say your piece. But watch yourself. I'm not some mark." },
+];
+
+
 
 // Ricci's deal. Positions run HIS ideal (0) → YOUR ideal (last).
 // His true priorities: fear(name) > money(debt) > pride(face) > paper.
