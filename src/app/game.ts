@@ -1,69 +1,58 @@
-import type { IntelId, Opponent, OpponentType } from '../domain/types';
-import { renderRecon } from '../ui/recon';
-import { renderCallIt, TYPE_OPTIONS } from '../ui/callit';
-import { startDeal } from './controller';
+import type { Opponent } from '../domain/types';
+import { initBoard, takeAction, dealPrep, applyDealOutcome } from '../domain/board';
+import { CHAPTER_1 } from '../content/chapter1';
 import { COLLECTOR_DEAL, LEVERAGE_TERM } from '../content/collector_deal';
+import { renderBoard } from '../ui/board';
+import { startDeal } from './controller';
 
 /**
- * One target's loop:
- *   RECON   — chase a limited number of leads. They give you RAW CLUES, never
- *             conclusions. Nobody tells you what he is.
- *   CALL IT — you look at what you turned up and commit to a read of the man.
- *             This is the earn-it gate: get it wrong and your instincts (and
- *             the risk you're shown at the table) are wrong all night.
- *   DUEL    — the wheel, his words, your notebook.
- * The mold for every person in the story.
+ * The campaign loop: work THE WEB (a board of people around your target — limited
+ * moves), then SIT DOWN (the deal, its difficulty set by your prep), then the
+ * outcome rewrites the board. You're the underdog; you climb by turning the
+ * empire's own people. Spec: docs/superpowers/specs/2026-07-19-the-web-board-design.md
  */
 export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => void): void {
   void onFinish;
+  const ch = CHAPTER_1;
+  let st = initBoard(ch);
+  let selected: string | null = null;
+  let result: string | undefined;
 
-  function runRecon(): void {
-    const found = new Set<IntelId>();
-    const taken = new Set<string>();
-    let digsLeft = opp.recon?.digs ?? 0;
-    const leads = opp.recon?.leads ?? [];
-
-    function showRecon(): void {
-      renderRecon(root, {
-        targetName: opp.name.toUpperCase(),
-        targetRole: opp.role,
-        why: opp.objective?.why ?? '',
-        digsLeft,
-        digsTotal: opp.recon?.digs ?? 0,
-        leads: leads.map((l) => ({
-          id: l.id, label: l.label, blurb: l.blurb,
-          taken: taken.has(l.id),
-          dossier: taken.has(l.id) ? l.dossier : undefined,
-        })),
-      }, { chase, sit });
-    }
-
-    function chase(leadId: string): void {
-      if (digsLeft <= 0 || taken.has(leadId)) return;
-      const lead = leads.find((l) => l.id === leadId);
-      if (!lead) return;
-      taken.add(leadId);
-      found.add(lead.grants);
-      digsLeft -= 1;
-      showRecon();
-    }
-
-    // before the table: make the call yourself
-    function sit(): void {
-      renderCallIt(root, {
-        targetName: opp.name.toUpperCase(),
-        clues: leads.filter((l) => taken.has(l.id)).map((l) => l.dossier),
-        options: TYPE_OPTIONS,
-      }, { call });
-    }
-
-    // then the table: the deal itself
-    function call(believed: OpponentType): void {
-      startDeal(root, opp, COLLECTOR_DEAL, LEVERAGE_TERM, found, believed, () => runRecon());
-    }
-
-    showRecon();
+  function showBoard(): void {
+    renderBoard(root, ch, st, selected, { act, select, sitDown }, result);
   }
 
-  runRecon();
+  function select(nodeId: string | null): void {
+    selected = nodeId;
+    result = undefined;
+    showBoard();
+  }
+
+  function act(actionId: string): void {
+    const a = ch.actions.find((x) => x.id === actionId);
+    st = takeAction(ch, st, actionId);
+    result = a?.result;
+    selected = null;
+    showBoard();
+  }
+
+  function sitDown(): void {
+    const prep = dealPrep(st.flags);
+    startDeal(
+      root, opp, COLLECTOR_DEAL, LEVERAGE_TERM, prep.intel, 'proud',
+      { startComposureLost: prep.startComposureLost, patienceDelta: prep.patienceDelta, thresholdDelta: prep.thresholdDelta },
+      (outcome) => {
+        st = applyDealOutcome(ch, st, outcome);
+        selected = null;
+        result = outcome.gotName
+          ? 'Ricci gave up the name. MARLOWE is in reach now.'
+          : outcome.closed
+            ? 'Deal closed. The docks remember how you played it.'
+            : 'He walked. Nothing changed — this time.';
+        showBoard();
+      },
+    );
+  }
+
+  showBoard();
 }

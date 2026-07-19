@@ -365,6 +365,91 @@ body {
   color: #fff; font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .14em;
 }
 
+/* ================= THE WEB BOARD — the people around your target ================= */
+.board-screen {
+  --pad: clamp(14px, 4.4vw, 20px);
+  position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden;
+  background:
+    radial-gradient(90% 60% at 50% 8%, rgba(226,59,66,.08), transparent 60%),
+    radial-gradient(120% 90% at 50% 60%, #12141b, #08090c 72%);
+  color: var(--bone); font-family: 'Oswald', sans-serif; -webkit-font-smoothing: antialiased;
+}
+.board-top {
+  position: relative; z-index: 3;
+  padding: calc(16px + var(--safe-t)) var(--pad) 6px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+}
+.board-title .bt-ch { display: block; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--steel); }
+.board-title .bt-name { display: block; font-size: clamp(20px, 6vw, 28px); font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: #fff; margin-top: 3px; }
+.board-moves { text-align: right; }
+.board-moves .bm-lab { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.bm-pips { display: flex; gap: 5px; justify-content: flex-end; margin-top: 5px; }
+.bm-pips .pip { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--steel-deep); opacity: .4; }
+.bm-pips .pip.on { background: var(--steel); border-color: var(--steel); opacity: 1; box-shadow: 0 0 6px rgba(111,211,230,.5); }
+
+.board-toast {
+  position: absolute; top: calc(70px + var(--safe-t)); left: var(--pad); right: var(--pad); z-index: 8;
+  padding: 11px 14px; border-radius: 10px;
+  border: 1px solid rgba(224,178,74,.5); background: linear-gradient(180deg, rgba(30,24,10,.96), rgba(18,14,6,.98));
+  color: #f4e7c6; font-family: 'JetBrains Mono', monospace; font-size: clamp(11px, 2.9vw, 12.5px); line-height: 1.5;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+}
+
+/* the web — a fixed-aspect stage the nodes are positioned on by % */
+.web { position: relative; width: 100%; height: 52vh; margin-top: 6px; }
+.web-edges { position: absolute; inset: 0; width: 100%; height: 100%; }
+.web-edges .edge { stroke-width: .5; opacity: .5; }
+.web-edges .e-hates { stroke: var(--crimson); }
+.web-edges .e-fears { stroke: var(--gold); stroke-dasharray: 2 1.5; }
+.web-edges .e-trusts { stroke: var(--good); }
+.web-edges .e-envies { stroke: #9a6bd0; }
+.edge-label { position: absolute; transform: translate(-50%, -50%); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); pointer-events: none; background: rgba(8,9,12,.7); padding: 1px 4px; border-radius: 3px; }
+.el-hates { color: #ff7b80; } .el-fears { color: var(--gold); } .el-trusts { color: var(--good); } .el-envies { color: #b79ae0; }
+
+.web-node {
+  position: absolute; transform: translate(-50%, -50%); z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: transparent; border: 0; cursor: pointer; font-family: inherit; color: inherit;
+}
+.web-node .nd-disc {
+  width: clamp(44px, 13vw, 58px); height: clamp(44px, 13vw, 58px); border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 40% 30%, #2a2f3a, #12141b);
+  border: 2px solid var(--edge);
+  box-shadow: 0 6px 16px rgba(0,0,0,.5);
+}
+.web-node .nd-init { font-size: clamp(16px, 5vw, 22px); font-weight: 700; color: #cfd6de; }
+.web-node .nd-name { font-size: clamp(9px, 2.6vw, 11px); font-weight: 600; letter-spacing: .06em; color: var(--bone); }
+.web-node .nd-disp { font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.web-node.target .nd-disc { border-color: var(--crimson); box-shadow: 0 0 18px rgba(226,59,66,.35); }
+.web-node.sel .nd-disc { border-color: var(--steel); box-shadow: 0 0 18px rgba(111,211,230,.5); }
+.web-node.locked { opacity: .55; }
+.web-node.locked .nd-disc { border-style: dashed; }
+/* disposition tints the ring */
+.web-node.d-0 .nd-disc { border-color: var(--crimson); } .web-node.d-0 .nd-disp { color: #ff7b80; }
+.web-node.d-4 .nd-disc { border-color: var(--good); } .web-node.d-4 .nd-disp { color: var(--good); }
+
+.act-sheet {
+  position: absolute; left: var(--pad); right: var(--pad); bottom: calc(96px + var(--safe-b)); z-index: 6;
+  border-radius: 14px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(16,19,26,.97), rgba(10,12,17,.98));
+  box-shadow: 0 -8px 30px rgba(0,0,0,.5); padding: 13px 14px; max-height: 40dvh; overflow-y: auto;
+}
+.as-head { display: flex; align-items: baseline; gap: 9px; margin-bottom: 10px; }
+.as-name { font-size: clamp(14px, 4vw, 17px); font-weight: 700; letter-spacing: .04em; color: #fff; }
+.as-role { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; }
+.as-none { font-size: 12.5px; color: var(--faint); line-height: 1.5; }
+.act { display: block; width: 100%; text-align: left; cursor: pointer; font-family: inherit; color: inherit; margin-bottom: 8px; padding: 11px 13px; border-radius: 10px; border: 1px solid rgba(111,211,230,.24); background: linear-gradient(180deg, rgba(18,26,30,.7), rgba(11,16,20,.75)); transition: .14s; }
+.act:hover { border-color: rgba(111,211,230,.5); }
+.act:disabled { opacity: .4; cursor: default; }
+.act-label { font-size: clamp(13px, 3.5vw, 15px); font-weight: 600; color: #eaf6f9; }
+.act-blurb { margin-top: 4px; font-size: clamp(11px, 2.8vw, 12px); color: var(--dim); line-height: 1.45; font-weight: 300; }
+
+.board-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 0 var(--pad) calc(14px + var(--safe-b)); background: linear-gradient(0deg, rgba(8,9,12,.95), transparent); }
+.bf-hint { font-size: 11px; color: var(--faint); line-height: 1.4; margin-bottom: 9px; }
+.board-sit { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--crimson); background: linear-gradient(180deg, rgba(34,12,14,.92), rgba(20,9,11,.96)); color: #fff; font-family: 'Oswald'; font-size: clamp(14px, 3.8vw, 16px); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.board-sit:active { transform: scale(.995); }
+
 /* ================= THE DEAL SHEET — the negotiation itself ================= */
 .deal-screen {
   --bg: #08090c; --bone: #eef0f4; --dim: #9096a4; --faint: #5a6070;

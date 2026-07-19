@@ -12,6 +12,16 @@ const COMPOSURE_PER_ROUND = 6;   // he wears down as the sit-down drags on
 
 export interface LevTermMap { [leverageId: string]: { term: string; strength: number } }
 
+// what your work on the board hands you when you sit down
+export interface DealPrep {
+  startComposureLost?: number;   // he's already rattled coming in
+  patienceDelta?: number;
+  thresholdDelta?: number;       // he's under pressure to close
+}
+
+// the deal's result, handed back so the board can rewrite itself
+export interface DealOutcome { closed: boolean; gotName: boolean; faceIdx: number; }
+
 /**
  * THE DEAL — the negotiation. You and Ricci both want several things, ranked
  * secretly and differently. You set a package on the deal sheet, lay down the
@@ -27,7 +37,8 @@ export function startDeal(
   levTerm: LevTermMap,
   intel: Set<IntelId>,
   believed: OpponentType,
-  onDone?: () => void,
+  prep: DealPrep,
+  onDone?: (o: DealOutcome) => void,
 ): void {
   void believed;
 
@@ -39,9 +50,15 @@ export function startDeal(
     .filter((id) => intel.has(`lev:${id}` as IntelId))
     .map((id) => ({ id, label: cardLabel(id), term: levTerm[id]!.term }));
 
+  const effSpec: DealSpec = {
+    ...spec,
+    patience: Math.max(2, spec.patience + (prep.patienceDelta ?? 0)),
+    startThreshold: spec.startThreshold + (prep.thresholdDelta ?? 0),
+  };
+
   let round = 1;
-  let patienceLeft = spec.patience;
-  let composureLost = 0;
+  let patienceLeft = effSpec.patience;
+  let composureLost = prep.startComposureLost ?? 0;   // your board-work already wore him down
   let reactions: Record<string, TermReaction> = {};
   let hisLine = opp.opener ?? "Let's hear it. What are you offering?";
   let reacting = false;
@@ -98,7 +115,7 @@ export function startDeal(
       rows: rows(),
       round,
       patienceLeft,
-      patienceTotal: spec.patience,
+      patienceTotal: effSpec.patience,
       hisLine,
       chips: chipsAvailable(),
       hasCounter: hasCounter(),
@@ -129,7 +146,7 @@ export function startDeal(
 
   function propose(): void {
     if (reacting || closed) return;
-    const res = evaluate(spec, offer, leverageMap(), round, composureLost);
+    const res = evaluate(effSpec, offer, leverageMap(), round, composureLost);
     reactions = res.reactions;
 
     if (res.verdict === 'accept') {
@@ -194,30 +211,31 @@ export function startDeal(
     return renderDeal(root, opp, {
       objective: opp.objective?.goal ?? 'THE DEAL',
       hisName: opp.name, mood: mood(), rows: rows(), round,
-      patienceLeft, patienceTotal: spec.patience, hisLine,
+      patienceLeft, patienceTotal: effSpec.patience, hisLine,
       chips: chipsAvailable(), hasCounter: hasCounter(), reacting: true,
     }, handlers);
   }
 
   function showOutcome(o: { walked?: boolean; finalOffer?: Offer; frac?: number }): void {
+    const nameTerm = spec.terms.find((t) => t.id === 'name');
     if (o.walked) {
       renderDealOutcome(root, opp, {
         walked: true, gradeLetter: 'F',
         terms: spec.terms.map((t) => ({ label: t.label, got: 'no deal' })),
         namedHim: false,
-      }, () => onDone?.());
+      }, () => onDone?.({ closed: false, gotName: false, faceIdx: 2 }));
       return;
     }
     const frac = o.frac ?? 0;
     const g = grade(frac);
     const fin = o.finalOffer!;
-    const nameTerm = spec.terms.find((t) => t.id === 'name');
-    const namedHim = Boolean(nameTerm && (fin.name ?? 0) >= nameTerm.positions.length - 1);
+    const gotName = Boolean(nameTerm && (fin.name ?? 0) >= nameTerm.positions.length - 1);
+    const faceIdx = fin.face ?? 0;
     renderDealOutcome(root, opp, {
       walked: false, gradeLetter: g,
       terms: spec.terms.map((t) => ({ label: t.label, got: t.positions[fin[t.id] ?? 0]! })),
-      namedHim,
-    }, () => onDone?.());
+      namedHim: gotName,
+    }, () => onDone?.({ closed: true, gotName, faceIdx }));
   }
 
   draw();
