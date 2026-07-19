@@ -1,16 +1,28 @@
 import type { Beat } from '../domain/board';
 
-// ---- MEET: a short face-to-face you play out when you work someone. Their
-// photo fills the frame, the lines type out, you tap through, then you see what
-// it got you (and what the world does back). This is what makes the board feel
-// like people, not dots.
+// ---- MEET: a face-to-face. Three kinds:
+//   INTRO      — just beats, then it proceeds (the sit-down opener).
+//   OBSERVE    — beats then a `result` (you watched someone; nobody to work).
+//   NEGOTIATE  — beats then an `ask` (what they want) + `options` (how you play
+//                them). YOU pick the approach. The right read gets what you
+//                came for; the wrong one fails or costs you. Nobody gives you
+//                anything for free.
+
+export interface MeetOption {
+  text: string;       // your approach ("Promise to protect him")
+  good: boolean;      // does it actually work on this person
+  result: string;     // what happens
+  ripple?: string;    // what the world does back
+}
 
 export interface MeetView {
   name: string;
   role: string;
   portrait?: string;
   beats: Beat[];
-  result?: string;   // omit for an INTRO scene — it just plays, then onDone()
+  ask?: string;              // their demand — the negotiation opens here
+  options?: MeetOption[];    // your approaches
+  result?: string;           // observe-scene payoff (no negotiation)
   ripple?: string;
 }
 
@@ -23,24 +35,34 @@ function el(tag: string, className?: string, text?: string): HTMLElement {
   return n;
 }
 
-export function renderMeet(root: HTMLElement, view: MeetView, onDone: () => void): void {
-  let i = 0;               // current beat
-  let typed = 0;           // chars shown
+type Phase = 'talk' | 'choose' | 'result';
+
+export function renderMeet(root: HTMLElement, view: MeetView, onDone: (chosen: MeetOption | null) => void): void {
+  let i = 0, typed = 0, ended = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let phase: 'talk' | 'result' = view.beats.length > 0 ? 'talk' : 'result';
+  let chosen: MeetOption | null = null;
+  let phase: Phase = view.beats.length > 0 ? 'talk' : afterTalk();
 
   function stopTimer(): void { if (timer) { clearTimeout(timer); timer = undefined; } }
+  function finish(): void { if (ended) return; ended = true; stopTimer(); root.onclick = null; onDone(chosen); }
+
+  function afterTalk(): Phase {
+    if (view.options && view.options.length > 0) return 'choose';
+    if (view.result !== undefined) return 'result';
+    // intro — nothing to resolve
+    return 'result'; // will render as an empty result -> but we short-circuit below
+  }
 
   function draw(): void {
     root.innerHTML = '';
     root.className = 'meet-screen';
+    root.onclick = null;
 
     const bg = el('div', 'meet-bg');
     if (view.portrait) {
       const img = document.createElement('img');
       img.className = 'meet-portrait';
-      img.src = view.portrait;
-      img.alt = view.name;
+      img.src = view.portrait; img.alt = view.name;
       img.onerror = () => { img.style.display = 'none'; };
       bg.appendChild(img);
     }
@@ -57,65 +79,76 @@ export function renderMeet(root: HTMLElement, view: MeetView, onDone: () => void
       const box = el('div', `meet-say ${beat.who}`);
       box.appendChild(el('div', 'meet-who', beat.who === 'you' ? 'YOU' : view.name));
       const line = el('div', 'meet-line');
-      const shown = beat.text.slice(0, typed);
-      line.append(shown);
+      line.append(beat.text.slice(0, typed));
       if (typed < beat.text.length) line.appendChild(el('span', 'meet-caret', '▌'));
       box.appendChild(line);
       root.appendChild(box);
-      const lastBeat = i === view.beats.length - 1;
-      const tapLabel = typed < beat.text.length ? '' : (lastBeat && view.result === undefined ? 'tap to sit down ▸' : 'tap to go on ▸');
-      root.appendChild(el('div', 'meet-tap', tapLabel));
-      root.dataset.advance = '';
+      root.appendChild(el('div', 'meet-tap', typed < beat.text.length ? '' : 'tap to go on ▸'));
       root.onclick = advance;
-    } else {
-      const res = el('div', 'meet-result');
-      res.appendChild(el('div', 'mr-lab', 'you got'));
-      res.appendChild(el('div', 'mr-line', view.result));
-      if (view.ripple) {
-        const rip = el('div', 'meet-ripple');
-        rip.appendChild(el('div', 'mr-lab warn', '…and word travels'));
-        rip.appendChild(el('div', 'mr-rip', view.ripple));
-        res.appendChild(rip);
-      }
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'meet-done';
-      btn.dataset.done = '';
-      btn.textContent = 'BACK TO THE BOARD ▸';
-      btn.addEventListener('click', () => { stopTimer(); onDone(); });
-      res.appendChild(btn);
-      root.appendChild(res);
-      root.onclick = null;
+      return;
     }
+
+    if (phase === 'choose') {
+      const box = el('div', 'meet-choose');
+      box.appendChild(el('div', 'mc-ask-lab', `${view.name} wants`));
+      box.appendChild(el('div', 'mc-ask', view.ask ?? ''));
+      box.appendChild(el('div', 'mc-lab', 'how do you play him'));
+      for (const o of view.options!) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mc-opt';
+        b.dataset.opt = String(view.options!.indexOf(o));
+        b.textContent = o.text;
+        b.addEventListener('click', () => { chosen = o; phase = 'result'; draw(); });
+        box.appendChild(b);
+      }
+      root.appendChild(box);
+      return;
+    }
+
+    // result
+    const res = el('div', 'meet-result');
+    const line = chosen ? chosen.result : view.result;
+    const ripple = chosen ? chosen.ripple : view.ripple;
+    const good = chosen ? chosen.good : true;
+    res.appendChild(el('div', `mr-lab ${good ? '' : 'fail'}`, good ? 'you got' : 'that went wrong'));
+    res.appendChild(el('div', 'mr-line', line ?? ''));
+    if (ripple) {
+      const rip = el('div', 'meet-ripple');
+      rip.appendChild(el('div', 'mr-lab warn', '…and word travels'));
+      rip.appendChild(el('div', 'mr-rip', ripple));
+      res.appendChild(rip);
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'meet-done';
+    btn.dataset.done = '';
+    btn.textContent = 'BACK TO THE BOARD ▸';
+    btn.addEventListener('click', (e) => { e.stopPropagation(); finish(); });
+    res.appendChild(btn);
+    root.appendChild(res);
   }
 
   function tick(): void {
     const beat = view.beats[i];
     if (!beat) return;
-    typed += 1;
-    draw();
+    typed += 1; draw();
     if (typed < beat.text.length) timer = setTimeout(tick, TYPE_MS);
   }
 
   function advance(): void {
-    if (phase !== 'talk') return;
+    if (phase !== 'talk' || ended) return;
     const beat = view.beats[i]!;
-    if (typed < beat.text.length) {   // finish the current line instantly
-      stopTimer();
-      typed = beat.text.length;
-      draw();
-      return;
-    }
-    if (i < view.beats.length - 1) {  // next line
-      i += 1; typed = 0;
-      draw();
-      timer = setTimeout(tick, TYPE_MS);
-      return;
-    }
-    // done talking: an action-scene shows what you got; an intro just proceeds
-    if (view.result !== undefined) { phase = 'result'; draw(); }
-    else { stopTimer(); onDone(); }
+    if (typed < beat.text.length) { stopTimer(); typed = beat.text.length; draw(); return; }
+    if (i < view.beats.length - 1) { i += 1; typed = 0; draw(); timer = setTimeout(tick, TYPE_MS); return; }
+    // done talking
+    if (view.options && view.options.length > 0) { phase = 'choose'; draw(); }
+    else if (view.result !== undefined) { phase = 'result'; draw(); }
+    else finish();   // intro
   }
+
+  // intro with no beats shouldn't happen; guard the empty-result short-circuit
+  if (view.beats.length === 0 && !view.options && view.result === undefined) { finish(); return; }
 
   draw();
   if (phase === 'talk') timer = setTimeout(tick, TYPE_MS);

@@ -32,29 +32,38 @@ export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => voi
     showBoard();
   }
 
-  // working someone is a SCENE — you meet them, they react, then it lands
+  // working someone is a MANIPULATION: you meet them, they want something, and
+  // you pick how to play them. The right read gets the goods; a wrong one fails
+  // and can cost you. Nobody hands you anything for free.
   function act(actionId: string): void {
     const a = ch.actions.find((x) => x.id === actionId);
     if (!a) return;
-    const nodeOf = (id: string): Node | undefined => st.nodes.find((n) => n.id === id);
+    const n = st.nodes.find((x) => x.id === a.nodeId);
 
-    const apply = (): void => {
-      st = takeAction(ch, st, actionId);
+    // meet options are built fresh; we map the chosen one back to its content
+    const opts = (a.options ?? []).map((o) => ({ text: o.text, good: o.good, result: o.result, ripple: o.ripple }));
+
+    renderMeet(root, {
+      name: n?.name ?? '', role: n?.role ?? '', portrait: n?.portrait,
+      beats: a.scene ?? [],
+      ask: a.ask,
+      options: a.options ? opts : undefined,
+      result: a.options ? undefined : a.result,
+      ripple: a.options ? undefined : a.ripple,
+    }, (chosen) => {
+      let success = true;
+      let failDelta: { nodeId: string; delta: number } | undefined;
+      if (a.options && chosen) {
+        const src = a.options.find((o) => o.text === chosen.text);
+        success = src?.good ?? false;
+        failDelta = src?.failDelta;
+      }
+      st = takeAction(ch, st, actionId, success, failDelta);
       selected = null;
       toast = undefined;
-      changed = new Set([a.nodeId, ...(a.dispositionDelta ? [a.dispositionDelta.nodeId] : [])]);
+      changed = new Set([a.nodeId, ...(a.dispositionDelta ? [a.dispositionDelta.nodeId] : []), ...(failDelta ? [failDelta.nodeId] : [])]);
       showBoard();
-    };
-
-    if (a.scene && a.scene.length > 0) {
-      const n = nodeOf(a.nodeId);
-      renderMeet(root, {
-        name: n?.name ?? '', role: n?.role ?? '', portrait: n?.portrait,
-        beats: a.scene, result: a.result, ripple: a.ripple,
-      }, apply);
-    } else {
-      apply();
-    }
+    });
   }
 
   function sitDown(): void {

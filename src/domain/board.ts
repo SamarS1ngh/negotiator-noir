@@ -22,17 +22,28 @@ export interface Beat { who: 'them' | 'you'; text: string; }
 
 export interface Edge { from: string; to: string; label: string; }
 
+// how you can play someone in the meet — the right read gets what you came for
+export interface MeetOption {
+  text: string;
+  good: boolean;
+  result: string;
+  ripple?: string;
+  failDelta?: { nodeId: string; delta: number };  // wrong approach can cost you
+}
+
 export interface Action {
   id: string;
   nodeId: string;
   label: string;
   blurb: string;
-  grants: string[];                 // flags set
-  dispositionDelta?: { nodeId: string; delta: number };
-  result: string;                   // one-line outcome shown after
+  grants: string[];                 // flags set ON SUCCESS
+  dispositionDelta?: { nodeId: string; delta: number };  // applied on success
+  result: string;                   // observe-scene payoff (no negotiation)
   requires?: string[];              // flags needed to appear
   scene?: Beat[];                   // the short face-to-face you play out
-  ripple?: string;                  // what the world does back (a beat after)
+  ripple?: string;                  // observe-scene ripple
+  ask?: string;                     // what they want — the negotiation opens here
+  options?: MeetOption[];           // your approaches; you must pick the right one
 }
 
 // something the world does back at you between your moves — makes it live.
@@ -70,21 +81,23 @@ export function availableActions(ch: Chapter, st: BoardState, nodeId: string): A
     (a.requires ?? []).every((r) => st.flags.has(r)));
 }
 
-// Take an action: spend a move, set its flags, shift a disposition. Returns a
-// NEW state (never mutates) so the UI can diff / the tests can assert.
-export function takeAction(ch: Chapter, st: BoardState, actionId: string): BoardState {
+// Take an action: spend a move (always), and — only if you played them right
+// (`success`) — set its flags and warm them. A failed read spends the move for
+// nothing, and may cost you (`failDelta`). Returns a NEW state (never mutates).
+export function takeAction(ch: Chapter, st: BoardState, actionId: string, success = true, failDelta?: { nodeId: string; delta: number }): BoardState {
   const a = ch.actions.find((x) => x.id === actionId);
   if (!a || st.done.has(a.id) || st.movesLeft <= 0) return st;
 
+  const delta = success ? a.dispositionDelta : failDelta;
   const nodes = st.nodes.map((n) => {
-    if (a.dispositionDelta && n.id === a.dispositionDelta.nodeId) {
-      const d = Math.max(0, Math.min(4, n.disposition + a.dispositionDelta.delta)) as Disposition;
+    if (delta && n.id === delta.nodeId) {
+      const d = Math.max(0, Math.min(4, n.disposition + delta.delta)) as Disposition;
       return { ...n, disposition: d };
     }
     return n;
   });
   const flags = new Set(st.flags);
-  for (const f of a.grants) flags.add(f);
+  if (success) for (const f of a.grants) flags.add(f);
   const done = new Set(st.done);
   done.add(a.id);
 

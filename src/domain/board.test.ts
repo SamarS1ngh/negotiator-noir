@@ -12,12 +12,30 @@ describe('the web board', () => {
     expect(st.nodes.find((n) => n.id === 'marlowe')?.locked).toBe(true);
   });
 
-  it('turning Sal grants the skim and warms him', () => {
+  it('playing Sal right (success) grants the skim and warms him', () => {
     let st = initBoard(CH);
-    st = takeAction(CH, st, 'sal_turn');
+    st = takeAction(CH, st, 'sal_turn', true);
     expect(st.flags.has('skim')).toBe(true);
     expect(st.movesLeft).toBe(2);
     expect(st.nodes.find((n) => n.id === 'sal')?.disposition).toBe(4);
+  });
+
+  it('playing him WRONG spends the move for nothing and can cost you', () => {
+    let st = initBoard(CH);
+    st = takeAction(CH, st, 'sal_turn', false, { nodeId: 'sal', delta: -1 });
+    expect(st.flags.has('skim')).toBe(false);       // you got nothing
+    expect(st.movesLeft).toBe(2);                   // but the move is gone
+    expect(st.nodes.find((n) => n.id === 'sal')?.disposition).toBe(1);  // and he's warier
+    expect(st.done.has('sal_turn')).toBe(true);     // can't retry
+  });
+
+  it('every person-action offers an ASK and options where exactly one works', () => {
+    const worked = CH.actions.filter((a) => a.options);
+    expect(worked.length).toBeGreaterThan(0);
+    for (const a of worked) {
+      expect(a.ask).toBeTruthy();
+      expect(a.options!.filter((o) => o.good).length).toBe(1);  // one right read
+    }
   });
 
   it('an action can only be taken once, and not past the move budget', () => {

@@ -31,6 +31,7 @@ export function renderBoard(
 ): void {
   root.innerHTML = '';
   root.className = 'board-screen';
+  root.onclick = null;   // never inherit a leaked tap handler
 
   if (result) root.appendChild(el('div', 'board-toast', result));
 

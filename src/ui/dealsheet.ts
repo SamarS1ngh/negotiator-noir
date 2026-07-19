@@ -60,6 +60,7 @@ export function renderDeal(root: HTMLElement, opp: Opponent, view: DealView, on:
   if (!m || m.oppId !== opp.id) {
     root.innerHTML = '';
     root.className = 'deal-screen';
+  root.onclick = null;   // never inherit a leaked tap handler
     const stageHost = el('div', 'bg');
     const stage = mountFace(stageHost, opp);
     root.appendChild(stageHost);

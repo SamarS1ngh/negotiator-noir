@@ -22,6 +22,7 @@ export function renderDealOutcome(
 ): void {
   root.innerHTML = '';
   root.className = 'dealout-screen';
+  root.onclick = null;   // never inherit a leaked tap handler
 
   const wrap = el('div', 'do-wrap');
   wrap.appendChild(el('div', 'do-kicker', view.walked ? 'he walked out' : 'the deal is closed'));
