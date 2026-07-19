@@ -27,6 +27,7 @@ export function renderBoard(
   selected: string | null,
   on: BoardHandlers,
   result?: string,
+  changed?: Set<string>,   // nodes that just shifted — they flare
 ): void {
   root.innerHTML = '';
   root.className = 'board-screen';
@@ -77,17 +78,28 @@ export function renderBoard(
     web.appendChild(lab);
   }
 
-  // nodes
+  // nodes — pinned photos on the corkboard
   for (const n of st.nodes) {
+    const flare = changed?.has(n.id) ? ' flare' : '';
     const node = document.createElement('button');
     node.type = 'button';
-    node.className = `web-node${n.locked ? ' locked' : ''}${n.dealTarget ? ' target' : ''}${selected === n.id ? ' sel' : ''} d-${n.disposition}`;
+    node.className = `web-node${n.locked ? ' locked' : ''}${n.dealTarget ? ' target' : ''}${selected === n.id ? ' sel' : ''}${flare} d-${n.disposition}`;
     node.dataset.node = n.id;
     node.style.left = `${n.x}%`;
     node.style.top = `${n.y}%`;
-    const disc = el('div', 'nd-disc');
-    disc.appendChild(el('span', 'nd-init', n.locked ? '?' : n.name.charAt(0)));
-    node.appendChild(disc);
+
+    const photo = el('div', 'nd-photo');
+    photo.appendChild(el('span', 'nd-pin'));
+    if (n.portrait && !n.locked) {
+      const img = document.createElement('img');
+      img.src = n.portrait;
+      img.alt = n.name;
+      img.onerror = () => { img.replaceWith(el('span', 'nd-init', n.name.charAt(0))); };
+      photo.appendChild(img);
+    } else {
+      photo.appendChild(el('span', 'nd-init', n.locked ? '?' : n.name.charAt(0)));
+    }
+    node.appendChild(photo);
     node.appendChild(el('div', 'nd-name', n.locked ? '???' : n.name));
     if (!n.locked && n.id !== 'you') node.appendChild(el('div', 'nd-disp', DISP_LABEL[n.disposition]));
     if (!n.locked) node.addEventListener('click', () => on.select(selected === n.id ? null : n.id));

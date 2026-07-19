@@ -13,8 +13,12 @@ export interface Node {
   disposition: Disposition;
   locked?: boolean;      // not yet reachable
   dealTarget?: boolean;  // "sit down with" this one
+  portrait?: string;     // their photo on the board
   x: number; y: number;  // 0..100 layout on the board
 }
+
+// a line in a meet-scene. `who: 'them'` is the character, 'you' is you.
+export interface Beat { who: 'them' | 'you'; text: string; }
 
 export interface Edge { from: string; to: string; label: string; }
 
@@ -27,7 +31,12 @@ export interface Action {
   dispositionDelta?: { nodeId: string; delta: number };
   result: string;                   // one-line outcome shown after
   requires?: string[];              // flags needed to appear
+  scene?: Beat[];                   // the short face-to-face you play out
+  ripple?: string;                  // what the world does back (a beat after)
 }
+
+// something the world does back at you between your moves — makes it live.
+export interface WorldEvent { text: string; }
 
 export interface Chapter {
   title: string;
