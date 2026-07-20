@@ -68,7 +68,7 @@ export function thresholdFor(spec: DealSpec, round: number, composureLost: numbe
 
 // A term is a `hardline` refusal if he cares (hardline flag), you pushed most of
 // the way to your side, and you brought no leverage to cover it.
-function reactionFor(t: Term, offerIndex: number, lev: number): TermReaction {
+export function reactionFor(t: Term, offerIndex: number, lev: number): TermReaction {
   const last = t.positions.length - 1;
   const pushedFar = offerIndex >= last - 0.0001 || offerIndex >= Math.ceil(last * 0.75);
   const eff = effectiveWeight(t, lev);

@@ -1,11 +1,25 @@
 import type { Opponent } from '../domain/types';
 import type { Node } from '../domain/board';
-import { initBoard, takeAction, dealPrep, applyDealOutcome } from '../domain/board';
+import { initBoard, takeAction, applyDealOutcome, applyMissionOutcome } from '../domain/board';
 import { CHAPTER_1 } from '../content/chapter1';
-import { COLLECTOR_DEAL, LEVERAGE_TERM, RICCI_INTRO_COLD, RICCI_INTRO_WORKED } from '../content/collector_deal';
+import { SAL_MISSION } from '../content/sal_mission';
+import { CREW_MISSION } from '../content/crew_mission';
+import { BIANCHI_MISSION } from '../content/bianchi_mission';
+import { RICCI_CONFRONT } from '../content/ricci_confront';
+import { PROLOGUE } from '../content/prologue';
 import { renderBoard } from '../ui/board';
 import { renderMeet } from '../ui/meet';
-import { startDeal } from './controller';
+import { startMission } from './mission';
+
+// board actions that open a full branching mission (Detroit-style), by action id
+const MISSIONS = [SAL_MISSION, CREW_MISSION, BIANCHI_MISSION];
+
+// prep flags → add 'proof' when you dug up hard evidence (the skim or the ledger)
+function missionFlags(flags: Set<string>): Set<string> {
+  const f = new Set(flags);
+  if (f.has('skim') || f.has('ledger')) f.add('proof');
+  return f;
+}
 
 /**
  * The campaign loop, alive: THE WEB is a corkboard of people you MEET in short
@@ -36,6 +50,22 @@ export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => voi
   // you pick how to play them. The right read gets the goods; a wrong one fails
   // and can cost you. Nobody hands you anything for free.
   function act(actionId: string): void {
+    // some board actions open a full branching mission (Detroit-style): several
+    // approaches, each ending bends the board its own way. The reached outcome
+    // rewrites it.
+    const mission = MISSIONS.find((m) => m.actionId === actionId);
+    if (mission) {
+      const person = st.nodes.find((x) => x.id === mission.nodeId);
+      startMission(root, mission, { name: person?.name ?? '', role: person?.role ?? '', portrait: person?.portrait }, missionFlags(st.flags), (outcome) => {
+        st = applyMissionOutcome(st, actionId, outcome);
+        selected = null;
+        toast = outcome.ripple;
+        changed = new Set([mission.nodeId, ...(outcome.dispositions?.map((d) => d.nodeId) ?? [])]);
+        showBoard();
+      });
+      return;
+    }
+
     const a = ch.actions.find((x) => x.id === actionId);
     if (!a) return;
     const n = st.nodes.find((x) => x.id === a.nodeId);
@@ -66,37 +96,38 @@ export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => voi
     });
   }
 
+  // THE CONFRONTATION — the sit-down is a branching scene like the missions, but
+  // it's the payoff: your prep picks the opening (rattled/forewarned/hardened) and
+  // gates the approaches (the skim = the blade for the name; Sal = his fear). Its
+  // ending carries a deal result the board applies (name → Marlowe unlocked; how
+  // he walked out → ally or enemy).
   function sitDown(): void {
-    const prep = dealPrep(st.flags);
-    const worked = st.flags.size > 0;   // you did homework → he knows, he's rattled
+    const flags = missionFlags(st.flags);
+    let startAt = 's0_cold';
+    if (flags.has('ricciHardened')) startAt = 's0_hardened';
+    else if (flags.has('ricciForewarned')) startAt = 's0_forewarned';
+    else if (flags.has('crewSpooked') || flags.has('bianchiPressing') || flags.has('salMole')) startAt = 's0_rattled';
+
     const ricci = st.nodes.find((n) => n.id === 'ricci');
-
-    // you MEET him first — the immersive sit-down, same as the others — then the table
-    renderMeet(root, {
-      name: 'RICCI', role: 'the collector', portrait: ricci?.portrait,
-      beats: worked ? RICCI_INTRO_WORKED : RICCI_INTRO_COLD,
-    }, () => openTable(prep));
-  }
-
-  function openTable(prep: ReturnType<typeof dealPrep>): void {
-    startDeal(
-      root, opp, COLLECTOR_DEAL, LEVERAGE_TERM, prep.intel, 'proud',
-      { startComposureLost: prep.startComposureLost, patienceDelta: prep.patienceDelta, thresholdDelta: prep.thresholdDelta },
+    startMission(
+      root, RICCI_CONFRONT,
+      { name: ricci?.name ?? 'RICCI', role: ricci?.role ?? '', portrait: ricci?.portrait },
+      flags,
       (outcome) => {
+        const deal = outcome.deal ?? { closed: false, gotName: false, faceIdx: 2 };
         const wasLocked = new Set(st.nodes.filter((n) => n.locked).map((n) => n.id));
-        st = applyDealOutcome(ch, st, outcome);
+        st = applyDealOutcome(ch, st, deal);
         const nowUnlocked = st.nodes.filter((n) => !n.locked && wasLocked.has(n.id)).map((n) => n.id);
         selected = null;
         changed = new Set(['ricci', ...nowUnlocked]);
-        toast = outcome.gotName
-          ? 'Ricci gave up the name. MARLOWE is in reach now.'
-          : outcome.closed
-            ? 'Deal closed. The docks remember how you played it.'
-            : 'He walked. Nothing changed — this time.';
+        toast = outcome.ripple;
         showBoard();
       },
+      startAt,
     );
   }
 
-  showBoard();
+  // open on the prologue — who you are, why now, why anyone as small as you gets
+  // a hearing — then the board
+  renderMeet(root, { name: 'THE JOB', role: 'a nobody with nothing to lose', beats: PROLOGUE }, showBoard);
 }

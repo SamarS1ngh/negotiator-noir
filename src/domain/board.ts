@@ -1,4 +1,5 @@
 import type { IntelId } from './types';
+import type { MissionOutcome } from './mission';
 
 // ---- THE WEB: the scheming board around a target. You're the underdog; you
 // can't fight the empire head-on, so you work the people around it. What you do
@@ -18,7 +19,9 @@ export interface Node {
 }
 
 // a line in a meet-scene. `who: 'them'` is the character, 'you' is you.
-export interface Beat { who: 'them' | 'you'; text: string; }
+// `caption: true` marks narration/inner-voice — rendered as a comic caption box
+// instead of a speech bubble.
+export interface Beat { who: 'them' | 'you'; text: string; caption?: boolean; }
 
 export interface Edge { from: string; to: string; label: string; }
 
@@ -128,6 +131,27 @@ export function dealPrep(flags: Set<string>): DealPrep {
   if (flags.has('bianchiPressing')) thresholdDelta -= 0.4;
 
   return { intel, startComposureLost, patienceDelta, thresholdDelta };
+}
+
+// ---- a mission's outcome rewrites the board (Detroit-style: which ending you
+// reached bends the world its own way — an ally here, an enemy there) ----
+export function applyMissionOutcome(st: BoardState, actionId: string, o: MissionOutcome): BoardState {
+  const changes = new Map<string, { set?: number; delta?: number }>();
+  for (const d of o.dispositions ?? []) changes.set(d.nodeId, d);
+  const nodes = st.nodes.map((n) => {
+    const c = changes.get(n.id);
+    if (!c) return n;
+    let disp: number = n.disposition;
+    if (c.set !== undefined) disp = c.set;
+    if (c.delta !== undefined) disp += c.delta;
+    return { ...n, disposition: Math.max(0, Math.min(4, disp)) as Disposition };
+  });
+  const flags = new Set(st.flags);
+  for (const f of o.grants ?? []) flags.add(f);
+  for (const f of o.worldFlags ?? []) flags.add(f);
+  const done = new Set(st.done);
+  done.add(actionId);
+  return { nodes, flags, done, movesLeft: Math.max(0, st.movesLeft - 1) };
 }
 
 // ---- the deal's result comes back and rewrites the board ----

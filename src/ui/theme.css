@@ -456,17 +456,62 @@ body {
 .meet-portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; animation: meet-in 6s ease-out forwards; }
 @keyframes meet-in { from { transform: scale(1.12); } to { transform: scale(1.18); } }
 .meet-grad { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,9,12,.55), transparent 26%, transparent 44%, rgba(8,9,12,.97) 82%); }
+
+/* portraitless scenes (the prologue) — a graded noir void with halftone + vignette
+   instead of dead black */
+.meet-screen.no-portrait .meet-bg {
+  background:
+    radial-gradient(115% 75% at 50% -8%, rgba(80,20,26,.55), transparent 52%),
+    radial-gradient(90% 60% at 50% 118%, rgba(18,30,56,.5), transparent 60%),
+    #0a0b10;
+}
+.meet-screen.no-portrait .meet-bg::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.6px);
+  background-size: 6px 6px; mix-blend-mode: screen; opacity: .5;
+}
+.meet-screen.no-portrait .meet-grad { background: radial-gradient(120% 100% at 50% 50%, transparent 38%, rgba(4,5,8,.86)); }
 .meet-top { position: absolute; top: calc(16px + var(--safe-t)); left: var(--pad); z-index: 3; }
 .meet-name { font-size: clamp(20px, 6vw, 28px); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #fff; text-shadow: 0 2px 12px #000; }
 .meet-role { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); margin-top: 2px; }
-.meet-say { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(52px + var(--safe-b)); z-index: 3; }
-.meet-say .meet-who { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 6px; }
-.meet-say.them .meet-who { color: var(--gold); }
-.meet-say.you .meet-who { color: var(--steel); }
-.meet-line { font-family: 'JetBrains Mono', monospace; font-size: clamp(15px, 4.4vw, 20px); line-height: 1.45; color: #fff; text-shadow: 0 2px 14px #000; }
-.meet-say.you .meet-line { color: #dff3f8; }
-.meet-caret { display: inline-block; margin-left: 2px; color: var(--steel); animation: cursor-blink 1s step-end infinite; }
-.meet-tap { position: absolute; right: var(--pad); bottom: calc(24px + var(--safe-b)); z-index: 3; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+/* ---- dialogue: sleek noir webtoon panel, glass-dark and tinted by the speaker.
+   The name rides a small accent tab; the panel's top edge + accent glow take the
+   character's palette colour, so who's talking reads at a glance and it melts into
+   the graded scene instead of fighting it. ---- */
+.meet-say { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(58px + var(--safe-b)); z-index: 4; display: flex; flex-direction: column; }
+.meet-say.them { align-items: flex-start; }
+.meet-say.you  { align-items: flex-end; }
+.meet-say .meet-who {
+  font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  padding: 3px 13px 4px; border-radius: 8px 8px 0 0; margin: 0 0 -1px 3px; color: #07080b;
+  background: var(--accent, #c9a94a);
+}
+.meet-say.you .meet-who { background: var(--steel); }
+.meet-line {
+  position: relative; max-width: 94%;
+  background: linear-gradient(180deg, rgba(17,20,26,.9), rgba(9,11,15,.92));
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: #eef3f7; border: 1px solid rgba(255,255,255,.07);
+  border-top: 2px solid var(--accent, #c9a94a);
+  border-radius: 2px 13px 13px 13px; padding: 13px 16px 14px;
+  font-family: 'Oswald', system-ui, sans-serif; font-weight: 300; letter-spacing: .012em;
+  font-size: clamp(15px, 4.2vw, 18px); line-height: 1.46; text-shadow: 0 1px 6px rgba(0,0,0,.5);
+  box-shadow: 0 14px 36px rgba(0,0,0,.6), 0 0 22px -8px var(--accent, transparent);
+}
+.meet-say.you .meet-line { border-top-color: var(--steel); border-radius: 13px 2px 13px 13px; box-shadow: 0 14px 36px rgba(0,0,0,.6), 0 0 22px -8px var(--steel); }
+/* narration = a slim glass caption with a gold rule — cinematic, not a sticker */
+.meet-say.caption { align-items: stretch; bottom: auto; top: calc(86px + var(--safe-t)); }
+.meet-say.caption .meet-line {
+  max-width: 100%; background: linear-gradient(180deg, rgba(10,10,14,.78), rgba(6,6,9,.82));
+  border: none; border-left: 3px solid var(--gold); border-radius: 2px;
+  color: #ece0c4; font-weight: 300; font-style: italic; text-shadow: 0 1px 10px #000;
+  box-shadow: 0 12px 32px rgba(0,0,0,.55);
+}
+.meet-screen.no-portrait .meet-say.caption { top: 30%; }
+.meet-screen.no-portrait .meet-say.caption .meet-line { font-size: clamp(16px, 4.6vw, 21px); line-height: 1.5; }
+
+.meet-caret { display: inline-block; margin-left: 1px; color: var(--accent, #c9a94a); font-weight: 700; animation: cursor-blink 1s step-end infinite; }
+.meet-tap { position: absolute; right: var(--pad); bottom: calc(20px + var(--safe-b)); z-index: 5; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
 .meet-result { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(28px + var(--safe-b)); z-index: 3; }
 .mr-lab { font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--steel); margin-bottom: 7px; }
 .mr-lab.warn { color: var(--crimson); }
@@ -478,19 +523,96 @@ body {
 .mc-ask { font-family: 'JetBrains Mono', monospace; font-size: clamp(13px, 3.5vw, 15px); line-height: 1.45; color: #f4e7c6; margin-bottom: 16px; text-shadow: 0 2px 10px #000; }
 .mc-lab { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--steel); margin-bottom: 8px; }
 .mc-opt {
-  display: block; width: 100%; text-align: left; cursor: pointer; font-family: inherit;
-  margin-bottom: 8px; padding: 12px 14px; border-radius: 11px;
-  border: 1px solid rgba(111,211,230,.28);
-  background: linear-gradient(180deg, rgba(14,22,27,.9), rgba(9,14,19,.94));
-  color: #eaf6f9; font-size: clamp(13px, 3.5vw, 15px); line-height: 1.35;
-  transition: border-color .15s, transform .1s;
+  display: block; width: 100%; text-align: left; cursor: pointer; font-family: 'Oswald', system-ui, sans-serif;
+  margin-bottom: 8px; padding: 12px 15px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.14); border-left: 2px solid rgba(255,255,255,.22);
+  background: linear-gradient(180deg, rgba(16,18,23,.88), rgba(9,11,15,.92));
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: #e8edf2; font-weight: 300; font-size: clamp(13px, 3.5vw, 15px); line-height: 1.36;
+  transition: border-color .15s, transform .1s, background .15s;
 }
-.mc-opt:hover { border-color: rgba(111,211,230,.55); }
-.mc-opt:active { transform: scale(.99); }
+.mc-opt:active { transform: scale(.99); background: linear-gradient(180deg, rgba(22,25,31,.92), rgba(12,14,19,.95)); }
 .mr-line { font-family: 'JetBrains Mono', monospace; font-size: clamp(14px, 3.8vw, 16px); line-height: 1.45; color: #f4e7c6; }
 .meet-ripple { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(226,59,66,.25); }
 .mr-rip { font-size: clamp(12px, 3.1vw, 13.5px); line-height: 1.5; color: #d8b9ba; font-style: italic; }
 .meet-done { margin-top: 20px; width: 100%; padding: 15px; border-radius: 11px; border: 1px solid var(--crimson); background: linear-gradient(180deg, rgba(34,12,14,.92), rgba(20,9,11,.96)); color: #fff; font-family: 'Oswald'; font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+
+/* ---- MISSION: character palettes + mood lighting ----
+   Two stacked light layers over the portrait: .scene-light carries the
+   CHARACTER's signature ambient + lamp glow (--glow / --ambient / --accent set
+   by the pal-* class); .scene-mood carries the SITUATION's wash + vignette (set
+   by the mood-* class). Both cross-fade so a scene visibly re-lights as it turns. */
+.mission-screen { --glow: rgba(120,150,170,.14); --ambient: rgba(10,14,18,.42); --accent: #6fd3e6; }
+.mission-screen.pal-sal     { --glow: rgba(150,200,150,.20); --ambient: rgba(24,34,24,.5);  --accent: #8fb98a; } /* sickly ledger-lamp green */
+.mission-screen.pal-ricci   { --glow: rgba(224,178,74,.22);  --ambient: rgba(40,18,12,.5);  --accent: #e0b24a; } /* proud gold + blood */
+.mission-screen.pal-bianchi { --glow: rgba(95,174,122,.20);  --ambient: rgba(14,34,24,.5);  --accent: #5fae7a; } /* envious green */
+.mission-screen.pal-crew    { --glow: rgba(201,138,58,.20);  --ambient: rgba(34,24,12,.5);  --accent: #c98a3a; } /* grimy dock amber */
+.mission-screen.pal-marlowe { --glow: rgba(143,176,200,.20); --ambient: rgba(14,20,28,.55); --accent: #8fb0c8; } /* cold steel */
+
+.scene-light {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(85% 55% at 50% -8%, var(--glow), transparent 62%),
+    linear-gradient(180deg, transparent 42%, var(--ambient));
+  transition: background .5s ease;
+}
+.scene-mood {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  box-shadow: inset 0 0 130px 34px rgba(0,0,0,.5);   /* base noir vignette on every scene */
+  transition: box-shadow .55s ease, background .55s ease; }
+.mood-tense  .scene-mood { box-shadow: inset 0 0 155px 50px rgba(0,0,0,.72); background: radial-gradient(120% 90% at 50% 30%, transparent 30%, rgba(0,0,0,.38)); }
+.mood-fear   .scene-mood { box-shadow: inset 0 0 195px 74px rgba(6,14,34,.84); background: radial-gradient(100% 82% at 50% 36%, transparent 22%, rgba(10,20,58,.62)); }
+.mood-guilt  .scene-mood { box-shadow: inset 0 0 175px 62px rgba(6,12,20,.74); background: radial-gradient(95% 74% at 50% 30%, transparent 30%, rgba(10,24,32,.52)); }
+.mood-cold   .scene-mood { box-shadow: inset 0 0 175px 60px rgba(8,18,30,.72); background: radial-gradient(100% 80% at 50% 40%, transparent 32%, rgba(16,32,46,.48)); }
+.mood-hope   .scene-mood { box-shadow: inset 0 0 120px 30px rgba(20,14,4,.42); background: radial-gradient(95% 72% at 50% 2%, rgba(242,192,92,.36), transparent 52%); }
+.mood-warm   .scene-mood { box-shadow: inset 0 0 120px 28px rgba(24,14,4,.44); background: radial-gradient(98% 76% at 50% 8%, rgba(242,162,82,.34), transparent 54%); }
+.mood-threat .scene-mood { box-shadow: inset 0 0 205px 68px rgba(112,6,10,.74); background: radial-gradient(115% 85% at 50% 44%, transparent 24%, rgba(172,18,22,.46)); }
+
+/* the MOOD grades the CHARACTER too — the whole scene takes the vibe, not a tint box */
+.mission-screen .meet-portrait { transition: filter .55s ease; }
+.mood-tense  .meet-portrait { filter: contrast(1.16) brightness(.80) saturate(.92); }
+.mood-fear   .meet-portrait { filter: contrast(1.10) brightness(.64) saturate(.66); }
+.mood-guilt  .meet-portrait { filter: contrast(1.02) brightness(.76) saturate(.42); }
+.mood-cold   .meet-portrait { filter: contrast(1.06) brightness(.80) saturate(.50); }
+.mood-hope   .meet-portrait { filter: contrast(1.03) brightness(1.05) saturate(1.08); }
+.mood-warm   .meet-portrait { filter: contrast(1.02) brightness(1.07) saturate(1.12); }
+.mood-threat .meet-portrait { filter: contrast(1.22) brightness(.82) saturate(1.18); }
+
+/* faint film grain across the scene — atmosphere, not a flat wash */
+.scene-light::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1.4px);
+  background-size: 5px 5px; mix-blend-mode: overlay; opacity: .5;
+}
+
+/* the character's accent tints their name + the scene's labels */
+.mission-screen .meet-name { color: var(--accent); }
+.mission-screen .mc-lab { color: var(--accent); opacity: .85; }
+
+/* ---- MISSION: branching fork tints + the consequence card ---- */
+/* NO tint by tone — the option's nature (aggressive/gentle/bribe) must NOT be
+   telegraphed by colour, or you'd pick by colour instead of reading the person.
+   Every option looks identical; the read is the game. */
+
+.mission-conseq {
+  position: absolute; left: var(--pad); right: var(--pad); bottom: calc(24px + var(--safe-b)); z-index: 4;
+  padding: 16px 16px 14px; border-radius: 14px; border: 1px solid rgba(120,140,160,.2);
+  background: linear-gradient(180deg, rgba(14,16,20,.96), rgba(8,10,13,.98));
+  box-shadow: 0 -8px 40px rgba(0,0,0,.6); animation: conseq-in .3s cubic-bezier(.2,.7,.3,1.15) both;
+}
+@keyframes conseq-in { 0% { opacity: 0; transform: translateY(18px); } 100% { opacity: 1; transform: none; } }
+.mission-conseq.tone-good { border-color: rgba(120,200,140,.5); box-shadow: 0 -8px 40px rgba(0,0,0,.6), inset 0 2px 0 rgba(120,200,140,.4); }
+.mission-conseq.tone-mixed { border-color: rgba(224,178,74,.5); box-shadow: 0 -8px 40px rgba(0,0,0,.6), inset 0 2px 0 rgba(224,178,74,.4); }
+.mission-conseq.tone-bad { border-color: rgba(226,59,66,.55); box-shadow: 0 -8px 40px rgba(0,0,0,.6), inset 0 2px 0 rgba(226,59,66,.5); }
+.mcq-tag { font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 7px; }
+.tone-good .mcq-tag { color: #7fd39a; }
+.tone-mixed .mcq-tag { color: var(--gold); }
+.tone-bad .mcq-tag { color: var(--crimson); }
+.mcq-title { font-family: 'Oswald'; font-size: 17px; font-weight: 700; letter-spacing: .04em; color: #f2f6f8; margin-bottom: 9px; }
+.mcq-line { font-family: 'JetBrains Mono', monospace; font-size: 13.5px; line-height: 1.45; color: #f4e7c6; }
+.mcq-ripple { margin-top: 13px; padding-top: 11px; border-top: 1px solid rgba(160,170,190,.16); }
+.mcq-rip-lab { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--steel); margin-bottom: 5px; }
+.mcq-rip { font-size: 13px; line-height: 1.5; color: #cfd8de; font-style: italic; }
 
 .act-sheet {
   position: absolute; left: var(--pad); right: var(--pad); bottom: calc(96px + var(--safe-b)); z-index: 6;
@@ -549,12 +671,35 @@ body {
 .deal-say .who { font-size: 10px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--crimson); margin-bottom: 5px; }
 .deal-say .line { font-family: 'JetBrains Mono', monospace; font-size: clamp(13px, 3.7vw, 16px); line-height: 1.4; color: var(--bone); text-shadow: 0 2px 12px #000; max-width: 88%; }
 
+/* the table you're both leaning over — a felt/wood band under the papers, so it
+   reads as a sit-down, not a form */
+.deal-felt {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 58dvh; z-index: 2; pointer-events: none;
+  background:
+    radial-gradient(120% 60% at 50% 118%, rgba(28,52,44,.55), transparent 70%),
+    linear-gradient(180deg, transparent 0%, rgba(6,10,9,.35) 30%, rgba(4,7,6,.86) 100%);
+  border-top: 1px solid rgba(120,150,120,.08);
+}
+.deal-felt::before {   /* the table edge — a lip of lamplit wood nearest you */
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 74px;
+  background: linear-gradient(180deg, rgba(46,30,16,.0), rgba(46,30,16,.55) 55%, rgba(26,16,8,.9));
+  box-shadow: inset 0 2px 0 rgba(224,178,74,.08);
+}
+
 /* the sheet sits at the bottom, over the darkened lower third */
 .deal-sheet {
   position: absolute; left: 0; right: 0; bottom: calc(112px + var(--safe-b)); z-index: 5;
   padding: 0 var(--pad); max-height: 46dvh; overflow-y: auto; scrollbar-width: none;
+  transition: transform .18s ease;
 }
 .deal-sheet::-webkit-scrollbar { display: none; }
+/* you put it to him → the papers slide across the table toward his side */
+.deal-sheet.pushed { animation: slide-across .7s cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes slide-across {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  55%  { transform: translateY(-16px) scale(.94) perspective(500px) rotateX(14deg); opacity: .82; }
+  100% { transform: translateY(-30px) scale(.9) perspective(500px) rotateX(20deg); opacity: .6; }
+}
 .sheet-head { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--steel); margin-bottom: 9px; }
 .term { margin-bottom: 12px; }
 .term-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
@@ -577,14 +722,136 @@ body {
 .term.r-hardline .term-label::after { content: ' — hard line'; color: var(--crimson); font-size: 9px; font-weight: 600; }
 .term.r-hardline .seg.yours { border-color: var(--crimson); box-shadow: 0 0 10px rgba(226,59,66,.4); }
 
-.deal-hand { position: absolute; left: 0; right: 0; bottom: calc(66px + var(--safe-b)); z-index: 5; padding: 0 var(--pad); }
-.deal-hand .hand-lab { font-size: 8.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: 5px; }
-.hand-chip { border: 1px solid rgba(224,178,74,.5); background: rgba(34,26,10,.8); color: #f6e2b0; font-family: 'Oswald'; font-size: 11px; letter-spacing: .04em; padding: 7px 11px; border-radius: 8px; cursor: pointer; margin-right: 7px; }
+/* your leverage — a hand of physical cards you drag up onto the table */
+.deal-hand { position: absolute; left: 0; right: 0; bottom: calc(70px + var(--safe-b)); z-index: 7; padding: 0 var(--pad); display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px; }
+.deal-hand .hand-lab { flex-basis: 100%; font-size: 8.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: 3px; }
+.deal-card {
+  display: inline-flex; align-items: center; gap: 7px; touch-action: none; user-select: none;
+  border: 1px solid rgba(224,178,74,.55); border-radius: 9px; cursor: grab;
+  background: linear-gradient(165deg, rgba(48,38,16,.96), rgba(28,22,9,.96));
+  color: #f6e2b0; padding: 9px 12px 10px; box-shadow: 0 6px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,230,160,.12);
+  transform-origin: bottom center; transition: box-shadow .12s, border-color .12s;
+}
+.deal-card .card-mark { color: var(--gold); font-size: 12px; }
+.deal-card .card-txt { font-family: 'Oswald'; font-size: 11.5px; letter-spacing: .03em; }
+.deal-card.lifting { cursor: grabbing; z-index: 40; box-shadow: 0 18px 34px rgba(0,0,0,.65), 0 0 22px rgba(224,178,74,.35); border-color: var(--gold); }
+.deal-card.played { animation: card-slap .28s ease forwards; }
+@keyframes card-slap { 0% { transform: translateY(-14px) scale(1.1); } 60% { transform: translateY(2px) scale(.97); } 100% { transform: translateY(0) scale(1); opacity: .2; } }
 
-.deal-foot { position: absolute; left: 0; right: 0; bottom: calc(12px + var(--safe-b)); z-index: 6; padding: 0 var(--pad); display: flex; gap: 9px; }
+.deal-foot { position: absolute; left: 0; right: 0; bottom: calc(12px + var(--safe-b)); z-index: 8; padding: 0 var(--pad); display: flex; gap: 9px; }
 .deal-accept { flex: 1; padding: 13px; border-radius: 11px; border: 1px solid var(--steel-deep); background: rgba(14,24,28,.9); color: var(--steel); font-family: 'Oswald'; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
-.deal-propose { flex: 2; padding: 13px; border-radius: 11px; border: 1px solid var(--crimson); background: linear-gradient(180deg, rgba(34,12,14,.92), rgba(20,9,11,.96)); color: #fff; font-family: 'Oswald'; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
-.deal-propose:active, .deal-accept:active { transform: scale(.99); }
+.deal-accept:active { transform: scale(.99); }
+
+/* LEAN ON HIM — the press pad. Not a slider: no track, no fill to chase. You
+   hold it and watch HIS FACE. The pad itself only shows it's engaged. */
+.press-pad {
+  flex: 2; position: relative; padding: 11px 13px; border-radius: 11px; touch-action: none; user-select: none;
+  border: 1px solid var(--crimson); background: linear-gradient(180deg, rgba(40,13,15,.94), rgba(22,9,11,.97));
+  color: #fff; font-family: 'Oswald'; cursor: pointer; display: flex; flex-direction: column; gap: 2px; align-items: center;
+  transition: transform .08s, box-shadow .12s, border-color .12s;
+  animation: pad-breathe 2.1s ease-in-out infinite;   /* idle: invites a hold, not a tap */
+}
+@keyframes pad-breathe { 0%,100% { box-shadow: 0 0 0 rgba(226,59,66,0); } 50% { box-shadow: 0 0 15px rgba(226,59,66,.4); } }
+.press-pad .pp-lab { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.press-pad .pp-sub { font-size: 8.5px; letter-spacing: .08em; text-transform: uppercase; color: rgba(244,220,220,.65); }
+/* held: grows and glows hard so a hold is unmistakably different from a tap */
+.press-pad.held { animation: none; transform: scale(1.03); border-color: #fff; box-shadow: 0 0 30px rgba(226,59,66,.6), inset 0 0 26px rgba(226,59,66,.4); }
+.press-pad.held .pp-sub { color: rgba(255,220,220,.95); }
+.press-pad.nudge { animation: pad-shake .42s; border-color: var(--gold); }
+@keyframes pad-shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 60% { transform: translateX(6px); } }
+
+/* the grip: closes in from the edges as you bear down. --press 0..1 drives it;
+   .danger floods crimson to say he's about to walk. */
+.press-grip {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: calc(var(--press, 0) * 1);
+  box-shadow: inset 0 0 calc(30px + var(--press, 0) * 120px) calc(6px + var(--press, 0) * 60px) rgba(6,4,5,.9);
+  transition: box-shadow .05s linear, background .12s;
+}
+.press-grip.danger {
+  box-shadow: inset 0 0 200px 70px rgba(120,10,14,.85);
+  background: radial-gradient(120% 90% at 50% 45%, transparent 40%, rgba(150,16,20,.28));
+  animation: grip-pulse .5s infinite;
+}
+@keyframes grip-pulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+
+/* ================= THE WIRE — the deal as an encrypted burner chat ================= */
+.wire-screen {
+  --pad: clamp(14px, 4.4vw, 20px);
+  position: relative; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+  background: radial-gradient(120% 80% at 50% -10%, #14161c, #070809 70%);
+  color: var(--bone); font-family: 'Oswald', sans-serif;
+  padding-top: var(--safe-t);
+}
+.wire-head {
+  display: flex; align-items: center; gap: 11px; padding: 11px var(--pad);
+  border-bottom: 1px solid rgba(120,140,160,.12); background: rgba(10,12,16,.72); backdrop-filter: blur(6px);
+  z-index: 4;
+}
+.wire-av { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; border: 1px solid rgba(224,178,74,.4); background: #222; }
+.wire-av img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; filter: grayscale(.25) contrast(1.05); }
+.wire-who { flex: 1; min-width: 0; }
+.ww-name { font-size: 15px; font-weight: 600; letter-spacing: .06em; }
+.ww-status { font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+.ww-status.live { color: var(--gold); }
+.wire-lock { color: rgba(120,200,140,.7); font-size: 13px; }
+
+.wire-log { flex: 1; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 9px; padding: 16px var(--pad) 8px; }
+.wire-log::-webkit-scrollbar { display: none; }
+.wm-row { display: flex; }
+.wm-row.them { justify-content: flex-start; }
+.wm-row.you { justify-content: flex-end; }
+.wm-row.sys { justify-content: center; }
+.wm {
+  max-width: 78%; padding: 9px 13px; border-radius: 15px; font-size: 14px; line-height: 1.38;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+.wm.them { background: linear-gradient(180deg, #1c2028, #171a20); color: #e9eef4; border: 1px solid rgba(150,170,190,.12); border-bottom-left-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.wm.you { background: linear-gradient(180deg, #5a1418, #430e12); color: #ffe9ea; border: 1px solid rgba(226,59,66,.4); border-bottom-right-radius: 5px; }
+.wm.sys { background: none; box-shadow: none; color: var(--faint); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }
+.wm.file { display: inline-flex; align-items: center; gap: 8px; font-family: 'Oswald'; font-style: italic; opacity: .95; border-style: dashed; }
+.wm .wm-clip { font-style: normal; }
+.wm-row.pop { animation: wm-in .26s cubic-bezier(.2,.7,.3,1.2) both; }
+@keyframes wm-in { 0% { opacity: 0; transform: translateY(10px) scale(.96); } 100% { opacity: 1; transform: none; } }
+
+.wm.typing { display: inline-flex; gap: 5px; align-items: center; padding: 12px 14px; }
+.wm.typing .dot { width: 6px; height: 6px; border-radius: 50%; background: #7d8794; animation: wm-dot 1s infinite; }
+.wm.typing .dot:nth-child(2) { animation-delay: .18s; }
+.wm.typing .dot:nth-child(3) { animation-delay: .36s; }
+@keyframes wm-dot { 0%,60%,100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+/* the hold-grip, same language as the table */
+.wire-grip {
+  position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: calc(var(--press, 0) * 1);
+  box-shadow: inset 0 0 calc(30px + var(--press, 0) * 130px) calc(6px + var(--press, 0) * 66px) rgba(6,4,5,.92);
+  transition: box-shadow .05s linear, background .12s;
+}
+.wire-grip.danger { box-shadow: inset 0 0 210px 74px rgba(120,10,14,.85); background: radial-gradient(120% 90% at 50% 45%, transparent 40%, rgba(150,16,20,.3)); animation: grip-pulse .5s infinite; }
+
+.wire-compose { position: relative; z-index: 6; padding: 8px var(--pad) calc(12px + var(--safe-b)); border-top: 1px solid rgba(120,140,160,.12); background: rgba(9,11,14,.82); backdrop-filter: blur(6px); }
+.wc-ask { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); margin: 2px 2px 8px; }
+.wc-chips { display: flex; flex-direction: column; gap: 7px; }
+.wc-chip {
+  display: flex; align-items: center; gap: 8px; text-align: left; width: 100%;
+  padding: 11px 13px; border-radius: 11px; cursor: pointer; font-family: 'Oswald'; font-size: 13.5px; letter-spacing: .01em;
+  border: 1px solid rgba(150,170,190,.2); background: rgba(24,27,33,.9); color: #e6ecf2; transition: transform .08s, border-color .12s, background .12s;
+}
+.wc-chip:active { transform: scale(.985); }
+.wc-chip.t-give { border-color: rgba(120,200,140,.35); }
+.wc-chip.t-push { border-color: rgba(226,59,66,.4); color: #ffdadb; }
+.wc-chip.t-lever { border-color: rgba(224,178,74,.55); background: linear-gradient(180deg, rgba(46,36,14,.92), rgba(28,22,9,.94)); color: #f6e2b0; }
+.wc-chip .chip-clip { font-size: 13px; }
+
+.wire-hold {
+  position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 13px; border-radius: 12px; cursor: pointer; touch-action: none; user-select: none; color: #fff; font-family: 'Oswald';
+  border: 1px solid var(--crimson); background: linear-gradient(180deg, rgba(40,13,15,.95), rgba(22,9,11,.97));
+  animation: pad-breathe 2.1s ease-in-out infinite; transition: transform .08s, box-shadow .12s, border-color .12s;
+}
+.wire-hold .wh-lab { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.wire-hold .wh-sub { font-size: 8.5px; letter-spacing: .08em; text-transform: uppercase; color: rgba(244,220,220,.65); }
+.wire-hold.held { animation: none; transform: scale(1.02); border-color: #fff; box-shadow: 0 0 30px rgba(226,59,66,.6), inset 0 0 26px rgba(226,59,66,.4); }
+.wire-hold.hot { border-color: #ff5a60; box-shadow: 0 0 40px rgba(226,59,66,.85), inset 0 0 30px rgba(226,59,66,.6); }
+.wire-hold.nudge { animation: pad-shake .42s; border-color: var(--gold); }
 .deal-walk { position: absolute; top: calc(9px + var(--safe-t)); right: 50%; transform: translateX(50%); z-index: 6; opacity: 0; pointer-events: none; }
 
 /* ---- deal outcome ---- */

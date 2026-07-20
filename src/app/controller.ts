@@ -9,6 +9,7 @@ import { renderDealOutcome } from '../ui/dealoutcome';
 const TEST = import.meta.env.MODE === 'test';
 const TIMING = { REACT: 1100 };
 const COMPOSURE_PER_ROUND = 6;   // he wears down as the sit-down drags on
+const PRESS_MAX = 28;            // how much threshold a full, controlled lean buys you
 
 export interface LevTermMap { [leverageId: string]: { term: string; strength: number } }
 
@@ -82,6 +83,10 @@ export function startDeal(
 
   function mood(): MoodState { return moodFor(100 - composureLost); }
 
+  // how far you can lean before he breaks off. With a hold on him (leverage laid
+  // down) he can't just walk, so you can press much harder.
+  function pressCeil(): number { return Object.keys(attached).length > 0 ? 0.9 : 0.72; }
+
   function chipsAvailable(): LeverageChip[] {
     const used = new Set(Object.values(attached));
     return held.filter((c) => !used.has(c.id));
@@ -120,6 +125,7 @@ export function startDeal(
       chips: chipsAvailable(),
       hasCounter: hasCounter(),
       reacting,
+      pressCeil: pressCeil(),
     }, handlers);
   }
 
@@ -144,9 +150,35 @@ export function startDeal(
     draw();
   }
 
-  function propose(): void {
+  // You don't "click propose" — you LEAN on him. `press` is 0..1: how hard you
+  // pushed before you let go. Pressing wears his threshold down (he deals to make
+  // it stop) — but lean too far and he walks. Leverage means you've got him: you
+  // can press much harder before he bolts. His face is your only gauge of how
+  // close to the edge you are.
+  function propose(press = 1): void {
     if (reacting || closed) return;
-    const res = evaluate(effSpec, offer, leverageMap(), round, composureLost);
+    const leverageOn = Object.keys(attached).length > 0;
+    const over = pressCeil();                   // how far you can push before he breaks off
+
+    if (press > over) {
+      if (leverageOn) {
+        // he can't just get up — you have him — but squeezing costs you both
+        round += 1;
+        patienceLeft -= 1;
+        composureLost += COMPOSURE_PER_ROUND;
+        hisLine = patienceLeft <= 0
+          ? "Enough. Take what's on the table or get out."
+          : "You're squeezing too hard. Careful.";
+        react('lean', draw);
+        return;
+      }
+      hisLine = "You overplayed it. I don't deal with people who try to break me.";
+      react('settle', () => showOutcome({ walked: true }));
+      return;
+    }
+
+    const pressBonus = Math.round(press * PRESS_MAX);
+    const res = evaluate(effSpec, offer, leverageMap(), round, composureLost + pressBonus);
     reactions = res.reactions;
 
     if (res.verdict === 'accept') {
@@ -212,7 +244,7 @@ export function startDeal(
       objective: opp.objective?.goal ?? 'THE DEAL',
       hisName: opp.name, mood: mood(), rows: rows(), round,
       patienceLeft, patienceTotal: effSpec.patience, hisLine,
-      chips: chipsAvailable(), hasCounter: hasCounter(), reacting: true,
+      chips: chipsAvailable(), hasCounter: hasCounter(), reacting: true, pressCeil: pressCeil(),
     }, handlers);
   }
 

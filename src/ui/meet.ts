@@ -41,6 +41,8 @@ export function renderMeet(root: HTMLElement, view: MeetView, onDone: (chosen: M
   let i = 0, typed = 0, ended = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let chosen: MeetOption | null = null;
+  let lineNode: HTMLElement | null = null;   // the bubble text — updated in place, no full redraw
+  let tapNode: HTMLElement | null = null;
   let phase: Phase = view.beats.length > 0 ? 'talk' : afterTalk();
 
   function stopTimer(): void { if (timer) { clearTimeout(timer); timer = undefined; } }
@@ -55,7 +57,7 @@ export function renderMeet(root: HTMLElement, view: MeetView, onDone: (chosen: M
 
   function draw(): void {
     root.innerHTML = '';
-    root.className = 'meet-screen';
+    root.className = view.portrait ? 'meet-screen' : 'meet-screen no-portrait';
     root.onclick = null;
 
     const bg = el('div', 'meet-bg');
@@ -76,14 +78,14 @@ export function renderMeet(root: HTMLElement, view: MeetView, onDone: (chosen: M
 
     if (phase === 'talk') {
       const beat = view.beats[i]!;
-      const box = el('div', `meet-say ${beat.who}`);
-      box.appendChild(el('div', 'meet-who', beat.who === 'you' ? 'YOU' : view.name));
-      const line = el('div', 'meet-line');
-      line.append(beat.text.slice(0, typed));
-      if (typed < beat.text.length) line.appendChild(el('span', 'meet-caret', '▌'));
-      box.appendChild(line);
+      const box = el('div', `meet-say ${beat.who}${beat.caption ? ' caption' : ''}`);
+      if (!beat.caption) box.appendChild(el('div', 'meet-who', beat.who === 'you' ? 'YOU' : view.name));
+      lineNode = el('div', 'meet-line');
+      box.appendChild(lineNode);
       root.appendChild(box);
-      root.appendChild(el('div', 'meet-tap', typed < beat.text.length ? '' : 'tap to go on ▸'));
+      tapNode = el('div', 'meet-tap');
+      root.appendChild(tapNode);
+      paint();
       root.onclick = advance;
       return;
     }
@@ -129,18 +131,29 @@ export function renderMeet(root: HTMLElement, view: MeetView, onDone: (chosen: M
     root.appendChild(res);
   }
 
+  // update just the bubble text (no DOM rebuild) so typing is smooth and a tap
+  // completes the line instantly
+  function paint(): void {
+    const beat = view.beats[i];
+    if (!beat || !lineNode) return;
+    lineNode.textContent = beat.text.slice(0, typed);
+    if (typed < beat.text.length) lineNode.appendChild(el('span', 'meet-caret', '▌'));
+    if (tapNode) tapNode.textContent = typed < beat.text.length ? '' : 'tap to go on ▸';
+  }
+
   function tick(): void {
     const beat = view.beats[i];
     if (!beat) return;
-    typed += 1; draw();
+    typed += 1; paint();
     if (typed < beat.text.length) timer = setTimeout(tick, TYPE_MS);
   }
 
   function advance(): void {
     if (phase !== 'talk' || ended) return;
     const beat = view.beats[i]!;
-    if (typed < beat.text.length) { stopTimer(); typed = beat.text.length; draw(); return; }
-    if (i < view.beats.length - 1) { i += 1; typed = 0; draw(); timer = setTimeout(tick, TYPE_MS); return; }
+    // mid-type → snap the whole line in at once
+    if (typed < beat.text.length) { stopTimer(); typed = beat.text.length; paint(); return; }
+    if (i < view.beats.length - 1) { i += 1; typed = 0; lineNode = null; draw(); timer = setTimeout(tick, TYPE_MS); return; }
     // done talking
     if (view.options && view.options.length > 0) { phase = 'choose'; draw(); }
     else if (view.result !== undefined) { phase = 'result'; draw(); }
