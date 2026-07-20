@@ -212,6 +212,7 @@ export const RICCI_CONFRONT: Mission = {
         line: "You overplayed a man who's clawed through worse than you'll ever be. He stands, straightens his coat, and has his men show you out. You got nothing — and now he has your face.",
         ripple: "No deal. Nothing changes on the board — and Ricci is on his guard now.",
         reflect: "I overplayed it. My father would have read the room. I'm not the man he made yet — I'm becoming a worse one.",
+        heatDelta: 3,
         deal: { closed: false, gotName: false, faceIdx: 2 },
       },
     },

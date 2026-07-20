@@ -381,8 +381,16 @@ body {
 }
 .board-title .bt-ch { display: block; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--steel); }
 .board-title .bt-name { display: block; font-size: clamp(20px, 6vw, 28px); font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: #fff; margin-top: 3px; }
+.board-status { display: flex; flex-direction: column; align-items: flex-end; gap: 9px; }
 .board-moves { text-align: right; }
-.board-moves .bm-lab { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.board-moves .bm-lab, .board-heat .bm-lab { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.board-heat { text-align: right; }
+.heat-bar { width: 74px; height: 6px; margin-top: 5px; border-radius: 4px; background: rgba(120,60,50,.25); overflow: hidden; }
+.heat-fill { height: 100%; border-radius: 4px; transition: width .4s ease, background .4s ease; }
+.board-heat.h-cool .heat-fill { background: linear-gradient(90deg, rgba(224,178,74,.7), var(--gold)); }
+.board-heat.h-warm .heat-fill { background: linear-gradient(90deg, var(--gold), #e8863a); }
+.board-heat.h-hot  .heat-fill { background: linear-gradient(90deg, #e8863a, var(--crimson)); box-shadow: 0 0 8px rgba(226,59,66,.6); }
+.board-heat.h-hot .bm-lab { color: var(--crimson); }
 .bm-pips { display: flex; gap: 5px; justify-content: flex-end; margin-top: 5px; }
 .bm-pips .pip { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--steel-deep); opacity: .4; }
 .bm-pips .pip.on { background: var(--steel); border-color: var(--steel); opacity: 1; box-shadow: 0 0 6px rgba(111,211,230,.5); }

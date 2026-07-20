@@ -91,6 +91,7 @@ export const OTTO_MISSION: Mission = {
         line: "He sets down his glass with a click that ends the conversation. \"You came into my house and tried to buy me like a dockhand. Or frighten me. Thirty years, boy. Thirty years.\" He's already reaching for the telephone as you leave.",
         ripple: "Otto tells Marlowe someone in the house is circling. Marlowe pulls his people close and waits for you — forewarned.",
         reflect: "I handled a man of real weight like a mark. Sloppy. Ricci wouldn't have. Marlowe wouldn't have. I keep measuring myself against the men I came to destroy.",
+        heatDelta: 3,
         worldFlags: ['marloweForewarned'],
         dispositions: [{ nodeId: 'otto', set: 0 }],
       },

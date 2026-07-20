@@ -68,6 +68,7 @@ export const MARLOWE_CONTACT: Mission = {
         line: "The pen stops. For the first time he looks at you — really looks. 'Ambition. I'll keep an eye on that.' You're inside, yes. But now the coldest man alive is watching your every step.",
         ripple: '',
         reflect: "I wanted him to see me, and he did. Pride — the same pride that put Ricci where he is. I keep learning the wrong lessons from the wrong men.",
+        heatDelta: 2,
         worldFlags: ['marloweMet'],
         dispositions: [{ nodeId: 'marlowe', set: 1 }],
         cta: 'THE MACHINE AWAITS ▸',

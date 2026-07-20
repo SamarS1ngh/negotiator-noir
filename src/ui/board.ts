@@ -1,5 +1,5 @@
 import type { Chapter, BoardState, Action, Node } from '../domain/board';
-import { availableActions } from '../domain/board';
+import { availableActions, HEAT_MAX } from '../domain/board';
 
 // ---- THE WEB board: the cast as portrait nodes, the lines between them showing
 // how they feel about each other. Tap a node → the moves you can make on them.
@@ -47,7 +47,20 @@ export function renderBoard(
   const pips = el('div', 'bm-pips');
   for (let i = 0; i < ch.moves; i += 1) pips.appendChild(el('span', `pip${i < st.movesLeft ? ' on' : ''}`));
   moves.appendChild(pips);
-  top.appendChild(moves);
+  const status = el('div', 'board-status');
+  status.appendChild(moves);
+
+  // HEAT — your exposure. Rises on botches, carries across chapters, makes the
+  // next target warier.
+  const heat = el('div', `board-heat h-${st.heat >= 7 ? 'hot' : st.heat >= 4 ? 'warm' : 'cool'}`);
+  heat.appendChild(el('span', 'bm-lab', 'heat'));
+  const hbar = el('div', 'heat-bar');
+  const hfill = el('div', 'heat-fill');
+  hfill.style.width = `${Math.round((st.heat / HEAT_MAX) * 100)}%`;
+  hbar.appendChild(hfill);
+  heat.appendChild(hbar);
+  status.appendChild(heat);
+  top.appendChild(status);
   root.appendChild(top);
 
   // the web itself

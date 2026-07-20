@@ -66,14 +66,21 @@ export interface BoardState {
   flags: Set<string>;
   done: Set<string>;      // spent action ids
   movesLeft: number;
+  heat: number;           // your exposure, 0..HEAT_MAX — rises on botches, carries across chapters
 }
 
-export function initBoard(ch: Chapter): BoardState {
+export const HEAT_MAX = 10;
+export function bumpHeat(heat: number, delta: number): number {
+  return Math.max(0, Math.min(HEAT_MAX, heat + delta));
+}
+
+export function initBoard(ch: Chapter, heat = 0): BoardState {
   return {
     nodes: ch.nodes.map((n) => ({ ...n })),
     flags: new Set<string>(),
     done: new Set<string>(),
     movesLeft: ch.moves,
+    heat,
   };
 }
 
@@ -104,7 +111,7 @@ export function takeAction(ch: Chapter, st: BoardState, actionId: string, succes
   const done = new Set(st.done);
   done.add(a.id);
 
-  return { nodes, flags, done, movesLeft: st.movesLeft - 1 };
+  return { nodes, flags, done, movesLeft: st.movesLeft - 1, heat: st.heat };
 }
 
 // ---- a mission's outcome rewrites the board (Detroit-style: which ending you
@@ -125,7 +132,7 @@ export function applyMissionOutcome(st: BoardState, actionId: string, o: Mission
   for (const f of o.worldFlags ?? []) flags.add(f);
   const done = new Set(st.done);
   done.add(actionId);
-  return { nodes, flags, done, movesLeft: Math.max(0, st.movesLeft - 1) };
+  return { nodes, flags, done, movesLeft: Math.max(0, st.movesLeft - 1), heat: bumpHeat(st.heat, o.heatDelta ?? 0) };
 }
 
 // ---- the deal's result comes back and rewrites the board ----

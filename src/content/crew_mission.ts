@@ -175,6 +175,7 @@ export const CREW_MISSION: Mission = {
         line: 'Enzo listens, nods, says nothing. Within the hour Ricci knows a stranger has been on his pier, buying his men.',
         ripple: "No help here. Ricci hears someone's circling his people — and hardens against you.",
         reflect: "I tried to buy men who can't be bought. My father would have led with the boy's hand, not a roll of cash. I'm learning the wrong lessons fast.",
+        heatDelta: 3,
         worldFlags: ['ricciHardened'],
         dispositions: [{ nodeId: 'crew', set: 1 }],
       },

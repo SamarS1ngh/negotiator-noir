@@ -94,6 +94,7 @@ export const ADLER_MISSION: Mission = {
         line: "He goes white and shoves back from the desk. \"No. No — I balance the books, I don't— get out.\" The locks are for keeping people out. Tonight they're to give him time to get to Marlowe first.",
         ripple: "No books. Adler runs straight to Marlowe: someone tried to turn the accountant. Marlowe tightens the house and waits — forewarned.",
         reflect: "I frightened a frightened man and he ran to the one place that felt safe: his master. I should have known. Fear doesn't turn a man. It sends him home.",
+        heatDelta: 3,
         worldFlags: ['marloweForewarned'],
         dispositions: [{ nodeId: 'adler', set: 1 }],
       },

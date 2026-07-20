@@ -29,6 +29,7 @@ export interface MissionOutcome {
   tag?: string;      // overrides the "it lands"/"it backfires" label (for title cards)
   cta?: string;      // overrides the consequence button text
   reflect?: string;  // the MC's inner voice on what he just did — the cost/the mirror
+  heatDelta?: number; // how much exposure this outcome draws (botches raise it; carries on)
 }
 
 // the emotional/situational light of a beat — drives the scene's colour + shadow

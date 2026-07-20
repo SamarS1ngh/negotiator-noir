@@ -1,5 +1,5 @@
 import type { Node } from '../domain/board';
-import { initBoard, takeAction, applyDealOutcome, applyMissionOutcome } from '../domain/board';
+import { initBoard, takeAction, applyDealOutcome, applyMissionOutcome, bumpHeat } from '../domain/board';
 import { CHAPTER_1 } from '../content/chapter1';
 import { CHAPTER_2, buildCh2Recap } from '../content/chapter2';
 import { SAL_MISSION } from '../content/sal_mission';
@@ -115,8 +115,8 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
     const flags = missionFlags(st.flags);
     let startAt = 's0_cold';
     if (flags.has('ricciHardened')) startAt = 's0_hardened';
-    // a bought man talks — salBought tips Ricci off, same as being forewarned
-    else if (flags.has('ricciForewarned') || flags.has('salBought')) startAt = 's0_forewarned';
+    // a bought man talks, or you drew too much heat — either way he's forewarned
+    else if (flags.has('ricciForewarned') || flags.has('salBought') || st.heat >= 6) startAt = 's0_forewarned';
     else if (flags.has('crewSpooked') || flags.has('crewLoyal') || flags.has('bianchiPressing') || flags.has('salMole')) startAt = 's0_rattled';
 
     const ricci = st.nodes.find((n) => n.id === 'ricci');
@@ -128,6 +128,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
         const deal = outcome.deal ?? { closed: false, gotName: false, faceIdx: 2 };
         const wasLocked = new Set(st.nodes.filter((n) => n.locked).map((n) => n.id));
         st = applyDealOutcome(ch, st, deal);
+        st = { ...st, heat: bumpHeat(st.heat, outcome.heatDelta ?? 0) };
         const nowUnlocked = st.nodes.filter((n) => !n.locked && wasLocked.has(n.id)).map((n) => n.id);
         selected = null;
         changed = new Set(['ricci', ...nowUnlocked]);
@@ -143,7 +144,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
   function marloweEndgame(): void {
     const flags = missionFlags(st.flags);
     let startAt = 's0_serene';
-    if (flags.has('marloweForewarned')) startAt = 's0_forewarned';
+    if (flags.has('marloweForewarned') || st.heat >= 6) startAt = 's0_forewarned';
     else if (flags.has('ottoTurned') || flags.has('booksExposed') || flags.has('ricciMole')) startAt = 's0_cracks';
 
     const marlowe = st.nodes.find((n) => n.id === 'marlowe');
@@ -153,6 +154,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
       flags,
       (outcome) => {
         st = applyDealOutcome(ch, st, outcome.deal ?? { closed: false, gotName: false, faceIdx: 2 });
+        st = { ...st, heat: bumpHeat(st.heat, outcome.heatDelta ?? 0) };
         selected = null;
         changed = new Set(['marlowe']);
         toast = outcome.ripple;
@@ -180,9 +182,9 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
         if (ricciDisp >= 4) carried.add('ricciMole');   // Ricci turned mole → your inside man in Ch2
         const marloweStanding = ((outcome.dispositions ?? []).find((d) => d.nodeId === 'marlowe')?.set ?? 2) as Node['disposition'];
 
-        // TRANSITION into Chapter Two — Marlowe's house
+        // TRANSITION into Chapter Two — Marlowe's house (heat carries over)
         ch = CHAPTER_2;
-        st = initBoard(ch);
+        st = initBoard(ch, bumpHeat(st.heat, outcome.heatDelta ?? 0));
         st = {
           ...st,
           flags: new Set([...st.flags, ...carried]),

@@ -117,6 +117,7 @@ export const BIANCHI_MISSION: Mission = {
         line: "'You don't threaten me, kid. Nobody threatens me.' His men step in close and quiet. You leave faster than you arrived — and he keeps your face.",
         ripple: "A peer doesn't take threats. Bianchi's insulted now, and a slighted collector at your back is a dangerous thing to leave behind you.",
         reflect: "Threatened a proud man to his face. Stupid — Ricci would've played it smooth. I keep catching myself thinking that: what would Ricci do.",
+        heatDelta: 2,
         worldFlags: ['ricciHardened'],
         dispositions: [{ nodeId: 'bianchi', set: 0 }],
       },
