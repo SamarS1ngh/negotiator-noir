@@ -1,6 +1,48 @@
 import type { Chapter } from '../domain/board';
+import type { Mission } from '../domain/mission';
 
 const A = 'assets/art/cast';
+
+// "Previously, on the docks" — a reactive recap shown as you cross into Chapter
+// Two, so it stands on its own and reflects how Chapter One actually went. Built
+// on the fly from your carried standing.
+export function buildCh2Recap(flags: Set<string>, marloweStanding: number): Mission {
+  const ricci = flags.has('ricciMole')
+    ? 'Ricci is yours now — your man inside Marlowe\'s house, feeding you what the boss knows.'
+    : 'Ricci walked out of the docks your enemy — a wounded man at your back, and no friend inside.';
+  const standing = marloweStanding >= 3
+    ? 'Marlowe thinks he owns you. A useful stray. He is not watching you closely — yet.'
+    : marloweStanding <= 1
+      ? 'Marlowe has marked you. The coldest man alive is watching your every step.'
+      : 'Marlowe barely saw you at all. A knife he has already forgotten he let in the door.';
+  const rival = flags.has('bianchiRival')
+    ? 'And out on the water, Bianchi holds Ricci\'s old territory now — a rival circling, owing you nothing.'
+    : '';
+
+  return {
+    id: 'ch2_recap', actionId: 'ch2_recap', nodeId: 'you', label: 'previously', palette: 'marlowe', start: 'r',
+    nodes: [{
+      id: 'r',
+      mood: 'cold',
+      portrait: 'assets/art/scene/now.jpg',
+      beats: [
+        { who: 'you', caption: true, text: 'PREVIOUSLY — THE DOCKS.' },
+        { who: 'you', caption: true, text: 'You came up from nothing to break Ricci, the collector who ruined your father — and through him, forced a way into the world of the man at the top.' },
+        { who: 'you', caption: true, text: ricci },
+        { who: 'you', caption: true, text: standing },
+        ...(rival ? [{ who: 'you' as const, caption: true, text: rival }] : []),
+      ],
+      outcome: {
+        key: 'ch2', tone: 'good',
+        tag: 'CHAPTER TWO',
+        title: "MARLOWE'S HOUSE",
+        line: "You're inside now. You can't break Marlowe with a secret — he has no fear, only control. So you rot his house out from under him: turn his people, take his paper, and then make your move.",
+        ripple: '',
+        cta: 'STEP INTO THE HOUSE ▸',
+      },
+    }],
+  };
+}
 
 // CHAPTER TWO — MARLOWE'S HOUSE. You're inside now. Marlowe can't be broken with a
 // secret (no fear, only control), so you don't hit him — you rot his house out

@@ -1,7 +1,7 @@
 import type { Node } from '../domain/board';
 import { initBoard, takeAction, applyDealOutcome, applyMissionOutcome } from '../domain/board';
 import { CHAPTER_1 } from '../content/chapter1';
-import { CHAPTER_2 } from '../content/chapter2';
+import { CHAPTER_2, buildCh2Recap } from '../content/chapter2';
 import { SAL_MISSION } from '../content/sal_mission';
 import { CREW_MISSION } from '../content/crew_mission';
 import { BIANCHI_MISSION } from '../content/bianchi_mission';
@@ -194,8 +194,13 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
         };
         selected = null;
         changed = new Set(['marlowe', 'ricci']);
-        toast = "Chapter Two — Marlowe's house. His people. His weakness. Turn them, then make your move.";
-        showBoard();
+        toast = undefined;
+        // a reactive "previously, on the docks" recap, then the Chapter Two board
+        startMission(
+          root, buildCh2Recap(st.flags, marloweStanding),
+          { name: '', role: '', portrait: 'assets/art/scene/now.jpg' },
+          st.flags, showBoard,
+        );
       },
     );
   }
