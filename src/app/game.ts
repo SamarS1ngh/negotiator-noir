@@ -1,4 +1,3 @@
-import type { Opponent } from '../domain/types';
 import type { Node } from '../domain/board';
 import { initBoard, takeAction, applyDealOutcome, applyMissionOutcome } from '../domain/board';
 import { CHAPTER_1 } from '../content/chapter1';
@@ -33,7 +32,7 @@ function missionFlags(flags: Set<string>): Set<string> {
  * difficulty of the sit-down; the deal outcome rewrites the board. You climb by
  * turning the empire's own people. Spec: docs/superpowers/specs/2026-07-19-*.
  */
-export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => void): void {
+export function startGame(root: HTMLElement, onFinish?: () => void): void {
   void onFinish;
   const ch = CHAPTER_1;
   let st = initBoard(ch);

@@ -1,4 +1,3 @@
-import type { IntelId } from './types';
 import type { MissionOutcome } from './mission';
 
 // ---- THE WEB: the scheming board around a target. You're the underdog; you
@@ -105,32 +104,6 @@ export function takeAction(ch: Chapter, st: BoardState, actionId: string, succes
   done.add(a.id);
 
   return { nodes, flags, done, movesLeft: st.movesLeft - 1 };
-}
-
-// ---- prep the flags become when you sit down ----
-export interface DealPrep {
-  intel: Set<IntelId>;
-  startComposureLost: number;
-  patienceDelta: number;
-  thresholdDelta: number;
-}
-
-export function dealPrep(flags: Set<string>): DealPrep {
-  const intel = new Set<IntelId>();
-  if (flags.has('skim')) intel.add('lev:skims');
-  if (flags.has('ledger')) intel.add('lev:ledger');
-  if (flags.has('type')) intel.add('type');
-  if (flags.has('tell')) intel.add('tell');
-  if (flags.has('lie')) intel.add('lie');
-
-  let startComposureLost = 0;
-  let thresholdDelta = 0;
-  const patienceDelta = 0;
-  if (flags.has('crewSpooked')) startComposureLost += 12;
-  if (flags.has('marloweSuspicious')) startComposureLost += 10;
-  if (flags.has('bianchiPressing')) thresholdDelta -= 0.4;
-
-  return { intel, startComposureLost, patienceDelta, thresholdDelta };
 }
 
 // ---- a mission's outcome rewrites the board (Detroit-style: which ending you

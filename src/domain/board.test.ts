@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initBoard, availableActions, takeAction, dealPrep, applyDealOutcome } from './board';
+import { initBoard, availableActions, takeAction, applyDealOutcome } from './board';
 import { CHAPTER_1 } from '../content/chapter1';
 
 const CH = CHAPTER_1;
@@ -49,22 +49,6 @@ describe('the web board', () => {
     const before = st;
     st = takeAction(CH, st, 'bianchi_tip');   // no moves left
     expect(st).toBe(before);                  // unchanged
-  });
-
-  it('prep: the flags you set become the hand you carry into the deal', () => {
-    const p = dealPrep(new Set(['skim', 'ledger', 'type', 'crewSpooked', 'bianchiPressing']));
-    expect([...p.intel]).toContain('lev:skims');
-    expect([...p.intel]).toContain('lev:ledger');
-    expect([...p.intel]).toContain('type');
-    expect(p.startComposureLost).toBe(12);    // crew spooked → he's rattled
-    expect(p.thresholdDelta).toBeCloseTo(-0.4); // Bianchi pressing → he wants to close
-  });
-
-  it('no prep = you walk in cold and empty-handed', () => {
-    const p = dealPrep(new Set());
-    expect(p.intel.size).toBe(0);
-    expect(p.startComposureLost).toBe(0);
-    expect(p.thresholdDelta).toBe(0);
   });
 
   it('taking the name unlocks Marlowe; saving his face makes him an ally', () => {
