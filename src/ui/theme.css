@@ -556,6 +556,7 @@ body {
 .mission-screen.pal-bianchi { --glow: rgba(95,174,122,.20);  --ambient: rgba(14,34,24,.5);  --accent: #5fae7a; } /* envious green */
 .mission-screen.pal-crew    { --glow: rgba(201,138,58,.20);  --ambient: rgba(34,24,12,.5);  --accent: #c98a3a; } /* grimy dock amber */
 .mission-screen.pal-marlowe { --glow: rgba(143,176,200,.20); --ambient: rgba(14,20,28,.55); --accent: #8fb0c8; } /* cold steel */
+.mission-screen.pal-deluca  { --glow: rgba(230,180,70,.24);   --ambient: rgba(38,26,8,.5);   --accent: #e8b64a; } /* flashy boss gold */
 
 .scene-light {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;

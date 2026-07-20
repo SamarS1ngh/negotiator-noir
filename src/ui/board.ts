@@ -9,7 +9,6 @@ export interface BoardHandlers {
   act(actionId: string): void;
   select(nodeId: string | null): void;
   sitDown(): void;
-  confrontMarlowe(): void;
 }
 
 const DISP_LABEL = ['enemy', 'wary', 'neutral', 'warm', 'ally'];
@@ -135,9 +134,13 @@ export function renderBoard(
   };
   const hint = (t: string): void => { foot.appendChild(el('div', 'bf-hint', t)); };
 
-  if (ch.id === 'ch2') {
-    // Chapter Two: turn Marlowe's house, then spring it on him
-    if (st.done.has('__dealt_marlowe')) {
+  const target = byId.get(ch.targetId);
+  const targetName = (target?.name ?? 'THE TARGET').toUpperCase();
+  const dealt = st.done.has(`__dealt_${ch.targetId}`);   // sat down but forced no way up (a dead-end)
+
+  if (ch.id === 'ch3') {
+    // the endgame — turn Marlowe's house, then move on him
+    if (dealt) {
       hint('It is done. The empire that ate your father answers to you now — or to no one.');
       const b = el('button', 'board-sit done'); (b as HTMLButtonElement).disabled = true; b.textContent = '— THE END —'; foot.appendChild(b);
     } else {
@@ -145,17 +148,12 @@ export function renderBoard(
       button('board-sit marlowe', 'MOVE ON MARLOWE ▸', () => on.sitDown());
     }
   } else {
-    // Chapter One: work the web → sit with Ricci → (if you earned the way in) Marlowe
-    const ricciDealt = st.done.has('__dealt_ricci');
-    const marloweUnlocked = !byId.get('marlowe')?.locked;
-    if (!ricciDealt) {
-      hint(st.movesLeft > 0 ? 'work the people first — you only get so many moves' : "you've done what you can. time to sit down.");
-      button('board-sit', 'SIT DOWN WITH RICCI ▸', () => on.sitDown());
-    } else if (marloweUnlocked) {
-      hint('Ricci got you a way in. Time to face the man himself.');
-      button('board-sit marlowe', 'MOVE ON MARLOWE ▸', () => on.confrontMarlowe());
+    // a climbing chapter — work the web, then sit with the target to force a way up
+    if (dealt) {
+      hint('You dealt with him — but forced no way up. The climb ends here, this time.');
     } else {
-      hint("Your father's debt is dead — but Marlowe stayed a mile out of reach. The climb ends here. This time.");
+      hint(st.movesLeft > 0 ? 'work his people first — you only get so many moves' : "you've done what you can. time to sit down.");
+      button('board-sit', `SIT DOWN WITH ${targetName} ▸`, () => on.sitDown());
     }
   }
   root.appendChild(foot);

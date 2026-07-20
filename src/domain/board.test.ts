@@ -9,7 +9,7 @@ describe('the web board', () => {
     const st = initBoard(CH);
     expect(st.movesLeft).toBe(3);
     expect(st.flags.size).toBe(0);
-    expect(st.nodes.find((n) => n.id === 'marlowe')?.locked).toBe(true);
+    expect(st.nodes.find((n) => n.id === 'deluca')?.locked).toBe(true);
   });
 
   it('playing Sal right (success) grants the skim and warms him', () => {
@@ -54,7 +54,7 @@ describe('the web board', () => {
   it('taking the name unlocks Marlowe; saving his face makes him an ally', () => {
     const st = initBoard(CH);
     const after = applyDealOutcome(CH, st, { closed: true, gotName: true, faceIdx: 0 });
-    expect(after.nodes.find((n) => n.id === 'marlowe')?.locked).toBe(false);
+    expect(after.nodes.find((n) => n.id === 'deluca')?.locked).toBe(false);
     expect(after.nodes.find((n) => n.id === 'ricci')?.disposition).toBe(4);   // ally / mole
     expect(after.nodes.find((n) => n.id === 'ricci')?.dealTarget).toBe(false);
   });
@@ -63,6 +63,6 @@ describe('the web board', () => {
     const st = initBoard(CH);
     const after = applyDealOutcome(CH, st, { closed: true, gotName: false, faceIdx: 2 });
     expect(after.nodes.find((n) => n.id === 'ricci')?.disposition).toBe(0);   // enemy
-    expect(after.nodes.find((n) => n.id === 'marlowe')?.locked).toBe(true);
+    expect(after.nodes.find((n) => n.id === 'deluca')?.locked).toBe(true);
   });
 });

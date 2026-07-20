@@ -19,14 +19,14 @@ export const CHAPTER_1: Chapter = {
     { id: 'sal', name: 'SAL', role: "Marlowe's bookkeeper", disposition: 2, portrait: `${A}/sal.jpg`, x: 17, y: 38 },
     { id: 'crew', name: 'THE CREW', role: 'dock loaders', disposition: 2, portrait: `${A}/crew.jpg`, x: 83, y: 38 },
     { id: 'bianchi', name: 'BIANCHI', role: 'rival collector', disposition: 2, portrait: `${A}/bianchi.jpg`, x: 24, y: 67 },
-    { id: 'marlowe', name: 'MARLOWE', role: 'the empire', disposition: 2, locked: true, portrait: `${A}/marlowe.jpg`, x: 50, y: 15 },
+    { id: 'deluca', name: 'DELUCA', role: 'the man above Ricci', disposition: 2, locked: true, portrait: `${A}/deluca.jpg`, x: 50, y: 15 },
   ],
   edges: [
     { from: 'sal', to: 'ricci', label: 'hates' },
     { from: 'crew', to: 'ricci', label: 'fears' },
-    { from: 'ricci', to: 'marlowe', label: 'fears' },
+    { from: 'ricci', to: 'deluca', label: 'answers to' },
     { from: 'bianchi', to: 'ricci', label: 'envies' },
-    { from: 'marlowe', to: 'ricci', label: 'trusts' },
+    { from: 'deluca', to: 'ricci', label: 'runs' },
   ],
   actions: [
     {

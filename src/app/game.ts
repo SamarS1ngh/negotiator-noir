@@ -1,13 +1,18 @@
 import type { Node } from '../domain/board';
+import type { MissionOutcome } from '../domain/mission';
 import { initBoard, takeAction, applyDealOutcome, applyMissionOutcome, bumpHeat } from '../domain/board';
 import { CHAPTER_1 } from '../content/chapter1';
 import { CHAPTER_2, buildCh2Recap } from '../content/chapter2';
+import { CHAPTER_3, buildCh3Recap } from '../content/chapter3';
 import { SAL_MISSION } from '../content/sal_mission';
 import { CREW_MISSION } from '../content/crew_mission';
 import { BIANCHI_MISSION } from '../content/bianchi_mission';
+import { SANTO_MISSION } from '../content/santo_mission';
+import { REESE_MISSION } from '../content/reese_mission';
 import { OTTO_MISSION } from '../content/otto_mission';
 import { ADLER_MISSION } from '../content/adler_mission';
 import { RICCI_CONFRONT } from '../content/ricci_confront';
+import { DELUCA_CONFRONT } from '../content/deluca_confront';
 import { MARLOWE_CONTACT } from '../content/marlowe_contact';
 import { MARLOWE_ENDGAME } from '../content/marlowe_endgame';
 import { PROLOGUE_MISSION } from '../content/prologue';
@@ -15,8 +20,9 @@ import { renderBoard } from '../ui/board';
 import { renderMeet } from '../ui/meet';
 import { startMission } from './mission';
 
-// board actions that open a full branching mission (Detroit-style), by action id
-const MISSIONS = [SAL_MISSION, CREW_MISSION, BIANCHI_MISSION, OTTO_MISSION, ADLER_MISSION];
+// board actions that open a full branching mission (Detroit-style), by action id.
+// Ch1: Sal/crew/Bianchi · Ch2: Santo/Reese · Ch3: Otto/Adler.
+const MISSIONS = [SAL_MISSION, CREW_MISSION, BIANCHI_MISSION, SANTO_MISSION, REESE_MISSION, OTTO_MISSION, ADLER_MISSION];
 
 // prep flags → derived flags the confrontation gates approaches on, so every
 // thing you did on the board changes what you can do at the table:
@@ -45,7 +51,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
   let changed: Set<string> | undefined;
 
   function showBoard(): void {
-    renderBoard(root, ch, st, selected, { act, select, sitDown, confrontMarlowe }, toast, changed);
+    renderBoard(root, ch, st, selected, { act, select, sitDown }, toast, changed);
     changed = undefined;   // flare is a one-shot
   }
 
@@ -105,119 +111,115 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
     });
   }
 
-  // THE CONFRONTATION — the sit-down is a branching scene like the missions, but
-  // it's the payoff: your prep picks the opening (rattled/forewarned/hardened) and
-  // gates the approaches (the skim = the blade for the name; Sal = his fear). Its
-  // ending carries a deal result the board applies (name → Marlowe unlocked; how
-  // he walked out → ally or enemy).
+  // ---- THE CLIMB: each chapter's sit-down is a branching confrontation. Beating
+  // the target with a WAY UP (deal.gotName) climbs you to the next chapter; a
+  // lesser result leaves you stuck on this rung. Chapter Three (Marlowe) is the end.
   function sitDown(): void {
-    if (ch.id === 'ch2') { marloweEndgame(); return; }
+    if (ch.id === 'ch3') { marloweEndgame(); return; }
+    if (ch.id === 'ch2') { delucaSitDown(); return; }
+    ricciSitDown();
+  }
+
+  function ricciSitDown(): void {
     const flags = missionFlags(st.flags);
     let startAt = 's0_cold';
     if (flags.has('ricciHardened')) startAt = 's0_hardened';
-    // a bought man talks, or you drew too much heat — either way he's forewarned
     else if (flags.has('ricciForewarned') || flags.has('salBought') || st.heat >= 6) startAt = 's0_forewarned';
     else if (flags.has('crewSpooked') || flags.has('crewLoyal') || flags.has('bianchiPressing') || flags.has('salMole')) startAt = 's0_rattled';
-
     const ricci = st.nodes.find((n) => n.id === 'ricci');
-    startMission(
-      root, RICCI_CONFRONT,
-      { name: ricci?.name ?? 'RICCI', role: ricci?.role ?? '', portrait: ricci?.portrait },
-      flags,
+    startMission(root, RICCI_CONFRONT, { name: ricci?.name ?? 'RICCI', role: ricci?.role ?? '', portrait: ricci?.portrait }, flags,
       (outcome) => {
-        const deal = outcome.deal ?? { closed: false, gotName: false, faceIdx: 2 };
-        const wasLocked = new Set(st.nodes.filter((n) => n.locked).map((n) => n.id));
-        st = applyDealOutcome(ch, st, deal);
-        st = { ...st, heat: bumpHeat(st.heat, outcome.heatDelta ?? 0) };
-        const nowUnlocked = st.nodes.filter((n) => !n.locked && wasLocked.has(n.id)).map((n) => n.id);
-        selected = null;
-        changed = new Set(['ricci', ...nowUnlocked]);
-        toast = outcome.ripple;
-        showBoard();
-      },
-      startAt,
-    );
+        const heat = bumpHeat(st.heat, outcome.heatDelta ?? 0);
+        if (outcome.deal?.gotName) { climbToChapter2(outcome, heat); return; }
+        st = applyDealOutcome(ch, st, outcome.deal ?? { closed: false, gotName: false, faceIdx: 2 });
+        st = { ...st, heat };
+        selected = null; changed = new Set(['ricci']); toast = outcome.ripple; showBoard();
+      }, startAt);
   }
 
-  // THE ENDGAME — Chapter Two's sit-down with Marlowe. The opening reacts to what
-  // you turned in his house; the ending closes the game.
+  function delucaSitDown(): void {
+    const flags = missionFlags(st.flags);
+    let startAt = 's0_serene';
+    if (flags.has('delucaForewarned') || st.heat >= 6) startAt = 's0_forewarned';
+    else if (flags.has('santoTurned') || flags.has('delucaProof')) startAt = 's0_cracks';
+    const deluca = st.nodes.find((n) => n.id === 'deluca');
+    startMission(root, DELUCA_CONFRONT, { name: deluca?.name ?? 'DELUCA', role: deluca?.role ?? '', portrait: deluca?.portrait }, flags,
+      (outcome) => {
+        const heat = bumpHeat(st.heat, outcome.heatDelta ?? 0);
+        if (outcome.deal?.gotName) { climbToChapter3(outcome, heat); return; }
+        st = applyDealOutcome(ch, st, outcome.deal ?? { closed: false, gotName: false, faceIdx: 2 });
+        st = { ...st, heat };
+        selected = null; changed = new Set(['deluca']); toast = outcome.ripple; showBoard();
+      }, startAt);
+  }
+
+  // THE ENDGAME — Chapter Three's sit-down with Marlowe. Opening reacts to what you
+  // turned in his house; the ending closes the game.
   function marloweEndgame(): void {
     const flags = missionFlags(st.flags);
     let startAt = 's0_serene';
     if (flags.has('marloweForewarned') || st.heat >= 6) startAt = 's0_forewarned';
     else if (flags.has('ottoTurned') || flags.has('booksExposed') || flags.has('ricciMole')) startAt = 's0_cracks';
-
     const marlowe = st.nodes.find((n) => n.id === 'marlowe');
-    startMission(
-      root, MARLOWE_ENDGAME,
-      { name: marlowe?.name ?? 'MARLOWE', role: marlowe?.role ?? 'the empire', portrait: marlowe?.portrait },
-      flags,
+    startMission(root, MARLOWE_ENDGAME, { name: marlowe?.name ?? 'MARLOWE', role: marlowe?.role ?? 'the empire', portrait: marlowe?.portrait }, flags,
       (outcome) => {
         st = applyDealOutcome(ch, st, outcome.deal ?? { closed: false, gotName: false, faceIdx: 2 });
         st = { ...st, heat: bumpHeat(st.heat, outcome.heatDelta ?? 0) };
-        selected = null;
-        changed = new Set(['marlowe']);
-        toast = outcome.ripple;
-        showBoard();
-      },
-      startAt,
-    );
+        selected = null; changed = new Set(['marlowe']); toast = outcome.ripple; showBoard();
+      }, startAt);
   }
 
-  // FIRST CONTACT WITH MARLOWE — the capstone of Chapter One, once Ricci earned
-  // you the way in. Not a takedown (he has no fear to press); your first move
-  // inside the machine. Sets your standing, closes the chapter. No move cost.
-  function confrontMarlowe(): void {
-    const marlowe = st.nodes.find((n) => n.id === 'marlowe');
-    startMission(
-      root, MARLOWE_CONTACT,
-      { name: marlowe?.name ?? 'MARLOWE', role: marlowe?.role ?? 'the empire', portrait: marlowe?.portrait },
-      missionFlags(st.flags),
-      (outcome) => {
-        // what you carry from Chapter One into Chapter Two
-        const carried = new Set(st.flags);
-        carried.add('marloweMet');
-        for (const f of outcome.worldFlags ?? []) carried.add(f);
-        const ricciDisp = st.nodes.find((n) => n.id === 'ricci')?.disposition ?? 2;
-        if (ricciDisp >= 4) carried.add('ricciMole');   // Ricci turned mole → your inside man in Ch2
-        const marloweStanding = ((outcome.dispositions ?? []).find((d) => d.nodeId === 'marlowe')?.set ?? 2) as Node['disposition'];
-
-        // TRANSITION into Chapter Two — Marlowe's house (heat carries over)
-        ch = CHAPTER_2;
-        st = initBoard(ch, bumpHeat(st.heat, outcome.heatDelta ?? 0));
-        st = {
-          ...st,
-          flags: new Set([...st.flags, ...carried]),
-          nodes: st.nodes.map((n) => {
-            if (n.id === 'ricci') return { ...n, disposition: ricciDisp };
-            if (n.id === 'marlowe') return { ...n, disposition: marloweStanding };
-            return n;
-          }),
-        };
-        selected = null;
-        changed = new Set(['marlowe', 'ricci']);
-        toast = undefined;
-        // a reactive "previously, on the docks" recap, then the Chapter Two board
-        startMission(
-          root, buildCh2Recap(st.flags, marloweStanding),
-          { name: '', role: '', portrait: 'assets/art/scene/now.jpg' },
-          st.flags, showBoard,
-        );
-      },
-    );
+  // Ch1 → Ch2: you forced your way up off the docks. Carry standing, recap, board.
+  function climbToChapter2(outcome: MissionOutcome, heat: number): void {
+    const carried = new Set(st.flags);
+    if ((outcome.deal?.faceIdx ?? 2) <= 0) carried.add('ricciMole');
+    for (const f of outcome.worldFlags ?? []) carried.add(f);
+    startMission(root, buildCh2Recap(carried), { name: '', role: '', portrait: 'assets/art/scene/now.jpg' }, carried, () => {
+      ch = CHAPTER_2;
+      st = initBoard(ch, heat);
+      st = { ...st, flags: new Set([...st.flags, ...carried]),
+        nodes: st.nodes.map((n) => (n.id === 'ricci' ? { ...n, disposition: (carried.has('ricciMole') ? 4 : 1) as Node['disposition'] } : n)) };
+      selected = null; changed = new Set(); toast = undefined; showBoard();
+    });
   }
 
-  // dev shortcut: ?ch2 jumps straight into Chapter Two so you can playtest the
-  // endgame without replaying the whole climb. Seeds a sensible carried state
-  // (Ricci turned mole in Ch1) so every endgame approach is reachable.
-  if (typeof location !== 'undefined' && (location.search.includes('ch2') || location.hash.includes('ch2'))) {
+  // Ch2 → Ch3: past DeLuca, you finally reach the top. First contact with Marlowe,
+  // then the recap, then his house.
+  function climbToChapter3(outcome: MissionOutcome, heat: number): void {
+    const carried = new Set(st.flags);
+    carried.add('marloweMet');
+    carried.add((outcome.deal?.faceIdx ?? 2) <= 0 ? 'delucaTurned' : 'delucaEnemy');
+    for (const f of outcome.worldFlags ?? []) carried.add(f);
+    startMission(root, MARLOWE_CONTACT, { name: 'MARLOWE', role: 'the empire', portrait: 'assets/art/cast/marlowe.jpg' }, carried, (contact) => {
+      for (const f of contact.worldFlags ?? []) carried.add(f);
+      const marloweStanding = ((contact.dispositions ?? []).find((d) => d.nodeId === 'marlowe')?.set ?? 2) as Node['disposition'];
+      const heat2 = bumpHeat(heat, contact.heatDelta ?? 0);
+      startMission(root, buildCh3Recap(carried), { name: '', role: '', portrait: 'assets/art/scene/now.jpg' }, carried, () => {
+        ch = CHAPTER_3;
+        st = initBoard(ch, heat2);
+        st = { ...st, flags: new Set([...st.flags, ...carried]),
+          nodes: st.nodes.map((n) => (n.id === 'marlowe' ? { ...n, disposition: marloweStanding } : n)) };
+        selected = null; changed = new Set(); toast = undefined; showBoard();
+      });
+    });
+  }
+
+  // dev shortcut: ?ch2 / ?ch3 jump straight into a later chapter for playtesting,
+  // seeded with sensible carried standing so approaches are reachable.
+  const jump = typeof location !== 'undefined'
+    ? (/ch3/.test(location.search + location.hash) ? 'ch3' : /ch2/.test(location.search + location.hash) ? 'ch2' : '')
+    : '';
+  if (jump === 'ch3') {
+    ch = CHAPTER_3;
+    st = initBoard(ch, 2);
+    st = { ...st, flags: new Set(['ricciMole', 'delucaTurned', 'marloweMet']) };
+    showBoard();
+    return;
+  }
+  if (jump === 'ch2') {
     ch = CHAPTER_2;
     st = initBoard(ch);
-    st = {
-      ...st,
-      flags: new Set(['ricciMole']),
-      nodes: st.nodes.map((n) => (n.id === 'ricci' ? { ...n, disposition: 4 as Node['disposition'] } : n)),
-    };
+    st = { ...st, flags: new Set(['ricciMole']), nodes: st.nodes.map((n) => (n.id === 'ricci' ? { ...n, disposition: 4 as Node['disposition'] } : n)) };
     showBoard();
     return;
   }
