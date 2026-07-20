@@ -6,6 +6,7 @@ import { SAL_MISSION } from '../content/sal_mission';
 import { CREW_MISSION } from '../content/crew_mission';
 import { BIANCHI_MISSION } from '../content/bianchi_mission';
 import { RICCI_CONFRONT } from '../content/ricci_confront';
+import { MARLOWE_CONTACT } from '../content/marlowe_contact';
 import { PROLOGUE_MISSION } from '../content/prologue';
 import { renderBoard } from '../ui/board';
 import { renderMeet } from '../ui/meet';
@@ -36,7 +37,7 @@ export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => voi
   let changed: Set<string> | undefined;
 
   function showBoard(): void {
-    renderBoard(root, ch, st, selected, { act, select, sitDown }, toast, changed);
+    renderBoard(root, ch, st, selected, { act, select, sitDown, confrontMarlowe }, toast, changed);
     changed = undefined;   // flare is a one-shot
   }
 
@@ -124,6 +125,35 @@ export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => voi
         showBoard();
       },
       startAt,
+    );
+  }
+
+  // FIRST CONTACT WITH MARLOWE — the capstone of Chapter One, once Ricci earned
+  // you the way in. Not a takedown (he has no fear to press); your first move
+  // inside the machine. Sets your standing, closes the chapter. No move cost.
+  function confrontMarlowe(): void {
+    const marlowe = st.nodes.find((n) => n.id === 'marlowe');
+    startMission(
+      root, MARLOWE_CONTACT,
+      { name: marlowe?.name ?? 'MARLOWE', role: marlowe?.role ?? 'the empire', portrait: marlowe?.portrait },
+      missionFlags(st.flags),
+      (outcome) => {
+        const flags = new Set(st.flags);
+        for (const f of outcome.worldFlags ?? []) flags.add(f);
+        const nodes = st.nodes.map((n) => {
+          const d = (outcome.dispositions ?? []).find((x) => x.nodeId === n.id);
+          if (!d) return n;
+          let dp: number = n.disposition;
+          if (d.set !== undefined) dp = d.set;
+          if (d.delta !== undefined) dp += d.delta;
+          return { ...n, disposition: Math.max(0, Math.min(4, dp)) as Node['disposition'] };
+        });
+        st = { ...st, flags, nodes };
+        selected = null;
+        changed = new Set(['marlowe']);
+        toast = undefined;
+        showBoard();
+      },
     );
   }
 

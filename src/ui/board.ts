@@ -9,6 +9,7 @@ export interface BoardHandlers {
   act(actionId: string): void;
   select(nodeId: string | null): void;
   sitDown(): void;
+  confrontMarlowe(): void;
 }
 
 const DISP_LABEL = ['enemy', 'wary', 'neutral', 'warm', 'ally'];
@@ -112,18 +113,35 @@ export function renderBoard(
   const sel = selected ? byId.get(selected) : null;
   if (sel) root.appendChild(actionSheet(ch, st, sel, on));
 
-  // sit down
+  // the foot advances with the story: work the web → sit with Ricci → (if you
+  // earned the way in) move on Marlowe → Chapter One closes
+  const ricciDealt = st.done.has('__dealt_ricci');
+  const marloweUnlocked = !byId.get('marlowe')?.locked;
+  const marloweMet = st.flags.has('marloweMet');
   const foot = el('div', 'board-foot');
-  const hint = el('div', 'bf-hint',
-    st.movesLeft > 0 ? 'work the people first — you only get so many moves' : "you've done what you can. time to sit down.");
-  foot.appendChild(hint);
-  const sit = document.createElement('button');
-  sit.type = 'button';
-  sit.className = 'board-sit';
-  sit.dataset.sit = '';
-  sit.textContent = 'SIT DOWN WITH RICCI ▸';
-  sit.addEventListener('click', () => on.sitDown());
-  foot.appendChild(sit);
+
+  const button = (cls: string, label: string, fn: () => void): void => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = cls; b.dataset.sit = ''; b.textContent = label;
+    b.addEventListener('click', fn);
+    foot.appendChild(b);
+  };
+
+  if (marloweMet) {
+    foot.appendChild(el('div', 'bf-hint', 'Chapter One is closed. You stand inside the machine now. The rest is the long war.'));
+    const b = el('button', 'board-sit done');
+    (b as HTMLButtonElement).disabled = true;
+    b.textContent = 'CHAPTER TWO — SOON ▸';
+    foot.appendChild(b);
+  } else if (!ricciDealt) {
+    foot.appendChild(el('div', 'bf-hint', st.movesLeft > 0 ? 'work the people first — you only get so many moves' : "you've done what you can. time to sit down."));
+    button('board-sit', 'SIT DOWN WITH RICCI ▸', () => on.sitDown());
+  } else if (marloweUnlocked) {
+    foot.appendChild(el('div', 'bf-hint', 'Ricci got you a way in. Time to face the man himself.'));
+    button('board-sit marlowe', 'MOVE ON MARLOWE ▸', () => on.confrontMarlowe());
+  } else {
+    foot.appendChild(el('div', 'bf-hint', "Your father's debt is dead — but Marlowe stayed a mile out of reach. The climb ends here. This time."));
+  }
   root.appendChild(foot);
 }
 
