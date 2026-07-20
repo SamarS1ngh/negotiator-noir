@@ -31,7 +31,7 @@ export function startMission(
       palette: mission.palette,
       choices,
       outcome: node.outcome
-        ? { tone: node.outcome.tone, title: node.outcome.title, line: node.outcome.line, ripple: node.outcome.ripple, tag: node.outcome.tag, cta: node.outcome.cta }
+        ? { tone: node.outcome.tone, title: node.outcome.title, line: node.outcome.line, ripple: node.outcome.ripple, tag: node.outcome.tag, cta: node.outcome.cta, reflect: node.outcome.reflect }
         : undefined,
     }, {
       choose(choiceId) {

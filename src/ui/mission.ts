@@ -15,7 +15,7 @@ export interface MissionNodeView {
   mood?: string;       // situational light: tense/fear/hope/guilt/threat/cold/warm
   palette?: string;    // character signature: pal-sal, pal-ricci…
   choices?: MissionChoice[];
-  outcome?: { tone: 'good' | 'mixed' | 'bad'; title: string; line: string; ripple: string; tag?: string; cta?: string };
+  outcome?: { tone: 'good' | 'mixed' | 'bad'; title: string; line: string; ripple: string; tag?: string; cta?: string; reflect?: string };
 }
 
 export interface MissionHandlers {
@@ -115,6 +115,12 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
       rip.appendChild(el('div', 'mcq-rip-lab', 'the world shifts'));
       rip.appendChild(el('div', 'mcq-rip', o.ripple));
       card.appendChild(rip);
+    }
+    if (o.reflect) {   // the MC's own voice — the toll it takes on him
+      const ref = el('div', 'mcq-reflect');
+      ref.appendChild(el('div', 'mcq-reflect-mark', '—'));
+      ref.appendChild(el('div', 'mcq-reflect-t', o.reflect));
+      card.appendChild(ref);
     }
     const btn = document.createElement('button');
     btn.type = 'button';

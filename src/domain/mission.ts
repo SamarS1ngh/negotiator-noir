@@ -26,8 +26,9 @@ export interface MissionOutcome {
   // for the TARGET confrontation: the deal result the board applies (unlock the
   // next rung on the name, ally/enemy on how he walked out)
   deal?: { closed: boolean; gotName: boolean; faceIdx: number };
-  tag?: string;   // overrides the "it lands"/"it backfires" label (for title cards)
-  cta?: string;   // overrides the consequence button text
+  tag?: string;      // overrides the "it lands"/"it backfires" label (for title cards)
+  cta?: string;      // overrides the consequence button text
+  reflect?: string;  // the MC's inner voice on what he just did — the cost/the mirror
 }
 
 // the emotional/situational light of a beat — drives the scene's colour + shadow
