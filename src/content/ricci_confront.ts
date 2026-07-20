@@ -66,8 +66,9 @@ export const RICCI_CONFRONT: Mission = {
       ],
       ask: "He's laid the debt and his authority on the table. How do you come at him?",
       choices: [
-        { id: 'skim', label: "The blade (requires proof) — 'You skim Marlowe. I can prove it. He'd love to see this.'", tone: 'push', requires: ['proof'], to: 'c_skim' },
-        { id: 'fear', label: "His fear (requires Sal) — 'You lie awake over Marlowe. Sal told me enough.'", tone: 'push', requires: ['salMole'], to: 'c_fear' },
+        { id: 'skim', label: "The blade (needs proof) — 'You skim Marlowe. I can prove it. He'd love to see this.'", tone: 'push', requires: ['proof'], to: 'c_skim' },
+        { id: 'rival', label: "The rival (Bianchi's circling) — 'He's about to take everything you built. I'm your only way to survive it.'", tone: 'push', requires: ['bianchiPressing'], to: 'c_rival' },
+        { id: 'fear', label: "His fear (you've read it) — 'You lie awake over Marlowe. Don't bother denying it.'", tone: 'push', requires: ['knowsFear'], to: 'c_fear' },
         { id: 'ego', label: "His ego — 'A man like you doesn't need five hundred. You need respect. I can give you both.'", tone: 'disarm', to: 'c_ego' },
         { id: 'small', label: "Play small — 'I know I'm nothing to you. That's why you can afford to hear me out.'", tone: 'disarm', to: 'c_small' },
       ],
@@ -132,6 +133,23 @@ export const RICCI_CONFRONT: Mission = {
         { id: 'inFace', label: "Your way in, let him save face — 'Keep your job, your skim stays buried. From tonight you're my man in Marlowe's house.'", tone: 'disarm', to: 'o_in_ally' },
         { id: 'inBreak', label: "Your way in, and break him — 'You're walking me to Marlowe. On your knees, in front of your own men.'", tone: 'push', to: 'o_in_broken' },
         { id: 'debtOnly', label: "Just the debt — 'Tear up my father's paper and I keep your secret. That's all.'", tone: 'disarm', to: 'o_deal_noname' },
+      ],
+    },
+
+    {
+      id: 'c_rival',
+      mood: 'fear',
+      beats: [
+        { who: 'them', text: "(a flicker of fear he can't mask) Bianchi. That circling son of a bitch. …What do you know." },
+        { who: 'you', text: "That he's about to have everything you built. And that Marlowe protects earners — not men who let a rival walk in his front door. When Bianchi takes your water, you stop being a collector. You become a loose end." },
+        { who: 'them', text: "(very still) …And you're offering. To hold him off." },
+        { who: 'you', text: "Marlowe. Not his name — I want the man. Get me in, and I keep Bianchi off your throat. Refuse, and I hand him the last push myself." },
+      ],
+      ask: "Not a secret this time — his own desperation has him by the neck. What do you force out of him, and how do you leave him?",
+      choices: [
+        { id: 'inFace', label: "Your way in, let him save face — 'Keep your name. From tonight you're my man in Marlowe's house.'", tone: 'disarm', to: 'o_in_ally' },
+        { id: 'inBreak', label: "Your way in, and break him — 'Beg me to keep Bianchi off you. On your knees.'", tone: 'push', to: 'o_in_broken' },
+        { id: 'debtOnly', label: "Just the debt — 'Tear up my father's paper and I'll keep Bianchi busy. That's all.'", tone: 'disarm', to: 'o_deal_noname' },
       ],
     },
 

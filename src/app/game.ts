@@ -15,10 +15,15 @@ import { startMission } from './mission';
 // board actions that open a full branching mission (Detroit-style), by action id
 const MISSIONS = [SAL_MISSION, CREW_MISSION, BIANCHI_MISSION];
 
-// prep flags → add 'proof' when you dug up hard evidence (the skim or the ledger)
+// prep flags → derived flags the confrontation gates approaches on, so every
+// thing you did on the board changes what you can do at the table:
+//   proof     = hard evidence dug up (skim or ledger)      → the blade for the way in
+//   knowsFear = you learned Ricci's terror of Marlowe      → the fear read
+//               (from Sal turned, the crew's gossip, or studying him)
 function missionFlags(flags: Set<string>): Set<string> {
   const f = new Set(flags);
   if (f.has('skim') || f.has('ledger')) f.add('proof');
+  if (f.has('salMole') || f.has('crewLoyal') || f.has('type')) f.add('knowsFear');
   return f;
 }
 
@@ -106,8 +111,9 @@ export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => voi
     const flags = missionFlags(st.flags);
     let startAt = 's0_cold';
     if (flags.has('ricciHardened')) startAt = 's0_hardened';
-    else if (flags.has('ricciForewarned')) startAt = 's0_forewarned';
-    else if (flags.has('crewSpooked') || flags.has('bianchiPressing') || flags.has('salMole')) startAt = 's0_rattled';
+    // a bought man talks — salBought tips Ricci off, same as being forewarned
+    else if (flags.has('ricciForewarned') || flags.has('salBought')) startAt = 's0_forewarned';
+    else if (flags.has('crewSpooked') || flags.has('crewLoyal') || flags.has('bianchiPressing') || flags.has('salMole')) startAt = 's0_rattled';
 
     const ricci = st.nodes.find((n) => n.id === 'ricci');
     startMission(
