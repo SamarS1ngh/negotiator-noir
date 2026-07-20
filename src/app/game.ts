@@ -200,6 +200,21 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
     );
   }
 
+  // dev shortcut: ?ch2 jumps straight into Chapter Two so you can playtest the
+  // endgame without replaying the whole climb. Seeds a sensible carried state
+  // (Ricci turned mole in Ch1) so every endgame approach is reachable.
+  if (typeof location !== 'undefined' && (location.search.includes('ch2') || location.hash.includes('ch2'))) {
+    ch = CHAPTER_2;
+    st = initBoard(ch);
+    st = {
+      ...st,
+      flags: new Set(['ricciMole']),
+      nodes: st.nodes.map((n) => (n.id === 'ricci' ? { ...n, disposition: 4 as Node['disposition'] } : n)),
+    };
+    showBoard();
+    return;
+  }
+
   // open on the lived cold-open (the fall, played through Ricci's face + a choice)
   // — then the board
   startMission(
