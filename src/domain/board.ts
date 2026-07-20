@@ -52,6 +52,7 @@ export interface Action {
 export interface WorldEvent { text: string; }
 
 export interface Chapter {
+  id: string;              // 'ch1' | 'ch2' — drives the board footer + which sit-down
   title: string;
   nodes: Node[];
   edges: Edge[];

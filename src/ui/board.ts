@@ -113,34 +113,37 @@ export function renderBoard(
   const sel = selected ? byId.get(selected) : null;
   if (sel) root.appendChild(actionSheet(ch, st, sel, on));
 
-  // the foot advances with the story: work the web → sit with Ricci → (if you
-  // earned the way in) move on Marlowe → Chapter One closes
-  const ricciDealt = st.done.has('__dealt_ricci');
-  const marloweUnlocked = !byId.get('marlowe')?.locked;
-  const marloweMet = st.flags.has('marloweMet');
   const foot = el('div', 'board-foot');
-
   const button = (cls: string, label: string, fn: () => void): void => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = cls; b.dataset.sit = ''; b.textContent = label;
     b.addEventListener('click', fn);
     foot.appendChild(b);
   };
+  const hint = (t: string): void => { foot.appendChild(el('div', 'bf-hint', t)); };
 
-  if (marloweMet) {
-    foot.appendChild(el('div', 'bf-hint', 'Chapter One is closed. You stand inside the machine now. The rest is the long war.'));
-    const b = el('button', 'board-sit done');
-    (b as HTMLButtonElement).disabled = true;
-    b.textContent = 'CHAPTER TWO — SOON ▸';
-    foot.appendChild(b);
-  } else if (!ricciDealt) {
-    foot.appendChild(el('div', 'bf-hint', st.movesLeft > 0 ? 'work the people first — you only get so many moves' : "you've done what you can. time to sit down."));
-    button('board-sit', 'SIT DOWN WITH RICCI ▸', () => on.sitDown());
-  } else if (marloweUnlocked) {
-    foot.appendChild(el('div', 'bf-hint', 'Ricci got you a way in. Time to face the man himself.'));
-    button('board-sit marlowe', 'MOVE ON MARLOWE ▸', () => on.confrontMarlowe());
+  if (ch.id === 'ch2') {
+    // Chapter Two: turn Marlowe's house, then spring it on him
+    if (st.done.has('__dealt_marlowe')) {
+      hint('It is done. The empire that ate your father answers to you now — or to no one.');
+      const b = el('button', 'board-sit done'); (b as HTMLButtonElement).disabled = true; b.textContent = '— THE END —'; foot.appendChild(b);
+    } else {
+      hint(st.movesLeft > 0 ? "turn his own house against him — you only get so many moves" : 'his people have chosen. make your move.');
+      button('board-sit marlowe', 'MOVE ON MARLOWE ▸', () => on.sitDown());
+    }
   } else {
-    foot.appendChild(el('div', 'bf-hint', "Your father's debt is dead — but Marlowe stayed a mile out of reach. The climb ends here. This time."));
+    // Chapter One: work the web → sit with Ricci → (if you earned the way in) Marlowe
+    const ricciDealt = st.done.has('__dealt_ricci');
+    const marloweUnlocked = !byId.get('marlowe')?.locked;
+    if (!ricciDealt) {
+      hint(st.movesLeft > 0 ? 'work the people first — you only get so many moves' : "you've done what you can. time to sit down.");
+      button('board-sit', 'SIT DOWN WITH RICCI ▸', () => on.sitDown());
+    } else if (marloweUnlocked) {
+      hint('Ricci got you a way in. Time to face the man himself.');
+      button('board-sit marlowe', 'MOVE ON MARLOWE ▸', () => on.confrontMarlowe());
+    } else {
+      hint("Your father's debt is dead — but Marlowe stayed a mile out of reach. The climb ends here. This time.");
+    }
   }
   root.appendChild(foot);
 }

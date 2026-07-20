@@ -9,6 +9,7 @@ const A = 'assets/art/cast';
 // Bianchi's a peer — he needs proof it's worth his while, not your word or a
 // threat.
 export const CHAPTER_1: Chapter = {
+  id: 'ch1',
   title: "MARLOWE'S DOCKS",
   moves: 3,
   targetId: 'ricci',

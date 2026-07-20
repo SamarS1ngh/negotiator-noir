@@ -1,18 +1,22 @@
 import type { Node } from '../domain/board';
 import { initBoard, takeAction, applyDealOutcome, applyMissionOutcome } from '../domain/board';
 import { CHAPTER_1 } from '../content/chapter1';
+import { CHAPTER_2 } from '../content/chapter2';
 import { SAL_MISSION } from '../content/sal_mission';
 import { CREW_MISSION } from '../content/crew_mission';
 import { BIANCHI_MISSION } from '../content/bianchi_mission';
+import { OTTO_MISSION } from '../content/otto_mission';
+import { ADLER_MISSION } from '../content/adler_mission';
 import { RICCI_CONFRONT } from '../content/ricci_confront';
 import { MARLOWE_CONTACT } from '../content/marlowe_contact';
+import { MARLOWE_ENDGAME } from '../content/marlowe_endgame';
 import { PROLOGUE_MISSION } from '../content/prologue';
 import { renderBoard } from '../ui/board';
 import { renderMeet } from '../ui/meet';
 import { startMission } from './mission';
 
 // board actions that open a full branching mission (Detroit-style), by action id
-const MISSIONS = [SAL_MISSION, CREW_MISSION, BIANCHI_MISSION];
+const MISSIONS = [SAL_MISSION, CREW_MISSION, BIANCHI_MISSION, OTTO_MISSION, ADLER_MISSION];
 
 // prep flags → derived flags the confrontation gates approaches on, so every
 // thing you did on the board changes what you can do at the table:
@@ -34,7 +38,7 @@ function missionFlags(flags: Set<string>): Set<string> {
  */
 export function startGame(root: HTMLElement, onFinish?: () => void): void {
   void onFinish;
-  const ch = CHAPTER_1;
+  let ch = CHAPTER_1;
   let st = initBoard(ch);
   let selected: string | null = null;
   let toast: string | undefined;
@@ -107,6 +111,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
   // ending carries a deal result the board applies (name → Marlowe unlocked; how
   // he walked out → ally or enemy).
   function sitDown(): void {
+    if (ch.id === 'ch2') { marloweEndgame(); return; }
     const flags = missionFlags(st.flags);
     let startAt = 's0_cold';
     if (flags.has('ricciHardened')) startAt = 's0_hardened';
@@ -133,6 +138,30 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
     );
   }
 
+  // THE ENDGAME — Chapter Two's sit-down with Marlowe. The opening reacts to what
+  // you turned in his house; the ending closes the game.
+  function marloweEndgame(): void {
+    const flags = missionFlags(st.flags);
+    let startAt = 's0_serene';
+    if (flags.has('marloweForewarned')) startAt = 's0_forewarned';
+    else if (flags.has('ottoTurned') || flags.has('booksExposed') || flags.has('ricciMole')) startAt = 's0_cracks';
+
+    const marlowe = st.nodes.find((n) => n.id === 'marlowe');
+    startMission(
+      root, MARLOWE_ENDGAME,
+      { name: marlowe?.name ?? 'MARLOWE', role: marlowe?.role ?? 'the empire', portrait: marlowe?.portrait },
+      flags,
+      (outcome) => {
+        st = applyDealOutcome(ch, st, outcome.deal ?? { closed: false, gotName: false, faceIdx: 2 });
+        selected = null;
+        changed = new Set(['marlowe']);
+        toast = outcome.ripple;
+        showBoard();
+      },
+      startAt,
+    );
+  }
+
   // FIRST CONTACT WITH MARLOWE — the capstone of Chapter One, once Ricci earned
   // you the way in. Not a takedown (he has no fear to press); your first move
   // inside the machine. Sets your standing, closes the chapter. No move cost.
@@ -143,20 +172,29 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
       { name: marlowe?.name ?? 'MARLOWE', role: marlowe?.role ?? 'the empire', portrait: marlowe?.portrait },
       missionFlags(st.flags),
       (outcome) => {
-        const flags = new Set(st.flags);
-        for (const f of outcome.worldFlags ?? []) flags.add(f);
-        const nodes = st.nodes.map((n) => {
-          const d = (outcome.dispositions ?? []).find((x) => x.nodeId === n.id);
-          if (!d) return n;
-          let dp: number = n.disposition;
-          if (d.set !== undefined) dp = d.set;
-          if (d.delta !== undefined) dp += d.delta;
-          return { ...n, disposition: Math.max(0, Math.min(4, dp)) as Node['disposition'] };
-        });
-        st = { ...st, flags, nodes };
+        // what you carry from Chapter One into Chapter Two
+        const carried = new Set(st.flags);
+        carried.add('marloweMet');
+        for (const f of outcome.worldFlags ?? []) carried.add(f);
+        const ricciDisp = st.nodes.find((n) => n.id === 'ricci')?.disposition ?? 2;
+        if (ricciDisp >= 4) carried.add('ricciMole');   // Ricci turned mole → your inside man in Ch2
+        const marloweStanding = ((outcome.dispositions ?? []).find((d) => d.nodeId === 'marlowe')?.set ?? 2) as Node['disposition'];
+
+        // TRANSITION into Chapter Two — Marlowe's house
+        ch = CHAPTER_2;
+        st = initBoard(ch);
+        st = {
+          ...st,
+          flags: new Set([...st.flags, ...carried]),
+          nodes: st.nodes.map((n) => {
+            if (n.id === 'ricci') return { ...n, disposition: ricciDisp };
+            if (n.id === 'marlowe') return { ...n, disposition: marloweStanding };
+            return n;
+          }),
+        };
         selected = null;
-        changed = new Set(['marlowe']);
-        toast = undefined;
+        changed = new Set(['marlowe', 'ricci']);
+        toast = "Chapter Two — Marlowe's house. His people. His weakness. Turn them, then make your move.";
         showBoard();
       },
     );
