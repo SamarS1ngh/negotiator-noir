@@ -23,14 +23,15 @@ export function startMission(
     // elsewhere (proof dug up, people turned) unlocks how you can play this scene
     const choices = node.choices?.filter((c) => (c.requires ?? []).every((f) => flags.has(f)));
     renderMissionNode(root, {
-      name: meta.name, role: meta.role, portrait: meta.portrait,
+      name: node.name ?? meta.name, role: node.role ?? meta.role,
+      portrait: node.portrait ?? meta.portrait,   // a node can change the face ('' = none)
       beats: node.beats ?? [],
       ask: node.ask,
       mood: node.mood,
       palette: mission.palette,
       choices,
       outcome: node.outcome
-        ? { tone: node.outcome.tone, title: node.outcome.title, line: node.outcome.line, ripple: node.outcome.ripple }
+        ? { tone: node.outcome.tone, title: node.outcome.title, line: node.outcome.line, ripple: node.outcome.ripple, tag: node.outcome.tag, cta: node.outcome.cta }
         : undefined,
     }, {
       choose(choiceId) {

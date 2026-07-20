@@ -26,6 +26,8 @@ export interface MissionOutcome {
   // for the TARGET confrontation: the deal result the board applies (unlock the
   // next rung on the name, ally/enemy on how he walked out)
   deal?: { closed: boolean; gotName: boolean; faceIdx: number };
+  tag?: string;   // overrides the "it lands"/"it backfires" label (for title cards)
+  cta?: string;   // overrides the consequence button text
 }
 
 // the emotional/situational light of a beat — drives the scene's colour + shadow
@@ -36,6 +38,9 @@ export interface MissionNode {
   beats?: Beat[];              // dialogue/narration played first
   ask?: string;               // a prompt shown above the fork
   mood?: SceneMood;           // how this moment should be lit
+  portrait?: string;          // override the face for this node ('' = no portrait)
+  name?: string;              // override who 'them' is in this node (e.g. your father)
+  role?: string;
   choices?: MissionChoice[];  // a fork — absent means this node is an ending
   outcome?: MissionOutcome;   // terminal node: the consequence
 }

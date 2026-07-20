@@ -15,7 +15,7 @@ export interface MissionNodeView {
   mood?: string;       // situational light: tense/fear/hope/guilt/threat/cold/warm
   palette?: string;    // character signature: pal-sal, pal-ricci…
   choices?: MissionChoice[];
-  outcome?: { tone: 'good' | 'mixed' | 'bad'; title: string; line: string; ripple: string };
+  outcome?: { tone: 'good' | 'mixed' | 'bad'; title: string; line: string; ripple: string; tag?: string; cta?: string };
 }
 
 export interface MissionHandlers {
@@ -46,8 +46,9 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
 
   function draw(): void {
     root.innerHTML = '';
-    // character palette + the moment's mood colour the whole scene
-    root.className = `meet-screen mission-screen ${view.palette ? 'pal-' + view.palette : ''} ${view.mood ? 'mood-' + view.mood : ''}`.trim();
+    // character palette + the moment's mood colour the whole scene; portraitless
+    // beats get the noir void treatment
+    root.className = `meet-screen mission-screen ${view.portrait ? '' : 'no-portrait'} ${view.palette ? 'pal-' + view.palette : ''} ${view.mood ? 'mood-' + view.mood : ''}`.replace(/\s+/g, ' ').trim();
     root.onclick = null;
 
     const bg = el('div', 'meet-bg');
@@ -63,10 +64,14 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
     bg.appendChild(el('div', 'meet-grad'));
     root.appendChild(bg);
 
-    const top = el('div', 'meet-top');
-    top.appendChild(el('div', 'meet-name', view.name));
-    top.appendChild(el('div', 'meet-role', view.role));
-    root.appendChild(top);
+    // the name-plate belongs to a named speaker in frame; a scene background with
+    // no character (name '') shows none
+    if (view.name) {
+      const top = el('div', 'meet-top');
+      top.appendChild(el('div', 'meet-name', view.name));
+      top.appendChild(el('div', 'meet-role', view.role));
+      root.appendChild(top);
+    }
 
     if (phase === 'talk') {
       const beat = view.beats[i]!;
@@ -99,21 +104,23 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
       return;
     }
 
-    // consequence card
+    // consequence card (also serves as a title card for the prologue via tag/cta)
     const o = view.outcome!;
     const card = el('div', `mission-conseq tone-${o.tone}`);
-    card.appendChild(el('div', 'mcq-tag', o.tone === 'good' ? 'it lands' : o.tone === 'bad' ? 'it backfires' : 'it costs you'));
+    card.appendChild(el('div', 'mcq-tag', o.tag ?? (o.tone === 'good' ? 'it lands' : o.tone === 'bad' ? 'it backfires' : 'it costs you')));
     card.appendChild(el('div', 'mcq-title', o.title));
-    card.appendChild(el('div', 'mcq-line', o.line));
-    const rip = el('div', 'mcq-ripple');
-    rip.appendChild(el('div', 'mcq-rip-lab', 'the world shifts'));
-    rip.appendChild(el('div', 'mcq-rip', o.ripple));
-    card.appendChild(rip);
+    if (o.line) card.appendChild(el('div', 'mcq-line', o.line));
+    if (o.ripple) {
+      const rip = el('div', 'mcq-ripple');
+      rip.appendChild(el('div', 'mcq-rip-lab', 'the world shifts'));
+      rip.appendChild(el('div', 'mcq-rip', o.ripple));
+      card.appendChild(rip);
+    }
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'meet-done';
     btn.dataset.done = '';
-    btn.textContent = 'BACK TO THE BOARD ▸';
+    btn.textContent = o.cta ?? 'BACK TO THE BOARD ▸';
     btn.addEventListener('click', (e) => { e.stopPropagation(); if (!ended) { ended = true; on.finish(); } });
     card.appendChild(btn);
     root.appendChild(card);

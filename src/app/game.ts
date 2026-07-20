@@ -6,7 +6,7 @@ import { SAL_MISSION } from '../content/sal_mission';
 import { CREW_MISSION } from '../content/crew_mission';
 import { BIANCHI_MISSION } from '../content/bianchi_mission';
 import { RICCI_CONFRONT } from '../content/ricci_confront';
-import { PROLOGUE } from '../content/prologue';
+import { PROLOGUE_MISSION } from '../content/prologue';
 import { renderBoard } from '../ui/board';
 import { renderMeet } from '../ui/meet';
 import { startMission } from './mission';
@@ -127,7 +127,12 @@ export function startGame(root: HTMLElement, opp: Opponent, onFinish?: () => voi
     );
   }
 
-  // open on the prologue — who you are, why now, why anyone as small as you gets
-  // a hearing — then the board
-  renderMeet(root, { name: 'THE JOB', role: 'a nobody with nothing to lose', beats: PROLOGUE }, showBoard);
+  // open on the lived cold-open (the fall, played through Ricci's face + a choice)
+  // — then the board
+  startMission(
+    root, PROLOGUE_MISSION,
+    { name: 'RICCI', role: 'the collector', portrait: 'assets/art/cast/ricci.jpg' },
+    new Set<string>(),
+    showBoard,
+  );
 }
