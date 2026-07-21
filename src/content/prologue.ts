@@ -55,9 +55,9 @@ export const PROLOGUE_MISSION: Mission = {
       portrait: RICCI,
       beats: [
         { who: 'them', text: "(peeling your hand off his sleeve, almost gentle) Easy, boy. Watch and learn. You don't break a man's legs. You break his name. Costs less. Lasts longer." },
-        { who: 'you', caption: true, text: "My father was finished by morning. Dead within the month. The debt he left came looking — and it found me." },
+        { who: 'you', caption: true, text: "He was finished by morning — the name gone, the shop dead inside a week. And a ruined man's last proud act was to get me clear of it: he scraped together everything he had and sent me upriver. An apprenticeship. A shot at a life bigger than the wreck he'd become. 'Don't come back,' he told me, 'for anything less than everything.'" },
       ],
-      choices: [{ id: 'go', label: 'Seven years pass.', to: 'now' }],
+      choices: [{ id: 'go', label: 'So I went. Seven years pass.', to: 'now' }],
     },
     {
       id: 'now',
@@ -65,7 +65,7 @@ export const PROLOGUE_MISSION: Mission = {
       portrait: DOCKS,        // the cold rainy present — you, watching, alone
       name: '', role: '',
       beats: [
-        { who: 'you', caption: true, text: "The year they came for him, I wasn't here. He'd scraped together everything to send me upriver — an apprenticeship, a shot at a life bigger than the shop. I took it. He faced them alone." },
+        { who: 'you', caption: true, text: "So I wasn't there for the end. While I was gone chasing that bigger life, the debt and the shame did what Ricci started. He died alone. And that's the part I'll carry to my own grave — that when it finished him, I was a hundred miles away, chasing a future." },
         { who: 'you', caption: true, text: "I came home to a padlocked door and a fresh grave. All I have of him now is his watch — cold in my pocket — and the thing he put in my head: how to read a man." },
         { who: 'you', caption: true, text: "So that's what I've done. Eighteen months in the dark of these docks. Who skims. Who flinches. Who hates whom. No money, no name, no one left to lose. I built the whole rotten map in my head." },
         { who: 'you', text: "Ricci's still down there, collecting for Marlowe. He doesn't remember my face. He's going to." },
