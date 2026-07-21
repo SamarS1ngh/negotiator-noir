@@ -46,19 +46,23 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
 
   function draw(): void {
     root.innerHTML = '';
+    // manhwa panels: during dialogue, the current beat's own art is the background
+    // (falls back to the mission's scene); advance() redraws per beat, so the
+    // panel changes as you tap through the lines.
+    const bgSrc = (phase === 'talk' ? view.beats[i]?.art : undefined) ?? view.portrait;
     // a full scene illustration reads best lightly graded (detail shows); a bare
     // face can take a heavy noir wash
-    const bgScene = view.portrait && /\/scene\//.test(view.portrait) ? 'bg-scene' : '';
+    const bgScene = bgSrc && /\/scene\//.test(bgSrc) ? 'bg-scene' : '';
     // character palette + the moment's mood colour the whole scene; portraitless
     // beats get the noir void treatment
-    root.className = `meet-screen mission-screen ${view.portrait ? '' : 'no-portrait'} ${bgScene} ${view.palette ? 'pal-' + view.palette : ''} ${view.mood ? 'mood-' + view.mood : ''}`.replace(/\s+/g, ' ').trim();
+    root.className = `meet-screen mission-screen ${bgSrc ? '' : 'no-portrait'} ${bgScene} ${view.palette ? 'pal-' + view.palette : ''} ${view.mood ? 'mood-' + view.mood : ''}`.replace(/\s+/g, ' ').trim();
     root.onclick = null;
 
     const bg = el('div', 'meet-bg');
-    if (view.portrait) {
+    if (bgSrc) {
       const img = document.createElement('img');
       img.className = 'meet-portrait';
-      img.src = view.portrait; img.alt = view.name;
+      img.src = bgSrc; img.alt = view.name;
       img.onerror = () => { img.style.display = 'none'; };
       bg.appendChild(img);
     }

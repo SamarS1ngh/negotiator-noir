@@ -19,8 +19,10 @@ export interface Node {
 
 // a line in a meet-scene. `who: 'them'` is the character, 'you' is you.
 // `caption: true` marks narration/inner-voice — rendered as a comic caption box
-// instead of a speech bubble.
-export interface Beat { who: 'them' | 'you'; text: string; caption?: boolean; }
+// instead of a speech bubble. `art` is this beat's panel illustration — the scene
+// swaps to it when the beat shows (manhwa-style), falling back to the mission's
+// scene when a beat has none.
+export interface Beat { who: 'them' | 'you'; text: string; caption?: boolean; art?: string; }
 
 export interface Edge { from: string; to: string; label: string; }
 
