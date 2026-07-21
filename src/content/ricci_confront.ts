@@ -17,6 +17,7 @@ export const RICCI_CONFRONT: Mission = {
   nodeId: 'ricci',
   label: 'Sit down with Ricci',
   palette: 'ricci',
+  scene: 'assets/art/scene/ricci.jpg',
   start: 's0_cold',
   nodes: [
     // --- reactive openings (game.ts picks one via startAt), all → 'open' ---

@@ -14,6 +14,7 @@ export const OTTO_MISSION: Mission = {
   nodeId: 'otto',
   label: 'Work the consigliere',
   palette: 'marlowe',
+  scene: 'assets/art/scene/otto.jpg',
   start: 's0',
   nodes: [
     {

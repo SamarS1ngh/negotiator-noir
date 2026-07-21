@@ -14,6 +14,7 @@ export const ADLER_MISSION: Mission = {
   nodeId: 'adler',
   label: 'Work the money man',
   palette: 'sal',
+  scene: 'assets/art/scene/adler.jpg',
   start: 's0',
   nodes: [
     {

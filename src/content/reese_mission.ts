@@ -14,6 +14,7 @@ export const REESE_MISSION: Mission = {
   nodeId: 'reese',
   label: 'Work the detective',
   palette: 'sal',
+  scene: 'assets/art/scene/reese.jpg',
   start: 's0',
   nodes: [
     {

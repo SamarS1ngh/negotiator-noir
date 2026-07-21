@@ -11,6 +11,7 @@ export const MARLOWE_CONTACT: Mission = {
   nodeId: 'marlowe',
   label: 'Move on Marlowe',
   palette: 'marlowe',
+  scene: 'assets/art/scene/marlowe.jpg',
   start: 's0',
   nodes: [
     {

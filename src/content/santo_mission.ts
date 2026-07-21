@@ -13,6 +13,7 @@ export const SANTO_MISSION: Mission = {
   nodeId: 'santo',
   label: 'Work the enforcer',
   palette: 'marlowe',
+  scene: 'assets/art/scene/santo.jpg',
   start: 's0',
   nodes: [
     {

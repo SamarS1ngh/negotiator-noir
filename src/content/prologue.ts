@@ -6,7 +6,7 @@ import type { Mission } from '../domain/mission';
 // mattered, and it forged you). Then seven years jump, and you're the man who
 // climbs. Answers who you are, where the skill came from, and who Ricci is — as
 // a scene, not a paragraph.
-const RICCI = 'assets/art/cast/ricci.jpg';
+const FALL = 'assets/art/scene/fall.jpg';     // Ricci on the doorstep, the ruin
 const SHOP = 'assets/art/scene/before.jpg';   // the warm past
 const DOCKS = 'assets/art/scene/now.jpg';     // the cold present
 
@@ -35,7 +35,7 @@ export const PROLOGUE_MISSION: Mission = {
     {
       id: 'fall',
       mood: 'threat',
-      portrait: RICCI,
+      portrait: FALL,
       beats: [
         { who: 'you', caption: true, text: "Seven years ago. My father's shop, the night everything came apart. I was fourteen." },
         { who: 'them', text: "Word's going round, Tomas. You've been watering your shipments. Cheating your own customers." },
@@ -52,7 +52,7 @@ export const PROLOGUE_MISSION: Mission = {
     {
       id: 'fall2',
       mood: 'cold',
-      portrait: RICCI,
+      portrait: FALL,
       beats: [
         { who: 'them', text: "(peeling your hand off his sleeve, almost gentle) Easy, boy. Watch and learn. You don't break a man's legs. You break his name. Costs less. Lasts longer." },
         { who: 'you', caption: true, text: "He was finished by morning — the name gone, the shop dead inside a week. And a ruined man's last proud act was to get me clear of it: he scraped together everything he had and sent me upriver. An apprenticeship. A shot at a life bigger than the wreck he'd become. 'Don't come back,' he told me, 'for anything less than everything.'" },

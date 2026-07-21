@@ -46,9 +46,12 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
 
   function draw(): void {
     root.innerHTML = '';
+    // a full scene illustration reads best lightly graded (detail shows); a bare
+    // face can take a heavy noir wash
+    const bgScene = view.portrait && /\/scene\//.test(view.portrait) ? 'bg-scene' : '';
     // character palette + the moment's mood colour the whole scene; portraitless
     // beats get the noir void treatment
-    root.className = `meet-screen mission-screen ${view.portrait ? '' : 'no-portrait'} ${view.palette ? 'pal-' + view.palette : ''} ${view.mood ? 'mood-' + view.mood : ''}`.replace(/\s+/g, ' ').trim();
+    root.className = `meet-screen mission-screen ${view.portrait ? '' : 'no-portrait'} ${bgScene} ${view.palette ? 'pal-' + view.palette : ''} ${view.mood ? 'mood-' + view.mood : ''}`.replace(/\s+/g, ' ').trim();
     root.onclick = null;
 
     const bg = el('div', 'meet-bg');

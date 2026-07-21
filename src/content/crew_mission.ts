@@ -15,6 +15,7 @@ export const CREW_MISSION: Mission = {
   nodeId: 'crew',
   label: 'Work the crew',
   palette: 'crew',
+  scene: 'assets/art/scene/crew.jpg',
   start: 's0',
   nodes: [
     {

@@ -18,6 +18,7 @@ export const SAL_MISSION: Mission = {
   nodeId: 'sal',
   label: 'Turn the bookkeeper',
   palette: 'sal',
+  scene: 'assets/art/scene/sal.jpg',
   start: 's0',
   nodes: [
     {

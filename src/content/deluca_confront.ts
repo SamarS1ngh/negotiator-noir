@@ -12,6 +12,7 @@ export const DELUCA_CONFRONT: Mission = {
   nodeId: 'deluca',
   label: 'Sit down with DeLuca',
   palette: 'deluca',
+  scene: 'assets/art/scene/deluca.jpg',
   start: 's0_serene',
   nodes: [
     {

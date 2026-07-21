@@ -587,6 +587,16 @@ body {
 .mood-warm   .meet-portrait { filter: contrast(1.02) brightness(1.07) saturate(1.12); }
 .mood-threat .meet-portrait { filter: contrast(1.22) brightness(.82) saturate(1.18); }
 
+/* ---- scene illustrations breathe: a full painted scene gets a MUCH lighter
+   grade than a bare face, so its detail actually reads. Text stays legible via a
+   bottom-only gradient. ---- */
+.bg-scene .meet-portrait { object-position: center; filter: contrast(1.06) brightness(.98) saturate(1.05) !important; }
+.bg-scene .scene-mood { opacity: .45; box-shadow: inset 0 0 140px 30px rgba(0,0,0,.42) !important; }
+.bg-scene .scene-light { opacity: .5; }
+.bg-scene .meet-grad {
+  background: linear-gradient(180deg, rgba(6,8,11,.12), transparent 20%, transparent 42%, rgba(6,8,11,.78) 78%, rgba(6,8,11,.94) 100%);
+}
+
 /* faint film grain across the scene — atmosphere, not a flat wash */
 .scene-light::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;

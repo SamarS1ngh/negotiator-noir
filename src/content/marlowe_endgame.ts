@@ -15,6 +15,7 @@ export const MARLOWE_ENDGAME: Mission = {
   nodeId: 'marlowe',
   label: 'Move on Marlowe',
   palette: 'marlowe',
+  scene: 'assets/art/scene/marlowe.jpg',
   start: 's0_serene',
   nodes: [
     // --- reactive openings (game.ts picks via startAt), all → 'move' ---

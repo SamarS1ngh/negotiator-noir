@@ -53,6 +53,8 @@ export interface Mission {
   nodeId: string;     // the board node it belongs to
   label: string;
   palette?: string;   // the character's signature colour (pal-sal, pal-ricci…)
+  scene?: string;     // the scene illustration (the moment painted), used as the
+                      // default background for every node unless a node overrides it
   start: string;      // id of the first MissionNode
   nodes: MissionNode[];
 }

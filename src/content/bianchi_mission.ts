@@ -16,6 +16,7 @@ export const BIANCHI_MISSION: Mission = {
   nodeId: 'bianchi',
   label: 'Set the rival on him',
   palette: 'bianchi',
+  scene: 'assets/art/scene/bianchi.jpg',
   start: 's0',
   nodes: [
     {
