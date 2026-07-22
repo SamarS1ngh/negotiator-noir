@@ -15,7 +15,9 @@ export interface MissionNodeView {
   mood?: string;       // situational light: tense/fear/hope/guilt/threat/cold/warm
   palette?: string;    // character signature: pal-sal, pal-ricci…
   choices?: MissionChoice[];
-  outcome?: { tone: 'good' | 'mixed' | 'bad'; title: string; line: string; ripple: string; tag?: string; cta?: string; reflect?: string };
+  outcome?: { tone: 'good' | 'mixed' | 'bad'; title: string; line: string; ripple: string; tag?: string; cta?: string; reflect?: string;
+    // the two-layer teaching close: plain mental model, then the named jargon
+    debrief?: { name: string; plain: string; real: string; note?: string } };
 }
 
 export interface MissionHandlers {
@@ -30,6 +32,16 @@ function el(tag: string, className?: string, text?: string): HTMLElement {
   if (className) n.className = className;
   if (text !== undefined) n.textContent = text;
   return n;
+}
+
+// minimal **bold** parser for the teaching card — bolds the named terms so the
+// jargon stands out (the text is set safely as text nodes, never innerHTML)
+function mdBold(host: HTMLElement, text: string): void {
+  text.split('**').forEach((seg, i) => {
+    if (seg === '') return;
+    if (i % 2 === 1) host.appendChild(el('strong', undefined, seg));
+    else host.appendChild(document.createTextNode(seg));
+  });
 }
 
 type Phase = 'talk' | 'choose' | 'conseq';
@@ -54,8 +66,10 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
     // face can take a heavy noir wash
     const bgScene = bgSrc && /\/scene\//.test(bgSrc) ? 'bg-scene' : '';
     // character palette + the moment's mood colour the whole scene; portraitless
-    // beats get the noir void treatment
-    root.className = `meet-screen mission-screen ${bgSrc ? '' : 'no-portrait'} ${bgScene} ${view.palette ? 'pal-' + view.palette : ''} ${view.mood ? 'mood-' + view.mood : ''}`.replace(/\s+/g, ' ').trim();
+    // beats get the noir void treatment. mood follows the BEAT (situation) first,
+    // then the node — so the colour visibly re-lights as the story turns.
+    const mood = (phase === 'talk' ? view.beats[i]?.mood : undefined) ?? view.mood;
+    root.className = `meet-screen mission-screen ${bgSrc ? '' : 'no-portrait'} ${bgScene} ${view.palette ? 'pal-' + view.palette : ''} ${mood ? 'mood-' + mood : ''}`.replace(/\s+/g, ' ').trim();
     root.onclick = null;
 
     const bg = el('div', 'meet-bg');
@@ -128,6 +142,20 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
       ref.appendChild(el('div', 'mcq-reflect-mark', '—'));
       ref.appendChild(el('div', 'mcq-reflect-t', o.reflect));
       card.appendChild(ref);
+    }
+    if (o.debrief) {   // THE BLACK BOOK — the two-layer lesson: plain model → the named principle
+      const db = el('div', 'mcq-learn');
+      db.appendChild(el('div', 'mcq-learn-lab', 'THE BLACK BOOK'));
+      if (o.debrief.note) { const n = el('div', 'mcq-learn-note'); mdBold(n, o.debrief.note); db.appendChild(n); }
+      // layer 1 — the plain mental model
+      const model = el('div', 'mcq-learn-model');
+      model.appendChild(el('div', 'mcq-learn-micro', 'Picture it'));
+      const pl = el('div', 'mcq-learn-plain'); mdBold(pl, o.debrief.plain); model.appendChild(pl);
+      db.appendChild(model);
+      // layer 2 — the named principle (the term he should learn, then the anchor)
+      db.appendChild(el('div', 'mcq-learn-term', o.debrief.name));
+      const rt = el('div', 'mcq-learn-real'); mdBold(rt, o.debrief.real); db.appendChild(rt);
+      card.appendChild(db);
     }
     const btn = document.createElement('button');
     btn.type = 'button';

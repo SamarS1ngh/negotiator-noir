@@ -1,4 +1,6 @@
 import type { Beat, Disposition } from './board';
+import type { CampaignDelta } from './campaign';
+import type { PrincipleId } from './principle';
 
 // ---- A MISSION: one prep job on the board, played as a BRANCHING scene
 // (Detroit-style). You move through beats, hit forks, and different approaches
@@ -30,6 +32,12 @@ export interface MissionOutcome {
   cta?: string;      // overrides the consequence button text
   reflect?: string;  // the MC's inner voice on what he just did — the cost/the mirror
   heatDelta?: number; // how much exposure this outcome draws (botches raise it; carries on)
+  // ---- campaign expansion (5-6hr) ----
+  campaign?: CampaignDelta;   // money/faction/bond/ledger effects that persist across chapters
+  debrief?: { principle: PrincipleId; note?: string };  // the two-layer teaching close:
+                              // names the concept you just used, tied to THIS moment
+  next?: string;     // chain to another Mission by id — multi-scene missions
+                     // (read → approach → complication → fallout)
 }
 
 // the emotional/situational light of a beat — drives the scene's colour + shadow
@@ -57,6 +65,8 @@ export interface Mission {
                       // default background for every node unless a node overrides it
   start: string;      // id of the first MissionNode
   nodes: MissionNode[];
+  teaches?: PrincipleId[];   // the principle(s) this mission is built to teach (codex)
+  phase?: 'read' | 'approach' | 'complication' | 'fallout';  // its slot in a multi-scene chain
 }
 
 export function missionNode(m: Mission, id: string): MissionNode | undefined {

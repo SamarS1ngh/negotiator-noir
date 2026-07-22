@@ -1,5 +1,6 @@
 import type { Mission, MissionOutcome } from '../domain/mission';
 import { missionNode } from '../domain/mission';
+import { principle } from '../domain/principle';
 import { renderMissionNode } from '../ui/mission';
 
 // Drive a branching mission: start at its first node, follow the fork the player
@@ -31,7 +32,16 @@ export function startMission(
       palette: mission.palette,
       choices,
       outcome: node.outcome
-        ? { tone: node.outcome.tone, title: node.outcome.title, line: node.outcome.line, ripple: node.outcome.ripple, tag: node.outcome.tag, cta: node.outcome.cta, reflect: node.outcome.reflect }
+        ? {
+            tone: node.outcome.tone, title: node.outcome.title, line: node.outcome.line,
+            ripple: node.outcome.ripple, tag: node.outcome.tag, cta: node.outcome.cta,
+            reflect: node.outcome.reflect,
+            // the two-layer teaching close — resolve the principle here so the UI
+            // stays free of domain lookups
+            debrief: node.outcome.debrief
+              ? (() => { const p = principle(node.outcome!.debrief!.principle); return { name: p.name, plain: p.plain, real: p.real, note: node.outcome!.debrief!.note }; })()
+              : undefined,
+          }
         : undefined,
     }, {
       choose(choiceId) {

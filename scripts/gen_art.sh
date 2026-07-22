@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 STYLE="glossy cel-shaded manhwa noir, crisp clean digital rendering, sharp detailed eyes, dramatic crimson overhead light single hanging bulb, film-noir crime backroom, high production"
 BASE="a dangerous debt collector in a dark suit seated at the FAR side of a long table facing the viewer, full wide shot showing the whole table and the dim room around him, POV from across the table"
 gen() { # gen <out> <expr>
+  [ -s "$1" ] && { echo "skip (exists) $1"; return 0; }
   local enc
   enc=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$BASE, $2, $STYLE")
   curl -fsSL -m 180 -o "$1" "https://image.pollinations.ai/prompt/${enc}?width=1080&height=1600&nologo=true&seed=501&model=flux"

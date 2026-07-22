@@ -33,6 +33,8 @@ export const PROLOGUE_MISSION: Mission = {
         { who: 'them', art: TEACH, text: "Up here, boy — watch. See how the captain's eyes keep going to the door while he haggles? He wants to leave more than he wants to win. Read that, and you've already got him." },
         { who: 'you', art: BOND, text: "You always get them, Pa." },
         { who: 'them', art: BOND, text: "Not always. But I read them true. Knowing people — that's worth more than money. Remember it when I'm gone." },
+        { who: 'you', caption: true, art: BOND, text: "But some nights, after the shop was locked and he thought I was asleep, I'd catch him at the back table with the freight books instead of the till — not counting, frowning, running the same column twice." },
+        { who: 'them', art: BOND, text: "(to himself, not seeing you there) These numbers don't move the way the cargo moves... (he catches you watching, shuts the ledger fast, forces a smile) Go on to bed. Nothing here for you to carry." },
         { who: 'you', caption: true, art: BOND, text: "My mother went when I was small. After that it was him, me, and the shop. He taught me to read a man across a table before I could read a book. I thought we had all the time in the world." },
       ],
       choices: [{ id: 'go', label: 'Then the world came for him.', to: 'fall' }],

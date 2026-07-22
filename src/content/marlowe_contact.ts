@@ -1,5 +1,15 @@
 import type { Mission } from '../domain/mission';
 
+// DENSE manhwa panels — one meaningful shot per dialogue beat, so the scene reads
+// like a comic that turns with the words (the walk-in → Marlowe's cold read of you
+// → your first move, and each ending its own portrait + mood).
+const OFFICE = 'assets/art/scene/mcontact_office.jpg';   // wide: you enter, he doesn't look up
+const MARLOWE = 'assets/art/scene/mcontact_marlowe.jpg'; // cold read: "sit, give me one reason"
+const STAND = 'assets/art/scene/mcontact_stand.jpg';     // you, steady, weighing the room
+const PAWN = 'assets/art/scene/mcontact_pawn.jpg';       // pen set down — cold ownership
+const UNSEEN = 'assets/art/scene/mcontact_unseen.jpg';   // dismissive almost-smile, forgotten
+const MARKED = 'assets/art/scene/mcontact_marked.jpg';   // pen stops — he really looks at you
+
 // MARLOWE — first contact. The payoff of the whole climb and the hinge into what
 // comes next. You can't break Marlowe with a secret the way you broke Ricci — he
 // has no fear to press, only control. So this isn't a takedown; it's your first
@@ -18,9 +28,9 @@ export const MARLOWE_CONTACT: Mission = {
       id: 's0',
       mood: 'threat',
       beats: [
-        { who: 'you', caption: true, text: "The way up cost you the docks. Ricci got you through a door no debtor has ever walked. And here he is — Marlowe. A fountain pen in his hand like a scalpel, a ledger open in front of him. He doesn't look up." },
-        { who: 'them', text: "Vidal's boy. Yes — I know. You turned my collector, rattled my dock, clawed all the way to this chair. Impressive. For an insect. Sit. Give me one reason I shouldn't have you erased before your coffee cools." },
-        { who: 'you', caption: true, text: "Ricci I could break with a secret. Marlowe has none that frighten him — no fear to press, only control. You don't threaten this machine. You become a part of it, and turn it against itself. That war starts here." },
+        { who: 'you', caption: true, art: OFFICE, text: "The way up cost you the docks. Ricci got you through a door no debtor has ever walked. And here he is — Marlowe. A fountain pen in his hand like a scalpel, a ledger open in front of him. He doesn't look up." },
+        { who: 'them', art: MARLOWE, text: "Vidal's boy. Yes — I know. You turned my collector, rattled my dock, clawed all the way to this chair. Impressive. For an insect. Sit. Give me one reason I shouldn't have you erased before your coffee cools." },
+        { who: 'you', caption: true, art: STAND, text: "Ricci I could break with a secret. Marlowe has none that frighten him — no fear to press, only control. You don't threaten this machine. You become a part of it, and turn it against itself. That war starts here." },
       ],
       ask: "In the room at last, with the man who ended your father — and he's already read you cover to cover. Your first move against Marlowe. Play it.",
       choices: [
@@ -32,6 +42,7 @@ export const MARLOWE_CONTACT: Mission = {
     {
       id: 'o_pawn',
       mood: 'cold',
+      portrait: PAWN,
       outcome: {
         key: 'pawn', tone: 'mixed',
         tag: 'END OF CHAPTER ONE',
@@ -47,6 +58,7 @@ export const MARLOWE_CONTACT: Mission = {
     {
       id: 'o_unseen',
       mood: 'cold',
+      portrait: UNSEEN,
       outcome: {
         key: 'unseen', tone: 'good',
         tag: 'END OF CHAPTER ONE',
@@ -62,6 +74,7 @@ export const MARLOWE_CONTACT: Mission = {
     {
       id: 'o_marked',
       mood: 'threat',
+      portrait: MARKED,
       outcome: {
         key: 'marked', tone: 'bad',
         tag: 'END OF CHAPTER ONE',

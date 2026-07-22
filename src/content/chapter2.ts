@@ -45,23 +45,28 @@ export function buildCh2Recap(flags: Set<string>): Mission {
 export const CHAPTER_2: Chapter = {
   id: 'ch2',
   title: "DELUCA'S DISTRICT",
-  moves: 3,
   targetId: 'deluca',
   nodes: [
     { id: 'you', name: 'YOU', role: 'off the docks, climbing', disposition: 4, x: 50, y: 86 },
     { id: 'deluca', name: 'DELUCA', role: 'boss of the Nine Streets', disposition: 2, dealTarget: true, portrait: `${A}/deluca.jpg`, x: 50, y: 15 },
     { id: 'santo', name: 'SANTO', role: "DeLuca's enforcer", disposition: 2, portrait: `${A}/santo.jpg`, x: 19, y: 43 },
     { id: 'reese', name: 'REESE', role: 'the tame detective', disposition: 2, portrait: `${A}/reese.jpg`, x: 81, y: 43 },
-    { id: 'ricci', name: 'RICCI', role: 'the collector', disposition: 2, portrait: `${A}/ricci.jpg`, x: 50, y: 64 },
+    { id: 'ricci', name: 'RICCI', role: 'the collector', disposition: 2, portrait: `${A}/ricci.jpg`, x: 50, y: 62 },
+    { id: 'vera', name: 'VERA', role: 'the fixer', disposition: 2, portrait: `${A}/vera.jpg`, x: 24, y: 71 },
+    { id: 'bagman', name: 'MILO', role: "DeLuca's bagman", disposition: 2, portrait: `${A}/bagman.jpg`, x: 76, y: 71 },
   ],
   edges: [
     { from: 'santo', to: 'deluca', label: 'serves' },
     { from: 'reese', to: 'deluca', label: 'owned by' },
     { from: 'ricci', to: 'deluca', label: 'answered to' },
     { from: 'deluca', to: 'santo', label: 'underpays' },
+    { from: 'bagman', to: 'deluca', label: 'washes for' },
+    { from: 'vera', to: 'deluca', label: 'hosts' },
   ],
   actions: [
     { id: 'santo_turn', nodeId: 'santo', label: 'Work the enforcer', blurb: 'Loyal muscle — and sick of being treated like it.', grants: [], result: '' },
     { id: 'reese_turn', nodeId: 'reese', label: 'Work the detective', blurb: "DeLuca's tame cop. He knows where the money and the bodies are.", grants: [], result: '' },
+    { id: 'vera_turn', nodeId: 'vera', label: 'Work the fixer', blurb: 'The club owner who bridges the docks and the men upriver.', grants: [], result: '' },
+    { id: 'bagman_turn', nodeId: 'bagman', label: 'Turn the bagman', blurb: "DeLuca's cash mover — sloppy, sweating, scared of the audit.", grants: [], result: '' },
   ],
 };

@@ -11,7 +11,6 @@ const A = 'assets/art/cast';
 export const CHAPTER_1: Chapter = {
   id: 'ch1',
   title: "MARLOWE'S DOCKS",
-  moves: 3,
   targetId: 'ricci',
   nodes: [
     { id: 'you', name: 'YOU', role: 'nobody — yet', disposition: 4, x: 50, y: 85 },
@@ -19,6 +18,8 @@ export const CHAPTER_1: Chapter = {
     { id: 'sal', name: 'SAL', role: "Marlowe's bookkeeper", disposition: 2, portrait: `${A}/sal.jpg`, x: 17, y: 38 },
     { id: 'crew', name: 'THE CREW', role: 'dock loaders', disposition: 2, portrait: `${A}/crew.jpg`, x: 83, y: 38 },
     { id: 'bianchi', name: 'BIANCHI', role: 'rival collector', disposition: 2, portrait: `${A}/bianchi.jpg`, x: 24, y: 67 },
+    { id: 'runner', name: 'TOMMY', role: "Ricci's runner", disposition: 2, portrait: `${A}/runner.jpg`, x: 72, y: 64 },
+    { id: 'gallo', name: 'FR. GALLO', role: 'the docks fence', disposition: 2, portrait: `${A}/gallo.jpg`, x: 28, y: 22 },
     { id: 'deluca', name: 'DELUCA', role: 'the man above Ricci', disposition: 2, locked: true, portrait: `${A}/deluca.jpg`, x: 50, y: 15 },
   ],
   edges: [
@@ -26,6 +27,8 @@ export const CHAPTER_1: Chapter = {
     { from: 'crew', to: 'ricci', label: 'fears' },
     { from: 'ricci', to: 'deluca', label: 'answers to' },
     { from: 'bianchi', to: 'ricci', label: 'envies' },
+    { from: 'runner', to: 'ricci', label: 'runs for' },
+    { from: 'gallo', to: 'ricci', label: 'washes for' },
     { from: 'deluca', to: 'ricci', label: 'runs' },
   ],
   actions: [
@@ -115,6 +118,22 @@ export const CHAPTER_1: Chapter = {
           result: "“You don't lean on me, kid.” A peer doesn't take threats.",
           failDelta: { nodeId: 'bianchi', delta: -1 } },
       ],
+    },
+    // the two deeper prep nodes — full branching missions (see runner_mission.ts /
+    // gallo_mission.ts); the board action just carries their metadata + grant.
+    {
+      id: 'runner_turn', nodeId: 'runner',
+      label: 'Flip the runner',
+      blurb: "Ricci's runner — scared under the swagger, and everywhere at once.",
+      grants: ['insideRicci'],
+      result: '',
+    },
+    {
+      id: 'gallo_turn', nodeId: 'gallo',
+      label: 'Work the fence',
+      blurb: 'The docks priest who launders small — and hears every confession.',
+      grants: ['moneyTrail'],
+      result: '',
     },
   ],
 };

@@ -13,6 +13,7 @@ BASE="a dangerous debt collector in a dark suit seated at the FAR side of a long
 D=public/assets/art/collector
 
 gen() { # gen <out> <pose>
+  [ -s "$1" ] && { echo "skip (exists) $1"; return 0; }
   local enc
   enc=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$BASE, $2, $STYLE")
   if curl -fsSL -m 180 -o "$1" "https://image.pollinations.ai/prompt/${enc}?width=1080&height=1600&nologo=true&seed=501&model=flux"; then

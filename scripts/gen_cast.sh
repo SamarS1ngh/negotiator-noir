@@ -9,6 +9,7 @@ D=public/assets/art/cast
 mkdir -p "$D"
 
 gen() { # gen <out> <seed> <desc>
+  [ -s "$1" ] && { echo "skip (exists) $1"; return 0; }
   local enc
   enc=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$3, $STYLE")
   if curl -fsSL -m 180 -o "$1" "https://image.pollinations.ai/prompt/${enc}?width=800&height=1000&nologo=true&seed=$2&model=flux"; then

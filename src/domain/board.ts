@@ -1,4 +1,4 @@
-import type { MissionOutcome } from './mission';
+import type { MissionOutcome, SceneMood } from './mission';
 
 // ---- THE WEB: the scheming board around a target. You're the underdog; you
 // can't fight the empire head-on, so you work the people around it. What you do
@@ -21,8 +21,9 @@ export interface Node {
 // `caption: true` marks narration/inner-voice — rendered as a comic caption box
 // instead of a speech bubble. `art` is this beat's panel illustration — the scene
 // swaps to it when the beat shows (manhwa-style), falling back to the mission's
-// scene when a beat has none.
-export interface Beat { who: 'them' | 'you'; text: string; caption?: boolean; art?: string; }
+// scene when a beat has none. `mood` re-lights the scene for THIS beat (the
+// situation's colour follows the story), falling back to the node's mood.
+export interface Beat { who: 'them' | 'you'; text: string; caption?: boolean; art?: string; mood?: SceneMood; }
 
 export interface Edge { from: string; to: string; label: string; }
 
@@ -59,16 +60,16 @@ export interface Chapter {
   nodes: Node[];
   edges: Edge[];
   actions: Action[];
-  moves: number;
   targetId: string;
 }
 
 export interface BoardState {
   nodes: Node[];
   flags: Set<string>;
-  done: Set<string>;      // spent action ids
-  movesLeft: number;
-  heat: number;           // your exposure, 0..HEAT_MAX — rises on botches, carries across chapters
+  done: Set<string>;      // spent action ids (each person can be worked once)
+  heat: number;           // your exposure, 0..HEAT_MAX — the ONLY cost of working the board:
+                          // work as many people as you like, but every botch raises it, and
+                          // high heat forewarns the target + endangers your allies
 }
 
 export const HEAT_MAX = 10;
@@ -81,7 +82,6 @@ export function initBoard(ch: Chapter, heat = 0): BoardState {
     nodes: ch.nodes.map((n) => ({ ...n })),
     flags: new Set<string>(),
     done: new Set<string>(),
-    movesLeft: ch.moves,
     heat,
   };
 }
@@ -98,7 +98,7 @@ export function availableActions(ch: Chapter, st: BoardState, nodeId: string): A
 // nothing, and may cost you (`failDelta`). Returns a NEW state (never mutates).
 export function takeAction(ch: Chapter, st: BoardState, actionId: string, success = true, failDelta?: { nodeId: string; delta: number }): BoardState {
   const a = ch.actions.find((x) => x.id === actionId);
-  if (!a || st.done.has(a.id) || st.movesLeft <= 0) return st;
+  if (!a || st.done.has(a.id)) return st;   // once per person; no move budget — heat is the cost
 
   const delta = success ? a.dispositionDelta : failDelta;
   const nodes = st.nodes.map((n) => {
@@ -113,7 +113,7 @@ export function takeAction(ch: Chapter, st: BoardState, actionId: string, succes
   const done = new Set(st.done);
   done.add(a.id);
 
-  return { nodes, flags, done, movesLeft: st.movesLeft - 1, heat: st.heat };
+  return { nodes, flags, done, heat: st.heat };
 }
 
 // ---- a mission's outcome rewrites the board (Detroit-style: which ending you
@@ -134,7 +134,7 @@ export function applyMissionOutcome(st: BoardState, actionId: string, o: Mission
   for (const f of o.worldFlags ?? []) flags.add(f);
   const done = new Set(st.done);
   done.add(actionId);
-  return { nodes, flags, done, movesLeft: Math.max(0, st.movesLeft - 1), heat: bumpHeat(st.heat, o.heatDelta ?? 0) };
+  return { nodes, flags, done, heat: bumpHeat(st.heat, o.heatDelta ?? 0) };
 }
 
 // ---- the deal's result comes back and rewrites the board ----

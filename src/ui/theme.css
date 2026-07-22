@@ -17,6 +17,10 @@
   --steel-glow: rgba(99, 182, 198, .32);
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
+  /* Oswald is a CONDENSED display face — great for titles/labels/buttons, cramped
+     for reading. Reading text (dialogue, teaching, captions) uses this readable
+     humanist stack instead. */
+  --font-read: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -381,7 +385,37 @@ body {
 }
 .board-title .bt-ch { display: block; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--steel); }
 .board-title .bt-name { display: block; font-size: clamp(20px, 6vw, 28px); font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: #fff; margin-top: 3px; }
-.board-status { display: flex; flex-direction: column; align-items: flex-end; gap: 9px; }
+.board-status { display: flex; flex-direction: column; align-items: flex-end; gap: 9px; margin-top: 34px; }
+/* the pause / menu button, top-right; heat sits below it */
+.board-menu-btn {
+  position: absolute; top: calc(12px + var(--safe-t)); right: var(--pad); z-index: 7;
+  width: 36px; height: 32px; border-radius: 9px; padding: 0;
+  border: 1px solid rgba(150,160,180,.3); background: rgba(20,22,28,.72);
+  color: #d3dbe4; font-size: 16px; line-height: 1; cursor: pointer;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.board-menu-btn:hover { background: rgba(32,36,44,.85); }
+/* the overlay */
+.menu-overlay {
+  position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+  background: rgba(4,5,7,.78); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
+.menu-panel {
+  width: min(300px, 82%); display: flex; flex-direction: column; gap: 11px;
+  padding: 22px 20px; border-radius: 16px;
+  border: 1px solid rgba(150,160,180,.18); background: linear-gradient(180deg, rgba(20,23,30,.96), rgba(12,14,19,.98));
+  box-shadow: 0 30px 90px rgba(0,0,0,.7);
+}
+.menu-title { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--steel); text-align: center; margin-bottom: 4px; }
+.menu-btn {
+  width: 100%; padding: 14px; border-radius: 11px; cursor: pointer;
+  font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  border: 1px solid rgba(160,170,190,.22); background: rgba(30,34,42,.8); color: #e7edf3;
+}
+.menu-btn.go { border-color: var(--steel-dim); color: var(--steel); }
+.menu-btn.warn { border-color: rgba(224,178,74,.5); color: var(--gold); }
+.menu-btn.danger { border-color: var(--crimson-dim); color: #e6979a; }
+.menu-btn.armed { background: var(--crimson-dim); color: #fff; border-color: var(--crimson); font-size: 12px; }
 .board-moves { text-align: right; }
 .board-moves .bm-lab, .board-heat .bm-lab { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
 .board-heat { text-align: right; }
@@ -502,8 +536,8 @@ body {
   color: #eef3f7; border: 1px solid rgba(255,255,255,.07);
   border-top: 2px solid var(--accent, #c9a94a);
   border-radius: 2px 13px 13px 13px; padding: 13px 16px 14px;
-  font-family: 'Oswald', system-ui, sans-serif; font-weight: 300; letter-spacing: .012em;
-  font-size: clamp(15px, 4.2vw, 18px); line-height: 1.46; text-shadow: 0 1px 6px rgba(0,0,0,.5);
+  font-family: var(--font-read); font-weight: 400; letter-spacing: .003em;
+  font-size: clamp(15px, 4.2vw, 17.5px); line-height: 1.52; text-shadow: 0 1px 6px rgba(0,0,0,.5);
   box-shadow: 0 14px 36px rgba(0,0,0,.6), 0 0 22px -8px var(--accent, transparent);
 }
 .meet-say.you .meet-line { border-top-color: var(--steel); border-radius: 13px 2px 13px 13px; box-shadow: 0 14px 36px rgba(0,0,0,.6), 0 0 22px -8px var(--steel); }
@@ -557,6 +591,8 @@ body {
 .mission-screen.pal-crew    { --glow: rgba(201,138,58,.20);  --ambient: rgba(34,24,12,.5);  --accent: #c98a3a; } /* grimy dock amber */
 .mission-screen.pal-marlowe { --glow: rgba(143,176,200,.20); --ambient: rgba(14,20,28,.55); --accent: #8fb0c8; } /* cold steel */
 .mission-screen.pal-deluca  { --glow: rgba(230,180,70,.24);   --ambient: rgba(38,26,8,.5);   --accent: #e8b64a; } /* flashy boss gold */
+.mission-screen.pal-gallo   { --glow: rgba(224,158,74,.22);   --ambient: rgba(32,20,10,.52); --accent: #e0a24a; } /* guttering votive-candle amber */
+.mission-screen.pal-vera    { --glow: rgba(216,88,168,.22);   --ambient: rgba(38,14,30,.52); --accent: #d9a34a; } /* jazz-club magenta stage-wash + brass gold */
 
 .scene-light {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
@@ -569,13 +605,16 @@ body {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
   box-shadow: inset 0 0 130px 34px rgba(0,0,0,.5);   /* base noir vignette on every scene */
   transition: box-shadow .55s ease, background .55s ease; }
-.mood-tense  .scene-mood { box-shadow: inset 0 0 155px 50px rgba(0,0,0,.72); background: radial-gradient(120% 90% at 50% 30%, transparent 30%, rgba(0,0,0,.38)); }
-.mood-fear   .scene-mood { box-shadow: inset 0 0 195px 74px rgba(6,14,34,.84); background: radial-gradient(100% 82% at 50% 36%, transparent 22%, rgba(10,20,58,.62)); }
-.mood-guilt  .scene-mood { box-shadow: inset 0 0 175px 62px rgba(6,12,20,.74); background: radial-gradient(95% 74% at 50% 30%, transparent 30%, rgba(10,24,32,.52)); }
-.mood-cold   .scene-mood { box-shadow: inset 0 0 175px 60px rgba(8,18,30,.72); background: radial-gradient(100% 80% at 50% 40%, transparent 32%, rgba(16,32,46,.48)); }
-.mood-hope   .scene-mood { box-shadow: inset 0 0 120px 30px rgba(20,14,4,.42); background: radial-gradient(95% 72% at 50% 2%, rgba(242,192,92,.36), transparent 52%); }
-.mood-warm   .scene-mood { box-shadow: inset 0 0 120px 28px rgba(24,14,4,.44); background: radial-gradient(98% 76% at 50% 8%, rgba(242,162,82,.34), transparent 54%); }
-.mood-threat .scene-mood { box-shadow: inset 0 0 205px 68px rgba(112,6,10,.74); background: radial-gradient(115% 85% at 50% 44%, transparent 24%, rgba(172,18,22,.46)); }
+/* each mood recolours the WHOLE frame (centre + edges), so a mood change reads at
+   a glance — even over bright scene art. A radial that stays tinted at the centre
+   grades the image; the box-shadow deepens the noir vignette on top. */
+.mood-tense  .scene-mood { box-shadow: inset 0 0 165px 54px rgba(0,0,0,.7);   background: radial-gradient(135% 105% at 50% 32%, rgba(10,9,10,.30), rgba(0,0,0,.56)); }
+.mood-fear   .scene-mood { box-shadow: inset 0 0 205px 76px rgba(6,14,40,.82); background: radial-gradient(135% 105% at 50% 36%, rgba(14,24,64,.42), rgba(4,8,28,.74)); }
+.mood-guilt  .scene-mood { box-shadow: inset 0 0 185px 64px rgba(6,14,20,.74); background: radial-gradient(135% 105% at 50% 32%, rgba(10,30,38,.38), rgba(4,14,20,.64)); }
+.mood-cold   .scene-mood { box-shadow: inset 0 0 185px 62px rgba(8,20,34,.72); background: radial-gradient(135% 105% at 50% 40%, rgba(20,46,66,.40), rgba(8,22,38,.66)); }
+.mood-hope   .scene-mood { box-shadow: inset 0 0 130px 34px rgba(20,14,4,.44); background: radial-gradient(125% 100% at 50% 4%, rgba(248,198,98,.38), rgba(30,18,6,.46) 82%); }
+.mood-warm   .scene-mood { box-shadow: inset 0 0 130px 32px rgba(24,14,4,.46); background: radial-gradient(125% 100% at 50% 8%, rgba(246,166,80,.38), rgba(32,16,4,.48) 84%); }
+.mood-threat .scene-mood { box-shadow: inset 0 0 210px 72px rgba(96,6,10,.72);  background: radial-gradient(135% 105% at 50% 42%, rgba(158,16,20,.44), rgba(56,4,8,.68)); }
 
 /* the MOOD grades the CHARACTER too — the whole scene takes the vibe, not a tint box */
 .mission-screen .meet-portrait { transition: filter .55s ease; }
@@ -590,9 +629,19 @@ body {
 /* ---- scene illustrations breathe: a full painted scene gets a MUCH lighter
    grade than a bare face, so its detail actually reads. Text stays legible via a
    bottom-only gradient. ---- */
-.bg-scene .meet-portrait { object-position: center; filter: contrast(1.06) brightness(.98) saturate(1.05) !important; }
-.bg-scene .scene-mood { opacity: .45; box-shadow: inset 0 0 140px 30px rgba(0,0,0,.42) !important; }
-.bg-scene .scene-light { opacity: .5; }
+/* scenes get a NEUTRAL base filter, then each mood re-grades the image itself so
+   detail survives but the vibe still lands. The .scene-mood colour plane above
+   does the heavy lifting; it now reads at near-full strength on scenes too. */
+.bg-scene .meet-portrait { object-position: center; filter: contrast(1.05) brightness(.97) saturate(1.04); }
+.bg-scene.mood-tense  .meet-portrait { filter: contrast(1.10) brightness(.90) saturate(.94); }
+.bg-scene.mood-fear   .meet-portrait { filter: contrast(1.09) brightness(.80) saturate(.58); }
+.bg-scene.mood-guilt  .meet-portrait { filter: contrast(1.04) brightness(.90) saturate(.5); }
+.bg-scene.mood-cold   .meet-portrait { filter: contrast(1.06) brightness(.90) saturate(.6); }
+.bg-scene.mood-hope   .meet-portrait { filter: contrast(1.03) brightness(1.07) saturate(1.14); }
+.bg-scene.mood-warm   .meet-portrait { filter: contrast(1.04) brightness(1.06) saturate(1.16); }
+.bg-scene.mood-threat .meet-portrait { filter: contrast(1.14) brightness(.92) saturate(1.18); }
+.bg-scene .scene-mood { opacity: .82; }
+.bg-scene .scene-light { opacity: .6; }
 .bg-scene .meet-grad {
   background: linear-gradient(180deg, rgba(6,8,11,.12), transparent 20%, transparent 42%, rgba(6,8,11,.78) 78%, rgba(6,8,11,.94) 100%);
 }
@@ -629,13 +678,43 @@ body {
 .tone-bad .mcq-tag { color: var(--crimson); }
 .mcq-title { font-family: 'Oswald'; font-size: 17px; font-weight: 700; letter-spacing: .04em; color: #f2f6f8; margin-bottom: 9px; }
 .mcq-line { font-family: 'JetBrains Mono', monospace; font-size: 13.5px; line-height: 1.45; color: #f4e7c6; }
-.mcq-ripple { margin-top: 13px; padding-top: 11px; border-top: 1px solid rgba(160,170,190,.16); }
-.mcq-rip-lab { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--steel); margin-bottom: 5px; }
-.mcq-rip { font-size: 13px; line-height: 1.5; color: #cfd8de; font-style: italic; }
+/* THE WORLD SHIFTS — the consequence rippling out. A cool steel callout with a
+   left rule: readable (no more condensed italic), but visibly a "world-state"
+   note, distinct from the fiction above and the gold lesson below. */
+.mcq-ripple { margin-top: 15px; padding: 1px 0 2px 13px; border-left: 3px solid var(--steel); }
+.mcq-rip-lab { font-family: 'Oswald', sans-serif; font-size: 9.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--steel); margin-bottom: 5px; }
+.mcq-rip { font-family: var(--font-read); font-size: 13px; line-height: 1.55; color: #cbd8e1; }
 /* the MC's own voice — the cost of what he just did */
-.mcq-reflect { margin-top: 12px; padding-top: 11px; border-top: 1px dashed rgba(160,150,120,.22); display: flex; gap: 9px; }
+.mcq-reflect { margin-top: 13px; padding-top: 12px; border-top: 1px dashed rgba(160,150,120,.22); display: flex; gap: 9px; }
 .mcq-reflect-mark { color: var(--gold); font-weight: 700; line-height: 1.5; opacity: .8; }
 .mcq-reflect-t { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.5; color: #d9c7a6; font-style: italic; }
+
+/* THE BLACK BOOK — the lesson, and the point of the whole game. Styled as an
+   entry in the player's growing ledger of tricks: warm gold on dark leather, a
+   spine rule, a decorative mark, the plain model, then the NAMED principle set as
+   a gold heading so the jargon is the thing that sticks. */
+.mcq-learn {
+  margin-top: 16px; padding: 13px 15px 15px;
+  border-radius: 3px 12px 12px 12px;
+  border: 1px solid rgba(200,162,58,.3); border-left: 3px solid var(--gold);
+  background: linear-gradient(180deg, rgba(30,25,15,.78), rgba(17,14,9,.9));
+  box-shadow: inset 0 1px 0 rgba(255,240,200,.05), 0 8px 22px -12px rgba(0,0,0,.7);
+}
+.mcq-learn-lab {
+  font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.mcq-learn-lab::before { content: '❦'; font-size: 13px; line-height: 1; opacity: .85; }
+.mcq-learn-lab::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(200,162,58,.35), transparent); }
+.mcq-learn-note {
+  font-family: var(--font-read); font-size: 12.5px; line-height: 1.55; color: #cbb98f; font-style: italic;
+  padding-bottom: 11px; margin-bottom: 11px; border-bottom: 1px solid rgba(200,162,58,.15);
+}
+.mcq-learn-micro { font-family: 'Oswald', sans-serif; font-size: 8.5px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: #9a875a; margin-bottom: 4px; }
+.mcq-learn-plain { font-family: var(--font-read); font-size: 13.5px; line-height: 1.6; color: #ece3cf; }
+.mcq-learn-term { font-family: 'Oswald', sans-serif; font-size: 15.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #f0d47e; margin: 13px 0 5px; }
+.mcq-learn-real { font-family: var(--font-read); font-size: 13px; line-height: 1.6; color: #d9ccab; }
+.mcq-learn strong { color: #f4e4ab; font-weight: 700; }
 
 .act-sheet {
   position: absolute; left: var(--pad); right: var(--pad); bottom: calc(96px + var(--safe-b)); z-index: 6;

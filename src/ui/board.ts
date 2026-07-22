@@ -9,6 +9,8 @@ export interface BoardHandlers {
   act(actionId: string): void;
   select(nodeId: string | null): void;
   sitDown(): void;
+  restartChapter(): void;
+  restartGame(): void;
 }
 
 const DISP_LABEL = ['enemy', 'wary', 'neutral', 'warm', 'ally'];
@@ -18,6 +20,34 @@ function el(tag: string, className?: string, text?: string): HTMLElement {
   if (className) n.className = className;
   if (text !== undefined) n.textContent = text;
   return n;
+}
+
+// the pause menu overlay — continue, restart the chapter, or restart the whole game.
+// Destructive options arm on first tap and fire on the second (no accidental wipes).
+function openMenu(root: HTMLElement, on: BoardHandlers): void {
+  const ov = el('div', 'menu-overlay');
+  ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
+  const panel = el('div', 'menu-panel');
+  panel.appendChild(el('div', 'menu-title', 'PAUSED'));
+  const mk = (label: string, cls: string, danger: boolean, fn: () => void): void => {
+    const b = el('button', `menu-btn ${cls}`, label) as HTMLButtonElement;
+    b.type = 'button';
+    if (danger) {
+      let armed = false;
+      b.addEventListener('click', () => {
+        if (!armed) { armed = true; b.textContent = 'tap again to confirm'; b.classList.add('armed'); return; }
+        ov.remove(); fn();
+      });
+    } else {
+      b.addEventListener('click', () => { ov.remove(); fn(); });
+    }
+    panel.appendChild(b);
+  };
+  mk('CONTINUE', 'go', false, () => { /* just close */ });
+  mk('RESTART CHAPTER', 'warn', true, on.restartChapter);
+  mk('RESTART GAME', 'danger', true, on.restartGame);
+  ov.appendChild(panel);
+  root.appendChild(ov);
 }
 
 export function renderBoard(
@@ -41,13 +71,13 @@ export function renderBoard(
   t.appendChild(el('span', 'bt-ch', 'the web'));
   t.appendChild(el('span', 'bt-name', ch.title));
   top.appendChild(t);
-  const moves = el('div', 'board-moves');
-  moves.appendChild(el('span', 'bm-lab', 'moves left'));
-  const pips = el('div', 'bm-pips');
-  for (let i = 0; i < ch.moves; i += 1) pips.appendChild(el('span', `pip${i < st.movesLeft ? ' on' : ''}`));
-  moves.appendChild(pips);
+  // the pause / menu button — restart chapter or the whole game
+  const menuBtn = el('button', 'board-menu-btn', '☰');
+  (menuBtn as HTMLButtonElement).type = 'button';
+  menuBtn.addEventListener('click', () => openMenu(root, on));
+  top.appendChild(menuBtn);
+  // no move budget — you can work as many people as you dare. HEAT is the cost.
   const status = el('div', 'board-status');
-  status.appendChild(moves);
 
   // HEAT — your exposure. Rises on botches, carries across chapters, makes the
   // next target warier.
@@ -138,13 +168,13 @@ export function renderBoard(
   const targetName = (target?.name ?? 'THE TARGET').toUpperCase();
   const dealt = st.done.has(`__dealt_${ch.targetId}`);   // sat down but forced no way up (a dead-end)
 
-  if (ch.id === 'ch3') {
+  if (ch.id === 'ch6') {
     // the endgame — turn Marlowe's house, then move on him
     if (dealt) {
       hint('It is done. The empire that ate your father answers to you now — or to no one.');
       const b = el('button', 'board-sit done'); (b as HTMLButtonElement).disabled = true; b.textContent = '— THE END —'; foot.appendChild(b);
     } else {
-      hint(st.movesLeft > 0 ? "turn his own house against him — you only get so many moves" : 'his people have chosen. make your move.');
+      hint('turn his own house against him — work as many as you dare. every botch raises the heat.');
       button('board-sit marlowe', 'MOVE ON MARLOWE ▸', () => on.sitDown());
     }
   } else {
@@ -152,7 +182,7 @@ export function renderBoard(
     if (dealt) {
       hint('You dealt with him — but forced no way up. The climb ends here, this time.');
     } else {
-      hint(st.movesLeft > 0 ? 'work his people first — you only get so many moves' : "you've done what you can. time to sit down.");
+      hint('work his people first — as many as you dare. every botch raises the heat, and the sit-down gets harder.');
       button('board-sit', `SIT DOWN WITH ${targetName} ▸`, () => on.sitDown());
     }
   }
@@ -170,7 +200,7 @@ function actionSheet(ch: Chapter, st: BoardState, node: Node, on: BoardHandlers)
   if (node.id === 'you') {
     sheet.appendChild(el('div', 'as-none', "That's you. The one they'll never see coming."));
   } else if (acts.length === 0) {
-    sheet.appendChild(el('div', 'as-none', st.movesLeft <= 0 ? 'Out of moves.' : "Nothing more to do here right now."));
+    sheet.appendChild(el('div', 'as-none', "Nothing more to do here right now."));
   } else {
     for (const a of acts) {
       const b = document.createElement('button');
@@ -179,9 +209,7 @@ function actionSheet(ch: Chapter, st: BoardState, node: Node, on: BoardHandlers)
       b.dataset.act = a.id;
       b.appendChild(el('div', 'act-label', a.label));
       b.appendChild(el('div', 'act-blurb', a.blurb));
-      const can = st.movesLeft > 0;
-      if (!can) b.disabled = true;
-      else b.addEventListener('click', () => on.act(a.id));
+      b.addEventListener('click', () => on.act(a.id));   // no move gate — heat is the cost
       sheet.appendChild(b);
     }
   }
