@@ -10,7 +10,7 @@ export const CHAPTER_6: Chapter = {
   title: "MARLOWE'S HOUSE",
   targetId: 'marlowe',
   nodes: [
-    { id: 'you', name: 'YOU', role: 'at the top, at last', disposition: 4, x: 50, y: 86 },
+    { id: 'you', name: 'CASS', role: 'at the top, at last', disposition: 4, x: 50, y: 86 },
     { id: 'marlowe', name: 'MARLOWE', role: 'the empire', disposition: 2, dealTarget: true, portrait: `${A}/marlowe.jpg`, x: 50, y: 15 },
     { id: 'otto', name: 'OTTO', role: "Marlowe's consigliere", disposition: 2, portrait: `${A}/otto.jpg`, x: 19, y: 43 },
     { id: 'adler', name: 'ADLER', role: 'the money man', disposition: 2, portrait: `${A}/adler.jpg`, x: 81, y: 43 },

@@ -2,7 +2,8 @@ import type { Node, Chapter } from '../domain/board';
 import type { Mission, MissionOutcome } from '../domain/mission';
 import { initBoard, takeAction, applyDealOutcome, applyMissionOutcome, bumpHeat } from '../domain/board';
 import { initCampaign, applyCampaign, learn, atRisk, record } from '../domain/campaign';
-import { saveGame, loadGame, clearSave } from './save';
+import { saveGame, loadGame, clearSave, saveCheckpoint, loadCheckpoints, checkpointState } from './save';
+import { renderMenu, renderIntro, renderChapterSelect, type MenuChapter } from '../ui/menu';
 import { CHAPTER_1 } from '../content/chapter1';
 import { CHAPTER_2, buildCh2Recap } from '../content/chapter2';
 import { CHAPTER_3 } from '../content/chapter3';
@@ -123,7 +124,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
 
   function showBoard(): void {
     saveGame(ch.id, st, camp);   // the board is the safe point — checkpoint here
-    renderBoard(root, ch, st, selected, { act, select, sitDown, restartChapter, restartGame }, toast, changed);
+    renderBoard(root, ch, st, selected, { act, select, sitDown, restartChapter, restartGame, mainMenu: showMenu }, toast, changed);
     changed = undefined;   // flare is a one-shot
   }
 
@@ -142,7 +143,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
     ch = CHAPTER_1; st = initBoard(ch); camp = initCampaign();
     selected = null; toast = undefined; changed = undefined;
     snapChapter();
-    startMission(root, PROLOGUE_MISSION, { name: 'RICCI', role: 'the collector', portrait: 'assets/art/cast/ricci.jpg' }, new Set<string>(), showBoard);
+    startMission(root, PROLOGUE_MISSION, { name: 'RICCI', role: 'the collector', portrait: 'assets/art/cast/ricci.jpg' }, new Set<string>(), showBoard, undefined, () => scenePause(false));
   }
 
   function select(nodeId: string | null): void {
@@ -168,7 +169,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
         toast = outcome.ripple;
         changed = new Set([mission.nodeId, ...(outcome.dispositions?.map((d) => d.nodeId) ?? [])]);
         showBoard();
-      });
+      }, undefined, () => scenePause(true));
       return;
     }
 
@@ -233,7 +234,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
         st = { ...st, heat }; toast = outcome.ripple;
       }
       selected = null; changed = new Set([stage.target]); showBoard();
-    }, startAt);
+    }, startAt, () => scenePause(true));
   }
 
   // who dies / who turns on you crossing into chapter `atCh` (writes ledger flags)
@@ -262,8 +263,88 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
       st = initBoard(ch, heat);
       st = { ...st, flags: new Set([...st.flags, ...carried]),
         nodes: st.nodes.map((n) => (n.id === 'ricci' && ch.id === 'ch2' ? { ...n, disposition: (carried.has('ricciMole') ? 4 : 1) as Node['disposition'] } : n)) };
-      selected = null; changed = new Set(); toast = undefined; snapChapter(); showBoard();
+      selected = null; changed = new Set(); toast = undefined;
+      snapChapter(); saveCheckpoint(next.ch.id, st, camp);   // unlock this chapter for replay
+      showBoard();
+    }, undefined, () => scenePause(false));
+  }
+
+  // the in-scene pause overlay — an exit from any conversation. Appended to the
+  // game root (inside the phone frame) with click-guards so it never advances the
+  // scene underneath.
+  function scenePause(showBack: boolean): void {
+    if (root.querySelector('.scene-pause')) return;
+    const ov = document.createElement('div');
+    ov.className = 'menu-overlay scene-pause';
+    ov.addEventListener('click', (e) => { e.stopPropagation(); if (e.target === ov) ov.remove(); });
+    const panel = document.createElement('div'); panel.className = 'menu-panel';
+    const title = document.createElement('div'); title.className = 'menu-title'; title.textContent = 'PAUSED'; panel.appendChild(title);
+    const mk = (label: string, cls: string, fn: () => void): void => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = `menu-btn ${cls}`.trim(); b.textContent = label;
+      b.addEventListener('click', (e) => { e.stopPropagation(); ov.remove(); fn(); });
+      panel.appendChild(b);
+    };
+    mk('RESUME', 'go', () => { /* just close */ });
+    if (showBack) mk('BACK TO THE BOARD', '', () => showBoard());
+    mk('MAIN MENU', 'warn', () => showMenu());
+    ov.appendChild(panel);
+    root.appendChild(ov);
+  }
+
+  // ---- THE FRONT DOOR: title menu, intro, chapter select ----
+  function showMenu(): void {
+    renderMenu(root, {
+      hasSave: !!loadGame(),
+      onContinue,
+      onNew: () => renderIntro(root, startFresh),
+      onChapters: showChapterSelect,
     });
+  }
+
+  function onContinue(): void {
+    const saved = loadGame();
+    if (!saved) { startFresh(); return; }
+    const stage = STAGES.find((s) => s.ch.id === saved.chId);
+    if (!stage) { startFresh(); return; }
+    ch = stage.ch; st = saved.st; camp = saved.camp;
+    selected = null; toast = 'Resumed.'; changed = undefined; snapChapter(); showBoard();
+  }
+
+  function startFresh(): void {
+    clearSave();
+    ch = CHAPTER_1; st = initBoard(ch); camp = initCampaign();
+    selected = null; toast = undefined; changed = undefined;
+    snapChapter(); saveCheckpoint('ch1', st, camp);
+    startMission(root, PROLOGUE_MISSION, { name: 'RICCI', role: 'the collector', portrait: 'assets/art/cast/ricci.jpg' }, new Set<string>(), showBoard, undefined, () => scenePause(false));
+  }
+
+  function showChapterSelect(): void {
+    const cps = loadCheckpoints();
+    const chapters: MenuChapter[] = STAGES.map((s, i) => ({
+      id: s.ch.id, num: i + 1, title: s.ch.title,
+      reached: s.ch.id === 'ch1' || !!cps[s.ch.id],   // ch1 is always available
+    }));
+    renderChapterSelect(root, chapters, { onPick: replayChapter, onBack: showMenu });
+  }
+
+  // replay a reached chapter from its checkpoint (fresh board at that rung)
+  function replayChapter(chId: string): void {
+    const stage = STAGES.find((s) => s.ch.id === chId);
+    if (!stage) return;
+    const cps = loadCheckpoints();
+    const cp = cps[chId];
+    ch = stage.ch;
+    if (cp) {
+      const restored = checkpointState(cp);
+      st = initBoard(ch, restored.st.heat);
+      st = { ...st, flags: new Set(restored.st.flags) };
+      camp = restored.camp;
+    } else {
+      st = initBoard(ch); camp = initCampaign();   // ch1 with no checkpoint = a clean start
+    }
+    if (ch.id === 'ch2') st = { ...st, nodes: st.nodes.map((n) => (n.id === 'ricci' ? { ...n, disposition: (st.flags.has('ricciMole') ? 4 : 1) as Node['disposition'] } : n)) };
+    selected = null; toast = undefined; changed = undefined;
+    snapChapter(); saveCheckpoint(ch.id, st, camp); showBoard();
   }
 
   function ricciSitDown(): void {
@@ -283,7 +364,7 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
         selected = null; changed = new Set(['ricci']);
         toast = (outcome.ripple ? outcome.ripple + ' ' : '') + '— no way up yet. Work more of his people, then sit down again.';
         showBoard();
-      }, startAt);
+      }, startAt, () => scenePause(true));
   }
 
   // (DeLuca → Marlowe sit-downs + all chapter climbs now run through the generic
@@ -320,29 +401,11 @@ export function startGame(root: HTMLElement, onFinish?: () => void): void {
     const m = MISSIONS.find((x) => x.actionId === mjump || x.id === mjump);
     if (m) {
       const person = st.nodes.find((x) => x.id === m.nodeId);
-      startMission(root, m, { name: person?.name ?? '', role: person?.role ?? '', portrait: person?.portrait }, missionFlags(st.flags), showBoard);
+      startMission(root, m, { name: person?.name ?? '', role: person?.role ?? '', portrait: person?.portrait }, missionFlags(st.flags), showBoard, undefined, () => scenePause(true));
       return;
     }
   }
 
-  // resume a saved climb (a dev shortcut above would have taken over first)
-  const saved = typeof localStorage !== 'undefined' ? loadGame() : null;
-  if (saved) {
-    const stage = STAGES.find((s) => s.ch.id === saved.chId);
-    if (stage) {
-      ch = stage.ch; st = saved.st; camp = saved.camp;
-      selected = null; toast = 'Resumed.'; changed = undefined; snapChapter(); showBoard();
-      return;
-    }
-  }
-
-  // fresh game: open on the lived cold-open (the fall, played through Ricci's face
-  // + a choice) — then the board
-  snapChapter();
-  startMission(
-    root, PROLOGUE_MISSION,
-    { name: 'RICCI', role: 'the collector', portrait: 'assets/art/cast/ricci.jpg' },
-    new Set<string>(),
-    showBoard,
-  );
+  // the front door: title screen (Continue / New Game / Chapters)
+  showMenu();
 }

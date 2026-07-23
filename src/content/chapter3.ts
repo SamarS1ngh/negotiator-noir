@@ -12,7 +12,7 @@ export const CHAPTER_3: Chapter = {
   title: 'THE WATERFRONT UNION',
   targetId: 'kastner',
   nodes: [
-    { id: 'you', name: 'YOU', role: 'climbing into the machine', disposition: 4, x: 50, y: 86 },
+    { id: 'you', name: 'CASS', role: 'climbing into the machine', disposition: 4, x: 50, y: 86 },
     { id: 'kastner', name: 'KASTNER', role: 'the union boss', disposition: 2, dealTarget: true, portrait: `${A}/kastner.jpg`, x: 50, y: 14 },
     { id: 'halloran', name: 'HALLORAN', role: 'the dockmaster', disposition: 2, portrait: `${A}/halloran.jpg`, x: 17, y: 40 },
     { id: 'breen', name: 'BREEN', role: 'customs, on the take', disposition: 2, portrait: `${A}/breen.jpg`, x: 83, y: 40 },

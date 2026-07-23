@@ -14,6 +14,7 @@ export function startMission(
   flags: Set<string>,
   onDone: (outcome: MissionOutcome) => void,
   startAt?: string,   // override the first node — used to react the opening to prep
+  onMenu?: () => void,   // open the in-scene pause menu
 ): void {
   let current = startAt ?? mission.start;
 
@@ -51,6 +52,7 @@ export function startMission(
       finish() {
         if (node.outcome) onDone(node.outcome);
       },
+      menu: onMenu,
     });
   }
 

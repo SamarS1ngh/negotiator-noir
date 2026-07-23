@@ -11,6 +11,7 @@ export interface BoardHandlers {
   sitDown(): void;
   restartChapter(): void;
   restartGame(): void;
+  mainMenu(): void;
 }
 
 const DISP_LABEL = ['enemy', 'wary', 'neutral', 'warm', 'ally'];
@@ -44,6 +45,7 @@ function openMenu(root: HTMLElement, on: BoardHandlers): void {
     panel.appendChild(b);
   };
   mk('CONTINUE', 'go', false, () => { /* just close */ });
+  mk('MAIN MENU', '', false, on.mainMenu);
   mk('RESTART CHAPTER', 'warn', true, on.restartChapter);
   mk('RESTART GAME', 'danger', true, on.restartGame);
   ov.appendChild(panel);

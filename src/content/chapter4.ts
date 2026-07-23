@@ -13,7 +13,7 @@ export const CHAPTER_4: Chapter = {
   title: 'THE CASSAR BANK',
   targetId: 'cassar',
   nodes: [
-    { id: 'you', name: 'YOU', role: 'following the money', disposition: 4, x: 50, y: 86 },
+    { id: 'you', name: 'CASS', role: 'following the money', disposition: 4, x: 50, y: 86 },
     { id: 'cassar', name: 'CASSAR', role: 'the banker', disposition: 2, dealTarget: true, portrait: `${A}/cassar.jpg`, x: 50, y: 14 },
     { id: 'teller', name: 'WYATT', role: 'the bank clerk', disposition: 2, portrait: `${A}/teller.jpg`, x: 18, y: 42 },
     { id: 'auditor', name: 'PROSSER', role: 'the auditor', disposition: 2, portrait: `${A}/auditor.jpg`, x: 82, y: 42 },

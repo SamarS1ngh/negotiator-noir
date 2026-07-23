@@ -13,7 +13,7 @@ export const CHAPTER_1: Chapter = {
   title: "MARLOWE'S DOCKS",
   targetId: 'ricci',
   nodes: [
-    { id: 'you', name: 'YOU', role: 'nobody — yet', disposition: 4, x: 50, y: 85 },
+    { id: 'you', name: 'CASS', role: 'nobody — yet', disposition: 4, x: 50, y: 85 },
     { id: 'ricci', name: 'RICCI', role: 'the collector', disposition: 2, dealTarget: true, portrait: `${A}/ricci.jpg`, x: 50, y: 50 },
     { id: 'sal', name: 'SAL', role: "Marlowe's bookkeeper", disposition: 2, portrait: `${A}/sal.jpg`, x: 17, y: 38 },
     { id: 'crew', name: 'THE CREW', role: 'dock loaders', disposition: 2, portrait: `${A}/crew.jpg`, x: 83, y: 38 },

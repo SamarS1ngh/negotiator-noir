@@ -12,7 +12,7 @@ export const CHAPTER_5: Chapter = {
   title: 'THE HALL',
   targetId: 'vane',
   nodes: [
-    { id: 'you', name: 'YOU', role: 'at the threshold of power', disposition: 4, x: 50, y: 86 },
+    { id: 'you', name: 'CASS', role: 'at the threshold of power', disposition: 4, x: 50, y: 86 },
     { id: 'vane', name: 'VANE', role: 'the commissioner', disposition: 2, dealTarget: true, portrait: `${A}/vane.jpg`, x: 50, y: 14 },
     { id: 'reporter', name: 'IRIS KELL', role: 'the reporter', disposition: 2, portrait: `${A}/reporter.jpg`, x: 18, y: 42 },
     { id: 'aide', name: 'HOLT', role: "Vane's fixer", disposition: 2, portrait: `${A}/aide.jpg`, x: 82, y: 42 },

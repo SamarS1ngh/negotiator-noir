@@ -23,6 +23,7 @@ export interface MissionNodeView {
 export interface MissionHandlers {
   choose(choiceId: string): void;   // pick a fork → runner swaps to the next node
   finish(): void;                   // dismiss the consequence card → apply outcome
+  menu?(): void;                    // open the in-scene pause menu (back to board / main menu)
 }
 
 const TYPE_MS = 24;
@@ -84,6 +85,14 @@ export function renderMissionNode(root: HTMLElement, view: MissionNodeView, on: 
     bg.appendChild(el('div', 'scene-mood'));    // the situational wash/vignette
     bg.appendChild(el('div', 'meet-grad'));
     root.appendChild(bg);
+
+    // the in-scene pause button — an exit from any conversation (tap doesn't advance)
+    if (on.menu) {
+      const mb = el('button', 'scene-menu-btn', '☰');
+      (mb as HTMLButtonElement).type = 'button';
+      mb.addEventListener('click', (e) => { e.stopPropagation(); on.menu!(); });
+      root.appendChild(mb);
+    }
 
     // the name-plate belongs to a named speaker in frame; a scene background with
     // no character (name '') shows none
