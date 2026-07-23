@@ -91,12 +91,27 @@ export const DELUCA_CONFRONT: Mission = {
         { who: 'them', art: TABLE, text: "Well? What does a dockrat bring to Vito DeLuca's table that keeps him out of the river?" },
         { who: 'you', caption: true, art: MOCK, text: "He's putting on a show — booming voice, hands wide, rings flashing, playing king for an audience of one. Men don't perform this loud unless something's chasing them." },
       ],
-      // --- THE WOVEN READ: what's actually driving Vito DeLuca ---
-      ask: "Under the gold and the noise — what's actually chasing him?",
-      choices: [
-        { id: 'read_greed', label: "Simple hunger. He wants more than Marlowe lets him keep.", tone: 'push', to: 'r_greed' },
-        { id: 'read_fear', label: "Fear — not of you. Of the man above him noticing how big he's grown.", tone: 'disarm', to: 'r_fear' },
-      ],
+      choices: [{ id: 'read', label: "Let him boom. Read what's under it. ▸", tone: 'disarm', to: 'read_deluca' }],
+    },
+    // --- THE WOVEN READ: investigate the performance, judge what's under it ---
+    {
+      id: 'read_deluca',
+      mood: 'threat',
+      portrait: MOCK,
+      read: {
+        ask: "Under the gold and the noise — what's actually chasing Vito DeLuca?",
+        hint: 'A man performs this loud to drown something out. Tap what you notice.',
+        clues: [
+          { x: 50, y: 24, label: 'his laugh', note: "Half a beat too loud, and it never reaches his eyes. A man laughing to fill a silence that scares him." },
+          { x: 31, y: 56, label: 'the rings', note: "He keeps turning them, flashing them — reminding himself, more than you, that he's still a big man." },
+          { x: 72, y: 38, label: 'his eyes', note: "They cut to the street outside, once, when money comes up. The real threat in his life isn't across this table." },
+          { x: 57, y: 73, label: 'his hand', note: "Never far from the tablecloth, and the pistol under it. That's comfort he's reaching for, not confidence." },
+        ],
+        options: [
+          { id: 'read_greed', label: "Simple hunger. He wants more than Marlowe lets him keep.", to: 'r_greed' },
+          { id: 'read_fear', label: "Fear — not of you. Of the man above him noticing how big he's grown.", to: 'r_fear' },
+        ],
+      },
     },
     {
       id: 'r_greed',

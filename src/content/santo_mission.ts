@@ -53,12 +53,33 @@ export const SANTO_MISSION: Mission = {
         { who: 'you', caption: true, art: WALL, text: "Santo stands outside DeLuca's club like part of the wall, and about as talkative. I've watched him break a man's jaw and then hold a door for the next one. You don't threaten a man like this. You find the one crack in the stone." },
         { who: 'them', art: DISMISS, text: "(without looking down at me) Members only. And you're not. Walk." },
       ],
-      ask: "He didn't look at you twice. Not scared, not curious, not hungry for a fight — just absent. Two seconds of him and you have to decide what you're looking at. What is Santo, really?",
       choices: [
-        { id: 'read_dignity', label: "A proud man doing a job that's stopped being worth his pride.", tone: 'disarm', to: 'r_dignity' },
-        { id: 'read_money', label: "Muscle for hire — loyal to whoever's paying, nothing more.", tone: 'bribe', to: 'r_money' },
-        { id: 'read_fear', label: "A dog beaten into obedience — lean hard enough, he folds.", tone: 'push', to: 'r_fear' },
+        { id: 'read', label: "Find the crack before you speak. ▸", tone: 'disarm', to: 'read_santo' },
       ],
+    },
+
+    // THE READ — study Santo, then judge what he really is (routes to the same
+    // three branches the old text-fork did, but the player earns the read).
+    {
+      id: 'read_santo',
+      mood: 'threat',
+      portrait: WALL,
+      read: {
+        ask: "Two seconds of a man who won't look at you. What is Santo, really?",
+        hint: 'Tap what you notice.',
+        clues: [
+          { x: 48, y: 26, label: 'his eyes', note: "Flat, absent. Never scan your hands, never price the room — whatever moves him isn't standing in front of him." },
+          { x: 38, y: 60, label: 'his hands', note: "Scarred to the knuckle. They've broken men and felt nothing doing it." },
+          { x: 58, y: 74, label: 'his stance', note: 'Still as the wall behind him. No fear to fold, no fight to pick.' },
+          { x: 80, y: 38, label: "DeLuca's door", note: 'He guards it like it\'s his — and gets called "dog" for the privilege.', grants: 'saw_leash' },
+          { x: 28, y: 46, label: 'the held door', note: "Broke a man's jaw, then held the door for the next one. Twenty years, no relish left in any of it." },
+        ],
+        options: [
+          { id: 'read_dignity', label: "A proud man doing a job that's stopped being worth his pride.", to: 'r_dignity' },
+          { id: 'read_money', label: "Muscle for hire — loyal to whoever's paying, nothing more.", to: 'r_money' },
+          { id: 'read_fear', label: "A dog beaten into obedience — lean hard enough, he folds.", to: 'r_fear' },
+        ],
+      },
     },
 
     // --- THE WOVEN READ: what you decide he truly is, before you say a word ---
@@ -72,7 +93,7 @@ export const SANTO_MISSION: Mission = {
       choices: [
         { id: 'respect', label: "His dignity — 'DeLuca called you his dog in front of the crew last week. I heard it. So did they.'", tone: 'disarm', to: 'n_respect' },
         { id: 'worth', label: "His worth — 'You're the most dangerous man on these streets, and he pays you like a doorman.'", tone: 'disarm', to: 'n_worth' },
-        { id: 'threat', label: "Lean on him — 'Help me, or I make sure DeLuca hears you and I talked.'", tone: 'push', to: 'o_loyal' },
+        { id: 'threat', label: "Lean on him — 'Help me, or I make sure DeLuca hears you and I talked.'", tone: 'push', requires: ['saw_leash'], to: 'o_loyal' },
       ],
     },
     {
@@ -85,7 +106,7 @@ export const SANTO_MISSION: Mission = {
       choices: [
         { id: 'worth', label: "His worth — 'You're the most dangerous man on these streets, and he pays you like a doorman.'", tone: 'disarm', to: 'n_worth' },
         { id: 'respect', label: "His dignity — 'DeLuca called you his dog in front of the crew last week. I heard it. So did they.'", tone: 'disarm', to: 'n_respect' },
-        { id: 'threat', label: "Lean on him — 'Help me, or I make sure DeLuca hears you and I talked.'", tone: 'push', to: 'o_loyal' },
+        { id: 'threat', label: "Lean on him — 'Help me, or I make sure DeLuca hears you and I talked.'", tone: 'push', requires: ['saw_leash'], to: 'o_loyal' },
       ],
     },
     {
@@ -96,7 +117,7 @@ export const SANTO_MISSION: Mission = {
       ],
       ask: "A wall of a man you can't scare or fight. What's your way in?",
       choices: [
-        { id: 'threat', label: "Lean on him — 'Help me, or I make sure DeLuca hears you and I talked.'", tone: 'push', to: 'o_loyal' },
+        { id: 'threat', label: "Lean on him — 'Help me, or I make sure DeLuca hears you and I talked.'", tone: 'push', requires: ['saw_leash'], to: 'o_loyal' },
         { id: 'respect', label: "His dignity — 'DeLuca called you his dog in front of the crew last week. I heard it. So did they.'", tone: 'disarm', to: 'n_respect' },
         { id: 'worth', label: "His worth — 'You're the most dangerous man on these streets, and he pays you like a doorman.'", tone: 'disarm', to: 'n_worth' },
       ],

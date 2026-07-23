@@ -43,6 +43,22 @@ export interface MissionOutcome {
 // the emotional/situational light of a beat — drives the scene's colour + shadow
 export type SceneMood = 'tense' | 'fear' | 'hope' | 'guilt' | 'threat' | 'cold' | 'warm';
 
+// ---- THE READ (investigate → deduce) ----
+// An interactive read: the player taps observable clues ON the scene, notes what
+// each reveals, then makes a judgment about what the mark is really driven by.
+// The chosen deduction routes to a node (same branch the old text-fork produced).
+// x/y are % on the scene. `grants` is a flag set when the player NOTICES this clue —
+// evidence that unlocks a specific lever in the negotiation (a `requires` on a later
+// choice). So investigating well earns you more/better options, not just flavor.
+export interface ReadClue { x: number; y: number; label: string; note: string; grants?: string; }
+export interface ReadOption { id: string; label: string; to: string; }
+export interface ReadDef {
+  ask: string;                // the deduction prompt ("what's really driving him?")
+  hint?: string;              // the look-phase nudge ("tap what you notice")
+  clues: ReadClue[];
+  options: ReadOption[];
+}
+
 export interface MissionNode {
   id: string;
   beats?: Beat[];              // dialogue/narration played first
@@ -51,6 +67,7 @@ export interface MissionNode {
   portrait?: string;          // override the face for this node ('' = no portrait)
   name?: string;              // override who 'them' is in this node (e.g. your father)
   role?: string;
+  read?: ReadDef;             // an interactive READ node (investigate → deduce → route)
   choices?: MissionChoice[];  // a fork — absent means this node is an ending
   outcome?: MissionOutcome;   // terminal node: the consequence
 }

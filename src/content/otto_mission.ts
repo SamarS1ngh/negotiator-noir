@@ -53,12 +53,33 @@ export const OTTO_MISSION: Mission = {
         { who: 'you', caption: true, art: POUR, text: "Otto Kessler has kept Marlowe's secrets for thirty years. He's also the only man in the house who's watched Marlowe discard every soul who stopped being useful. He pours two brandies without being asked, and slides one to me. He already knows why I'm here." },
         { who: 'them', art: SIZEUP, text: "The Vidal boy. Marlowe's new favourite stray. Sit. You've come to ask an old man to betray the only life he's had. Do it well, at least. I've heard it done badly too many times." },
       ],
-      ask: "A courtly old wolf who's seen every angle — but he didn't just recite your father's file, he recited what he's already decided about his own ending. Before you say a word: what does thirty years in this house actually leave a man like Otto wanting, now that it's nearly over?",
       choices: [
-        { id: 'read_spent', label: "His loyalty's spent, not his nerve. He's past being bought and past being frightened — what's left is wanting to survive what's coming, and be remembered as more than the hand that signed the letters.", tone: 'disarm', to: 'r_spent' },
-        { id: 'read_price', label: "Thirty years at a rich man's elbow buys expensive tastes. Every man like that has a number — he's just never been offered it.", tone: 'bribe', to: 'r_price' },
-        { id: 'read_scare', label: "He's served a man who ends people for a living, for thirty years. That's conditioning. Fear still owns him.", tone: 'push', to: 'r_scare' },
+        { id: 'read', label: "Read the old wolf before you show a card. ▸", tone: 'disarm', to: 'read_otto' },
       ],
+    },
+
+    // THE READ — study Otto, then judge what thirty years has left him wanting
+    // (routes to the same three branches the old text-fork did, but earned).
+    {
+      id: 'read_otto',
+      mood: 'cold',
+      portrait: POUR,
+      read: {
+        ask: "He didn't recite your father's file — he recited what he's already decided about his own ending. What does thirty years in this house leave a man like Otto wanting, now it's nearly over?",
+        hint: 'Tap what you notice.',
+        clues: [
+          { x: 48, y: 26, label: 'his eyes', note: "Never once on the door. A cornered man watches his exits; he watches only you." },
+          { x: 36, y: 60, label: 'the two glasses', note: "Poured before you spoke. He knew you'd come — and didn't lean toward the money you hadn't offered." },
+          { x: 58, y: 74, label: 'his stillness', note: "Settled, unhurried. A man grieving himself, not one bracing for a fight." },
+          { x: 80, y: 40, label: 'the thick folder', note: "Always within reach. An old man's insurance against the day he stops being useful.", grants: 'saw_folder' },
+          { x: 28, y: 46, label: 'the old watch', note: "Thirty years at a rich man's elbow, still a foreman's watch. Whatever he wants, it was never things." },
+        ],
+        options: [
+          { id: 'read_spent', label: "His loyalty's spent, not his nerve. He's past being bought and past being frightened — what's left is wanting to survive what's coming, and be remembered as more than the hand that signed the letters.", to: 'r_spent' },
+          { id: 'read_price', label: "Thirty years at a rich man's elbow buys expensive tastes. Every man like that has a number — he's just never been offered it.", to: 'r_price' },
+          { id: 'read_scare', label: "He's served a man who ends people for a living, for thirty years. That's conditioning. Fear still owns him.", to: 'r_scare' },
+        ],
+      },
     },
 
     // --- THE WOVEN READ: what you decide he truly wants, before you say another word ---
@@ -73,7 +94,7 @@ export const OTTO_MISSION: Mission = {
         { id: 'legacy', label: "His conscience — 'Thirty years of blood. For a man who'd forget your name in a week.'", tone: 'disarm', to: 'n_legacy' },
         { id: 'survive', label: "His fear — 'You know he'll throw you away the day you're inconvenient. That day's close.'", tone: 'disarm', to: 'n_survive' },
         { id: 'bribe', label: "Offer him a cut — 'Help me, and there's a place for you at the top with me.'", tone: 'bribe', to: 'o_warns' },
-        { id: 'threat', label: "Lean on him — 'You'll help, or I'll let Marlowe think you already have.'", tone: 'push', to: 'o_warns' },
+        { id: 'threat', label: "Lean on him — 'You'll help, or I'll let Marlowe think you already have.'", tone: 'push', requires: ['saw_folder'], to: 'o_warns' },
       ],
     },
     {
@@ -85,7 +106,7 @@ export const OTTO_MISSION: Mission = {
       ask: "If a number is what moves him, you'd better find it before he finds yours instead. How do you open him?",
       choices: [
         { id: 'bribe', label: "Offer him a cut — 'Help me, and there's a place for you at the top with me.'", tone: 'bribe', to: 'o_warns' },
-        { id: 'threat', label: "Lean on him — 'You'll help, or I'll let Marlowe think you already have.'", tone: 'push', to: 'o_warns' },
+        { id: 'threat', label: "Lean on him — 'You'll help, or I'll let Marlowe think you already have.'", tone: 'push', requires: ['saw_folder'], to: 'o_warns' },
         { id: 'survive', label: "His fear — 'You know he'll throw you away the day you're inconvenient. That day's close.'", tone: 'disarm', to: 'n_survive' },
         { id: 'legacy', label: "His conscience — 'Thirty years of blood. For a man who'd forget your name in a week.'", tone: 'disarm', to: 'n_legacy' },
       ],
@@ -98,7 +119,7 @@ export const OTTO_MISSION: Mission = {
       ],
       ask: "Fear is the fastest lever there is — if he's still got something left to lose. How do you open him?",
       choices: [
-        { id: 'threat', label: "Lean on him — 'You'll help, or I'll let Marlowe think you already have.'", tone: 'push', to: 'o_warns' },
+        { id: 'threat', label: "Lean on him — 'You'll help, or I'll let Marlowe think you already have.'", tone: 'push', requires: ['saw_folder'], to: 'o_warns' },
         { id: 'bribe', label: "Offer him a cut — 'Help me, and there's a place for you at the top with me.'", tone: 'bribe', to: 'o_warns' },
         { id: 'survive', label: "His fear — 'You know he'll throw you away the day you're inconvenient. That day's close.'", tone: 'disarm', to: 'n_survive' },
         { id: 'legacy', label: "His conscience — 'Thirty years of blood. For a man who'd forget your name in a week.'", tone: 'disarm', to: 'n_legacy' },

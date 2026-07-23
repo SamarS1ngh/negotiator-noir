@@ -109,7 +109,9 @@ export function renderBoard(
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.setAttribute('x1', String(a.x)); line.setAttribute('y1', String(a.y));
     line.setAttribute('x2', String(b.x)); line.setAttribute('y2', String(b.y));
-    line.setAttribute('class', `edge e-${e.label}`);
+    // labels can be multi-word ("answers to"); a raw space would split the class
+    // and drop the themed stroke — slug it to one token
+    line.setAttribute('class', `edge e-${e.label.replace(/\s+/g, '-')}`);
     svg.appendChild(line);
   }
   web.appendChild(svg);
@@ -118,7 +120,7 @@ export function renderBoard(
   for (const e of ch.edges) {
     const a = byId.get(e.from); const b = byId.get(e.to);
     if (!a || !b) continue;
-    const lab = el('div', `edge-label el-${e.label}`, e.label);
+    const lab = el('div', `edge-label el-${e.label.replace(/\s+/g, '-')}`, e.label);
     lab.style.left = `${(a.x + b.x) / 2}%`;
     lab.style.top = `${(a.y + b.y) / 2}%`;
     web.appendChild(lab);

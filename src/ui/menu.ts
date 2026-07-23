@@ -53,28 +53,35 @@ export function renderMenu(root: HTMLElement, on: MenuHandlers): void {
   root.appendChild(wrap);
 }
 
-// THE INTRO CARDS — set the expectation before the cold-open: this is a branching
-// game where choices, not victories, drive the story. Tap through, then the game.
-const INTRO_CARDS = [
-  'This is a game of reading people.',
-  'There are no right answers — only choices, and what each one costs you.',
-  'Everyone you turn, buy, or break bends what happens next. One choice leads to the next.',
-  'The web you leave behind — the allies, the enemies, the dead — is the story you live with.',
+// THE COLD OPEN — a cinematic hook in the PRESENT tense that flows straight into
+// the played prologue instead of spoiling it. It sets up who Cass is NOW (a man
+// on the docks building a map), then dives back into memory — the last frame is
+// the shop, and the prologue opens on that same shop, so the cut is seamless.
+interface IntroBeat { img: string; line: string; }
+const INTRO_BEATS: IntroBeat[] = [
+  { img: 'assets/art/menu/mc_back1.jpg', line: "Eighteen months I've worked these docks in the dark. Just 'Cass' — one more face on the pier nobody looks at twice." },
+  { img: 'assets/art/scene/now.jpg', line: "Every night I watch the same men. Who skims. Who flinches. Who owes whom. I'm building a map of the whole rotten thing, in my head." },
+  { img: 'assets/art/scene/marlowe.jpg', line: "At the top of it sits an empire — and the collector who broke my father for it, and never learned my name." },
+  { img: 'assets/art/scene/depart.jpg', line: "All I've got left of the old man is a cold watch in my pocket, and the one thing he put in my head: how to read a man." },
+  { img: 'assets/art/scene/shop_teach.jpg', line: "To understand what I'm about to do to them, you have to see where it started. Come back with me. To the shop." },
 ];
 export function renderIntro(root: HTMLElement, onDone: () => void): void {
   let i = 0;
   function draw(): void {
     root.innerHTML = '';
     root.className = 'menu-screen intro-screen';
-    root.appendChild(el('div', 'menu-bg'));
-    const card = el('div', 'intro-card');
-    card.appendChild(el('div', 'intro-line', INTRO_CARDS[i]!));
-    card.appendChild(el('div', 'intro-tap', i < INTRO_CARDS.length - 1 ? 'tap to go on ▸' : 'begin ▸'));
-    root.appendChild(card);
+    root.onclick = null;
+    const b = INTRO_BEATS[i]!;
+    const img = el('img', 'intro-img') as HTMLImageElement;
+    img.src = b.img; img.alt = ''; img.onerror = () => { img.style.display = 'none'; };
+    root.appendChild(img);
+    root.appendChild(el('div', 'intro-scrim'));
+    root.appendChild(el('div', 'intro-bigline', b.line));
+    root.appendChild(el('div', 'intro-tap', i < INTRO_BEATS.length - 1 ? 'tap ▸' : 'begin ▸'));
     const dots = el('div', 'intro-dots');
-    for (let d = 0; d < INTRO_CARDS.length; d += 1) dots.appendChild(el('span', `idot${d === i ? ' on' : ''}`));
+    for (let d = 0; d < INTRO_BEATS.length; d += 1) dots.appendChild(el('span', `idot${d === i ? ' on' : ''}`));
     root.appendChild(dots);
-    root.onclick = () => { i += 1; if (i >= INTRO_CARDS.length) { root.onclick = null; onDone(); } else draw(); };
+    root.onclick = () => { i += 1; if (i >= INTRO_BEATS.length) { root.onclick = null; onDone(); } else draw(); };
   }
   draw();
 }

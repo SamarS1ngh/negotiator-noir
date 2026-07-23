@@ -15,11 +15,11 @@ export const CHAPTER_1: Chapter = {
   nodes: [
     { id: 'you', name: 'CASS', role: 'nobody — yet', disposition: 4, x: 50, y: 85 },
     { id: 'ricci', name: 'RICCI', role: 'the collector', disposition: 2, dealTarget: true, portrait: `${A}/ricci.jpg`, x: 50, y: 50 },
-    { id: 'sal', name: 'SAL', role: "Marlowe's bookkeeper", disposition: 2, portrait: `${A}/sal.jpg`, x: 17, y: 38 },
+    { id: 'sal', name: 'SAL', role: "Marlowe's bookkeeper", disposition: 2, portrait: `${A}/sal.jpg`, x: 16, y: 45 },
     { id: 'crew', name: 'THE CREW', role: 'dock loaders', disposition: 2, portrait: `${A}/crew.jpg`, x: 83, y: 38 },
     { id: 'bianchi', name: 'BIANCHI', role: 'rival collector', disposition: 2, portrait: `${A}/bianchi.jpg`, x: 24, y: 67 },
     { id: 'runner', name: 'TOMMY', role: "Ricci's runner", disposition: 2, portrait: `${A}/runner.jpg`, x: 72, y: 64 },
-    { id: 'gallo', name: 'FR. GALLO', role: 'the docks fence', disposition: 2, portrait: `${A}/gallo.jpg`, x: 28, y: 22 },
+    { id: 'gallo', name: 'FR. GALLO', role: 'the docks fence', disposition: 2, portrait: `${A}/gallo.jpg`, x: 27, y: 18 },
     { id: 'deluca', name: 'DELUCA', role: 'the man above Ricci', disposition: 2, locked: true, portrait: `${A}/deluca.jpg`, x: 50, y: 15 },
   ],
   edges: [

@@ -82,12 +82,33 @@ export const REPORTER_MISSION: Mission = {
         { who: 'you', art: DOORWAY, text: "Nobody sent me. I'm here about the same story that drawer's full of." },
         { who: 'them', art: LEVEL, text: "(finally looks up, the pen stilling) …That's a specific thing to know. Sit down before I decide you're lying. What do you want." },
       ],
-      ask: "Three years on this beat taught her paranoia keeps reporters alive. Before you say another word, size her up — what IS Iris Kell, really?",
       choices: [
-        { id: 'read_fairtrade', label: "A trader, not a mark. The story's her only currency — she'll spend it, but only for a fair price.", tone: 'disarm', to: 'r_fairtrade' },
-        { id: 'read_forsale', label: 'A byline-chaser. Dangle enough access or cash and she prints whatever you want.', tone: 'bribe', to: 'r_forsale' },
-        { id: 'read_reckless', label: "A woman one bad night from running it all regardless of cost. She just needs a shove.", tone: 'push', to: 'r_reckless' },
+        { id: 'read', label: "Read her before you make an offer. ▸", tone: 'disarm', to: 'read_reporter' },
       ],
+    },
+
+    // THE READ — size Iris up, then judge what she really is (routes to the same
+    // three branches the old text-fork did, but the player earns the read).
+    {
+      id: 'read_reporter',
+      mood: 'tense',
+      portrait: DESK,
+      read: {
+        ask: "Paranoia's kept her alive three years on this beat. Before you say another word — what IS Iris Kell, really?",
+        hint: 'Tap what you notice.',
+        clues: [
+          { x: 48, y: 26, label: 'her eyes', note: "They price you on sight — a quick, hungry flicker, fast-hidden. She reads people for a living." },
+          { x: 36, y: 60, label: 'the still pen', note: "A typewriter that never quite stops. Past midnight and she's chasing, not sleeping." },
+          { x: 58, y: 74, label: 'the locked drawer', note: "By her knee. She touches it like a scar — spiked stories, and a source they cost her.", grants: 'saw_scar' },
+          { x: 80, y: 38, label: 'the dark window', note: "She keeps checking it. Three years on this beat, never once out from under a watching eye." },
+          { x: 28, y: 46, label: 'cold coffee', note: "One lamp, coffee gone cold, no bed. Whatever's in that drawer, she means to raise it." },
+        ],
+        options: [
+          { id: 'read_fairtrade', label: "A trader, not a mark. The story's her only currency — she'll spend it, but only for a fair price.", to: 'r_fairtrade' },
+          { id: 'read_forsale', label: 'A byline-chaser. Dangle enough access or cash and she prints whatever you want.', to: 'r_forsale' },
+          { id: 'read_reckless', label: "A woman one bad night from running it all regardless of cost. She just needs a shove.", to: 'r_reckless' },
+        ],
+      },
     },
 
     // --- THE WOVEN READ: what you decide she truly is, before you say a word ---
@@ -100,7 +121,7 @@ export const REPORTER_MISSION: Mission = {
       ask: "You know what she's actually selling and what she needs back for it. How do you open a trader who checks the exits twice?",
       choices: [
         { id: 'disarm', label: "Level with her — 'I'm not here to use you. I'm here to make a fair trade.'", tone: 'disarm', to: 'd1' },
-        { id: 'name', label: "Quietly — 'Two years ago you had a source inside the Hall.'", tone: 'push', to: 'n1' },
+        { id: 'name', label: "Quietly — 'Two years ago you had a source inside the Hall.'", tone: 'push', requires: ['saw_scar'], to: 'n1' },
         { id: 'press', label: "Crowd her — 'You don't get this story without me, and you know it.'", tone: 'press', to: 'p1' },
         { id: 'bribe', label: 'Set an envelope on the desk.', tone: 'bribe', to: 'c1' },
       ],
@@ -116,7 +137,7 @@ export const REPORTER_MISSION: Mission = {
         { id: 'bribe', label: 'Set an envelope on the desk.', tone: 'bribe', to: 'c1' },
         { id: 'press', label: "Crowd her — 'You don't get this story without me, and you know it.'", tone: 'press', to: 'p1' },
         { id: 'disarm', label: "Level with her — 'I'm not here to use you. I'm here to make a fair trade.'", tone: 'disarm', to: 'd1' },
-        { id: 'name', label: "Quietly — 'Two years ago you had a source inside the Hall.'", tone: 'push', to: 'n1' },
+        { id: 'name', label: "Quietly — 'Two years ago you had a source inside the Hall.'", tone: 'push', requires: ['saw_scar'], to: 'n1' },
       ],
     },
     {
@@ -127,7 +148,7 @@ export const REPORTER_MISSION: Mission = {
       ],
       ask: "Push a woman like that and she doesn't recklessly leap — she remembers exactly why she stopped. How do you open her, knowing that now?",
       choices: [
-        { id: 'name', label: "Quietly — 'Two years ago you had a source inside the Hall.'", tone: 'push', to: 'n1' },
+        { id: 'name', label: "Quietly — 'Two years ago you had a source inside the Hall.'", tone: 'push', requires: ['saw_scar'], to: 'n1' },
         { id: 'press', label: "Crowd her — 'You don't get this story without me, and you know it.'", tone: 'press', to: 'p1' },
         { id: 'disarm', label: "Level with her — 'I'm not here to use you. I'm here to make a fair trade.'", tone: 'disarm', to: 'd1' },
         { id: 'bribe', label: 'Set an envelope on the desk.', tone: 'bribe', to: 'c1' },

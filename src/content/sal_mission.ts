@@ -68,16 +68,36 @@ export const SAL_MISSION: Mission = {
       beats: [
         { who: 'you', caption: true, art: WATCH, text: 'Three weeks I watched Sal Moretti before I showed my face. He keeps Ricci\'s books — and the second one, the one that proves Ricci steals from Marlowe. He stays late. He drinks alone. He flinches at the boss\'s name.' },
         { who: 'you', caption: true, art: DESK, text: "He's the softest way in. And there's a thing about me he doesn't know yet." },
-        { who: 'them', art: CLOSED, text: '(ledger snapping shut, chair scraping back) We\'re closed. Whoever you are, you didn\'t see anything. Get out.' },
+        { who: 'them', art: CLOSED, text: "(ledger snapping shut, chair scraping back) We're closed. Whoever you are, you didn't see anything. Get out." },
         { who: 'you', art: DOORWAY, text: "Sit down, Sal. I'm not one of Marlowe's. I'm nobody." },
         { who: 'them', art: WARY, text: "Nobody doesn't walk into my office after dark and know my name. …What do you want." },
       ],
-      ask: "He's cornered, scared, and sharp enough to be dangerous — but before you open your mouth, three weeks of watching him boil down to one question. What IS Sal Moretti, really?",
+      ask: "Before you say a word — look at him. Read him true, like Pa taught you.",
       choices: [
-        { id: 'read_drowning', label: "A drowning man. He doesn't want in on anything — he wants OUT.", tone: 'disarm', to: 'r_drowning' },
-        { id: 'read_forsale', label: "A man with a price. Scared enough to sell to whoever pays.", tone: 'bribe', to: 'r_forsale' },
-        { id: 'read_revenge', label: "A man who already hates Ricci. He just needs a reason to move.", tone: 'push', to: 'r_revenge' },
+        { id: 'read', label: "Read him before you say a word. ▸", tone: 'disarm', to: 'read_sal' },
       ],
+    },
+    // THE READ — investigate Sal, then judge what really drives him (routes to the
+    // same three branches the old text-fork did, but the player earns the read).
+    {
+      id: 'read_sal',
+      mood: 'tense',
+      portrait: 'assets/art/scene/sal_desk.jpg',
+      read: {
+        ask: "What's really driving him?",
+        hint: 'Tap what you notice.',
+        clues: [
+          { x: 33, y: 64, label: 'his hands', note: 'Guarding that drawer. Not selling it.', grants: 'saw_drawer' },
+          { x: 62, y: 76, label: 'the glass', note: 'Drinking alone. Numbing something.', grants: 'saw_numbing' },
+          { x: 50, y: 28, label: 'his eyes', note: "Flinches at 'Marlowe.' Not Ricci — Marlowe.", grants: 'saw_fear' },
+          { x: 17, y: 48, label: 'the ledgers', note: 'Two books. Sat on them a year. Cornered.', grants: 'saw_cornered' },
+        ],
+        options: [
+          { id: 'drowning', label: 'Drowning — he wants OUT.', to: 'r_drowning' },
+          { id: 'forsale', label: "For sale — he'll deal with anyone.", to: 'r_forsale' },
+          { id: 'revenge', label: 'Vengeful — he hates Ricci.', to: 'r_revenge' },
+        ],
+      },
     },
 
     // --- THE WOVEN READ: what you decide he truly is, before you say a word ---
@@ -91,7 +111,7 @@ export const SAL_MISSION: Mission = {
       choices: [
         { id: 'disarm', label: "Hands open — 'I'm not here to hurt you. We're scared of the same man.'", tone: 'disarm', to: 'd1' },
         { id: 'name', label: "Quietly — 'My father was Tomas Vidal.'", tone: 'push', to: 'n1' },
-        { id: 'press', label: "Crowd him — 'You don't want me talking loud about that drawer.'", tone: 'press', to: 'p1' },
+        { id: 'press', label: "Crowd him — 'You don't want me talking loud about that drawer.'", tone: 'press', requires: ['saw_drawer'], to: 'p1' },
         { id: 'bribe', label: 'Set a roll of cash on the ledger.', tone: 'bribe', to: 'c1' },
       ],
     },
@@ -104,7 +124,7 @@ export const SAL_MISSION: Mission = {
       ask: "If he's for sale, he's for sale to your enemies too. Careful how you open a man who's already doing the math on you.",
       choices: [
         { id: 'bribe', label: 'Set a roll of cash on the ledger.', tone: 'bribe', to: 'c1' },
-        { id: 'press', label: "Crowd him — 'You don't want me talking loud about that drawer.'", tone: 'press', to: 'p1' },
+        { id: 'press', label: "Crowd him — 'You don't want me talking loud about that drawer.'", tone: 'press', requires: ['saw_drawer'], to: 'p1' },
         { id: 'disarm', label: "Hands open — 'I'm not here to hurt you. We're scared of the same man.'", tone: 'disarm', to: 'd1' },
         { id: 'name', label: "Quietly — 'My father was Tomas Vidal.'", tone: 'push', to: 'n1' },
       ],
@@ -118,7 +138,7 @@ export const SAL_MISSION: Mission = {
       ask: "Push a broken man toward revenge and he doesn't fight — he bolts. How do you open him, knowing that now?",
       choices: [
         { id: 'name', label: "Quietly — 'My father was Tomas Vidal.'", tone: 'push', to: 'n1' },
-        { id: 'press', label: "Crowd him — 'You don't want me talking loud about that drawer.'", tone: 'press', to: 'p1' },
+        { id: 'press', label: "Crowd him — 'You don't want me talking loud about that drawer.'", tone: 'press', requires: ['saw_drawer'], to: 'p1' },
         { id: 'disarm', label: "Hands open — 'I'm not here to hurt you. We're scared of the same man.'", tone: 'disarm', to: 'd1' },
         { id: 'bribe', label: 'Set a roll of cash on the ledger.', tone: 'bribe', to: 'c1' },
       ],

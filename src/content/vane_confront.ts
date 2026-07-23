@@ -105,13 +105,28 @@ export const VANE_CONFRONT: Mission = {
         { who: 'them', art: TABLE_WAIT, text: "Your father. I remember the name, if not the face — we process a great many names in this office. What is it you imagine I did to him?" },
         { who: 'you', caption: true, art: SIZEUP, text: "He doesn't bluster like DeLuca or posture like Ricci. He sits very still and lets silence do the threatening — a man who's never once needed to raise his voice, because the whole machinery of the Hall raises it for him." },
       ],
-      // --- THE WOVEN READ: what's actually driving Commissioner Vane ---
-      ask: "Under the calm and the credentials — what's actually driving him?",
-      choices: [
-        { id: 'read_believer', label: "He believes it. Every order he's signed, he's convinced himself it kept the city clean.", tone: 'disarm', to: 'r_believer' },
-        { id: 'read_coward', label: "A frightened bureaucrat protecting his pension. Corner him and he folds.", tone: 'push', to: 'r_coward' },
-        { id: 'read_bought', label: "Just another man on somebody's leash — upriver owns him the same as everyone else.", tone: 'disarm', to: 'r_bought' },
-      ],
+      choices: [{ id: 'read', label: "Say nothing yet. Read the stillness. ▸", tone: 'disarm', to: 'read_vane' }],
+    },
+    // --- THE WOVEN READ: investigate the stillness, judge what's under it ---
+    {
+      id: 'read_vane',
+      mood: 'cold',
+      portrait: SIZEUP,
+      read: {
+        ask: "Under the calm and the credentials — what's actually driving Commissioner Vane?",
+        hint: 'He lets silence do his threatening. Tap what you notice.',
+        clues: [
+          { x: 50, y: 30, label: 'his eyes', note: "You named your father. Not a flicker — no guilt, no fear. Whatever he did, he squared it with himself long ago." },
+          { x: 37, y: 62, label: 'his hands', note: "Folded, perfectly still. Not a man guarding a pension — a man who has never once had to reach for anything." },
+          { x: 80, y: 27, label: 'the commendations', note: "A wall of them. Years of keeping the city 'clean.' He's built his whole self around being the good man in the room." },
+          { x: 62, y: 71, label: 'the clock', note: "He keeps it in view — your minutes are a courtesy he is granting. Control is the air he breathes." },
+        ],
+        options: [
+          { id: 'read_believer', label: "He believes it. Every order he's signed, he's convinced himself it kept the city clean.", to: 'r_believer' },
+          { id: 'read_coward', label: "A frightened bureaucrat protecting his pension. Corner him and he folds.", to: 'r_coward' },
+          { id: 'read_bought', label: "Just another man on somebody's leash — upriver owns him the same as everyone else.", to: 'r_bought' },
+        ],
+      },
     },
     {
       id: 'r_believer',

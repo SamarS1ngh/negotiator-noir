@@ -77,12 +77,32 @@ export const FINN_MISSION: Mission = {
         { who: 'you', art: WARY, text: "No. I'm not from anyone, Mrs. Finn. I just want to know what happened to your husband." },
         { who: 'them', art: WARY, text: "(dry, not unkind, already turning back into the kitchen, leaving the door open behind her — which is either an invitation or a test) Everyone who's said that this month wanted my signature on something after. Sit if you're staying. Don't, if you're not." },
       ],
-      ask: "A reporter, an insurance man, and a union lawyer have all stood on this exact step this month, each one calling it sympathy while they angled for something. You've got the length of her kitchen to decide which one she'll take you for. What is Mrs. Finn, really?",
       choices: [
-        { id: 'read_truth', label: "A woman who's stopped grieving and started building a case. She doesn't want comfort — she wants the truth, and Danny's name back.", tone: 'disarm', to: 'r_truth' },
-        { id: 'read_revenge', label: "A woman who wants somebody to bleed for this. Give her a name to hate and she'll move.", tone: 'push', to: 'r_revenge' },
-        { id: 'read_broke', label: "A dockworker's widow with no income left and a coat she can't bring herself to sell. Money talks here.", tone: 'bribe', to: 'r_broke' },
+        { id: 'read', label: "Read her before you sit down. ▸", tone: 'disarm', to: 'read_finn' },
       ],
+    },
+    // THE READ — investigate Mrs. Finn, then judge what really drives her (routes
+    // to the same three branches the old text-fork did, but the player earns it).
+    {
+      id: 'read_finn',
+      mood: 'tense',
+      portrait: KITCHEN,
+      read: {
+        ask: "A reporter, an insurance man, a union lawyer — all stood on this step this month calling it sympathy. You've got the length of her kitchen to read her. What is Mrs. Finn, really?",
+        hint: 'Tap what you notice.',
+        clues: [
+          { x: 48, y: 26, label: 'her eyes', note: "Dry. She's done crying — now she's watching you like the others." },
+          { x: 38, y: 60, label: 'her hands', note: 'Folding that dish towel flat and steady. She ran a knife off this porch herself.' },
+          { x: 58, y: 74, label: 'how she stands', note: 'Composed to the point of dangerous. Worst exactly when she goes quiet.' },
+          { x: 80, y: 38, label: 'the shoebox', note: "Half under a towel: clippings, a schedule, dates circled back to the week Danny started asking. A case, built by hand, alone.", grants: 'saw_case' },
+          { x: 28, y: 46, label: 'the envelope', note: "Behind the sugar tin — Kastner's hush money, a month unopened. Cash won't buy this room quiet." },
+        ],
+        options: [
+          { id: 'read_truth', label: "A woman who's stopped grieving and started building a case. She doesn't want comfort — she wants the truth, and Danny's name back.", to: 'r_truth' },
+          { id: 'read_revenge', label: "A woman who wants somebody to bleed for this. Give her a name to hate and she'll move.", to: 'r_revenge' },
+          { id: 'read_broke', label: "A dockworker's widow with no income left and a coat she can't bring herself to sell. Money talks here.", to: 'r_broke' },
+        ],
+      },
     },
 
     // --- THE WOVEN READ: what you decide she truly is, before you say more ---
@@ -96,7 +116,7 @@ export const FINN_MISSION: Mission = {
       choices: [
         { id: 'disarm', label: "Nod at the shoebox — 'You've been building this alone. You don't have to anymore.'", tone: 'disarm', to: 'd1' },
         { id: 'name', label: "Quietly — 'My father was Tomas Vidal. He asked questions too.'", tone: 'push', to: 'n1' },
-        { id: 'press', label: "Lean in — 'I need to know exactly what he found, Mrs. Finn. Now.'", tone: 'press', to: 'p1' },
+        { id: 'press', label: "Lean in — 'I need to know exactly what he found, Mrs. Finn. Now.'", tone: 'press', requires: ['saw_case'], to: 'p1' },
         { id: 'bribe', label: 'Set money on the table for what she knows.', tone: 'bribe', to: 'c1' },
       ],
     },
@@ -108,7 +128,7 @@ export const FINN_MISSION: Mission = {
       ],
       ask: "Hand a grieving woman a target when what she's actually guarding against is more bodies, and you'll watch her shut the door in your face too. What do you do instead?",
       choices: [
-        { id: 'press', label: "Lean in — 'I need to know exactly what he found, Mrs. Finn. Now.'", tone: 'press', to: 'p1' },
+        { id: 'press', label: "Lean in — 'I need to know exactly what he found, Mrs. Finn. Now.'", tone: 'press', requires: ['saw_case'], to: 'p1' },
         { id: 'name', label: "Quietly — 'My father was Tomas Vidal. He asked questions too.'", tone: 'push', to: 'n1' },
         { id: 'disarm', label: "Nod at the shoebox — 'You've been building this alone. You don't have to anymore.'", tone: 'disarm', to: 'd1' },
         { id: 'bribe', label: 'Set money on the table for what she knows.', tone: 'bribe', to: 'c1' },
@@ -125,7 +145,7 @@ export const FINN_MISSION: Mission = {
         { id: 'bribe', label: 'Set money on the table for what she knows.', tone: 'bribe', to: 'c1' },
         { id: 'disarm', label: "Nod at the shoebox — 'You've been building this alone. You don't have to anymore.'", tone: 'disarm', to: 'd1' },
         { id: 'name', label: "Quietly — 'My father was Tomas Vidal. He asked questions too.'", tone: 'push', to: 'n1' },
-        { id: 'press', label: "Lean in — 'I need to know exactly what he found, Mrs. Finn. Now.'", tone: 'press', to: 'p1' },
+        { id: 'press', label: "Lean in — 'I need to know exactly what he found, Mrs. Finn. Now.'", tone: 'press', requires: ['saw_case'], to: 'p1' },
       ],
     },
 

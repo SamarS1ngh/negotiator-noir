@@ -54,12 +54,32 @@ export const REESE_MISSION: Mission = {
         { who: 'you', caption: true, art: ALONE, text: "Detective Reese drinks alone in the back of a bar that isn't his precinct's, which tells you everything. He's the man who signs off DeLuca's bodies as drownings and bar fights. He hates himself for it in a quiet, professional way." },
         { who: 'them', art: TAIL, text: "(not turning) I know a tail when I feel one, kid. Whatever you're selling, I've already bought worse. Sit down or walk — you're blocking my light." },
       ],
-      ask: "He's guarded, sharp, three drinks past careful — and every one of those things is a tell if you read it right. What IS Reese, underneath the badge he's stopped believing in?",
       choices: [
-        { id: 'read_out', label: "A drowning man looking for a way out — not more money, not another threat. A shot at being clean again.", tone: 'disarm', to: 'r_wantout' },
-        { id: 'read_scared', label: "A man who only moves when the fear's big enough. Lean on it.", tone: 'press', to: 'r_threatened' },
-        { id: 'read_money', label: "A cop on a payroll like any other. Everyone on DeLuca's take has a price.", tone: 'bribe', to: 'r_forsale' },
+        { id: 'read', label: "Read him before you take the stool. ▸", tone: 'disarm', to: 'read_reese' },
       ],
+    },
+    // THE READ — investigate Reese, then judge what really drives him (routes to
+    // the same three branches the old text-fork did, but the player earns it).
+    {
+      id: 'read_reese',
+      mood: 'tense',
+      portrait: ALONE,
+      read: {
+        ask: "Every guarded thing about him is a tell, if you read it right. What IS Reese, under the badge he's stopped believing in?",
+        hint: 'Tap what you notice.',
+        clues: [
+          { x: 48, y: 26, label: 'his eyes', note: "Won't hold his own reflection in the glass. Guilt he can't drink down." },
+          { x: 38, y: 60, label: 'his hands', note: 'Refilling on habit, not thirst. The drink stopped being a pleasure years ago.' },
+          { x: 58, y: 74, label: 'how he sits', note: 'Slumped, hat low, jaw set — a man who threatens himself in the mirror every night.' },
+          { x: 80, y: 38, label: 'the wrong bar', note: "A back booth in a place that isn't his precinct's. He drinks where no cop will see him — DeLuca's man, and he knows it.", grants: 'saw_hiding' },
+          { x: 28, y: 46, label: 'the whisky', note: "Three past careful, and still watching the door like it's coming for him." },
+        ],
+        options: [
+          { id: 'read_out', label: "A drowning man looking for a way out — not more money, not another threat. A shot at being clean again.", to: 'r_wantout' },
+          { id: 'read_scared', label: "A man who only moves when the fear's big enough. Lean on it.", to: 'r_threatened' },
+          { id: 'read_money', label: "A cop on a payroll like any other. Everyone on DeLuca's take has a price.", to: 'r_forsale' },
+        ],
+      },
     },
 
     // --- THE WOVEN READ: what you decide he truly is, before you say a word ---
@@ -72,7 +92,7 @@ export const REESE_MISSION: Mission = {
       ask: "You know what he needs before he's said it. How do you open a drowning man?",
       choices: [
         { id: 'conscience', label: "His conscience — 'You joined to catch men like DeLuca. Now you bury them for him.'", tone: 'disarm', to: 'n_conscience' },
-        { id: 'fear', label: "His fear — 'When DeLuca falls — and he's going to — the cop who covered it falls with him.'", tone: 'press', to: 'n_fear' },
+        { id: 'fear', label: "His fear — 'When DeLuca falls — and he's going to — the cop who covered it falls with him.'", tone: 'press', requires: ['saw_hiding'], to: 'n_fear' },
         { id: 'money', label: "Offer him cash — 'Name your price for what you know about DeLuca.'", tone: 'bribe', to: 'o_bolts' },
       ],
     },
@@ -84,7 +104,7 @@ export const REESE_MISSION: Mission = {
       ],
       ask: "Wrong lever, and some part of him already clocked you reaching for it. Recover, or keep pushing?",
       choices: [
-        { id: 'fear', label: "Push on anyway — 'When DeLuca falls — and he's going to — the cop who covered it falls with him.'", tone: 'press', to: 'n_fear' },
+        { id: 'fear', label: "Push on anyway — 'When DeLuca falls — and he's going to — the cop who covered it falls with him.'", tone: 'press', requires: ['saw_hiding'], to: 'n_fear' },
         { id: 'conscience', label: "Recover — 'You joined to catch men like DeLuca. Now you bury them for him.'", tone: 'disarm', to: 'n_conscience' },
         { id: 'money', label: "Offer him cash — 'Name your price for what you know about DeLuca.'", tone: 'bribe', to: 'o_bolts' },
       ],
@@ -99,7 +119,7 @@ export const REESE_MISSION: Mission = {
       choices: [
         { id: 'money', label: "Make the offer anyway — 'Name your price for what you know about DeLuca.'", tone: 'bribe', to: 'o_bolts' },
         { id: 'conscience', label: "Catch yourself — 'You joined to catch men like DeLuca. Now you bury them for him.'", tone: 'disarm', to: 'n_conscience' },
-        { id: 'fear', label: "His fear instead — 'When DeLuca falls — and he's going to — the cop who covered it falls with him.'", tone: 'press', to: 'n_fear' },
+        { id: 'fear', label: "His fear instead — 'When DeLuca falls — and he's going to — the cop who covered it falls with him.'", tone: 'press', requires: ['saw_hiding'], to: 'n_fear' },
       ],
     },
 

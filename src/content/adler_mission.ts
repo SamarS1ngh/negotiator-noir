@@ -54,12 +54,33 @@ export const ADLER_MISSION: Mission = {
         { who: 'you', caption: true, art: ESTABLISH, text: "Adler works late in a back office that smells of ink and fear, three locks on the door. He keeps two sets of books: the ones Marlowe shows, and the ones that are true. He's the second most dangerous man in the house, and the most afraid." },
         { who: 'them', art: LOCKED, text: "(not looking up, pen still moving) The door was locked. It's always locked. Whatever you are, I've balanced worse than you before midnight. State your business and leave me my evening." },
       ],
-      ask: "A precise, frightened man behind three locks, two sets of books, a pen that won't land a full line. Before you say a word — what's actually true about him?",
       choices: [
-        { id: 'read_scared', label: "Terror's finally bigger than loyalty. Ten years of fear has outrun whatever he owes Marlowe — he's not guarding secrets anymore, he's hunting for a reason to save himself.", tone: 'disarm', to: 'r_scared' },
-        { id: 'read_loyal', label: "A true believer. Ten years keeping the real books without a slip isn't fear — it's devotion, and devotion doesn't turn.", tone: 'press', to: 'r_loyal' },
-        { id: 'read_greedy', label: "A thief covering a thief. Whatever's rattling him, it's his own hand in the till, not Marlowe's.", tone: 'bribe', to: 'r_greedy' },
+        { id: 'read', label: "Read him before you break his evening. ▸", tone: 'disarm', to: 'read_adler' },
       ],
+    },
+
+    // THE READ — study Adler, then judge what's really eating him (routes to the
+    // same three branches the old text-fork did, but the player earns the read).
+    {
+      id: 'read_adler',
+      mood: 'tense',
+      portrait: ESTABLISH,
+      read: {
+        ask: "Three locks, two sets of books, a pen that won't land a full line. What's actually true about him?",
+        hint: 'Tap what you notice.',
+        clues: [
+          { x: 48, y: 26, label: 'his eyes', note: "Never on you — flicking to the floor safe like it's a wound. Not guarding it. Measuring the way out.", grants: 'saw_exit' },
+          { x: 38, y: 60, label: 'his hands', note: 'Flat on the desk, not a tremor. Ten years of holding steady, still holding.' },
+          { x: 58, y: 74, label: 'the pen', note: "Still moving — but it hasn't landed a full line since you walked in." },
+          { x: 80, y: 38, label: 'three locks', note: "Three of them on one door. That's not security. That's fear you can count." },
+          { x: 28, y: 46, label: 'two ledgers', note: "One set he shows Marlowe. One set that's true. He keeps both, and it's eating him." },
+        ],
+        options: [
+          { id: 'read_scared', label: "Terror's finally bigger than loyalty. Ten years of fear has outrun whatever he owes Marlowe — he's not guarding secrets anymore, he's hunting for a reason to save himself.", to: 'r_scared' },
+          { id: 'read_loyal', label: "A true believer. Ten years keeping the real books without a slip isn't fear — it's devotion, and devotion doesn't turn.", to: 'r_loyal' },
+          { id: 'read_greedy', label: "A thief covering a thief. Whatever's rattling him, it's his own hand in the till, not Marlowe's.", to: 'r_greedy' },
+        ],
+      },
     },
 
     // --- THE WOVEN READ: what you decide is really eating him, before he's said another word ---
@@ -73,7 +94,7 @@ export const ADLER_MISSION: Mission = {
       choices: [
         { id: 'fear', label: "His fear — 'Marlowe's auditing his own people. A man who knows the true numbers doesn't retire. He disappears.'", tone: 'press', to: 'n_fear' },
         { id: 'order', label: "His precision — 'Every number he's made you lie about is a stain on the only clean thing you have left. Your work.'", tone: 'disarm', to: 'n_order' },
-        { id: 'threat', label: "Lean on him — 'Give me the real books or I tell Marlowe you offered them.'", tone: 'push', to: 'o_bolts' },
+        { id: 'threat', label: "Lean on him — 'Give me the real books or I tell Marlowe you offered them.'", tone: 'push', requires: ['saw_exit'], to: 'o_bolts' },
       ],
     },
     {
@@ -87,7 +108,7 @@ export const ADLER_MISSION: Mission = {
       choices: [
         { id: 'fear', label: "Drop the flattery, go straight for the fear — 'Marlowe's auditing his own people. A man who knows the true numbers doesn't retire.'", tone: 'press', to: 'n_fear' },
         { id: 'order', label: "Needle the one thing loyalty can't cover — 'Every number he's made you falsify is a stain on the only clean thing you have left.'", tone: 'disarm', to: 'n_order' },
-        { id: 'threat', label: "Cut your losses — 'Give me the real books or I tell Marlowe you offered them.'", tone: 'push', to: 'o_bolts' },
+        { id: 'threat', label: "Cut your losses — 'Give me the real books or I tell Marlowe you offered them.'", tone: 'push', requires: ['saw_exit'], to: 'o_bolts' },
       ],
     },
     {
@@ -101,7 +122,7 @@ export const ADLER_MISSION: Mission = {
       choices: [
         { id: 'fear', label: "Try the fear under the insult — 'Fine — it's not the till. It's Marlowe auditing his own people, and a man who knows the true numbers doesn't retire.'", tone: 'press', to: 'n_fear' },
         { id: 'order', label: "Try the precision he just defended so hard — 'You're right, it's not theft. It's every number he's made you falsify — a stain on the one clean thing you have left.'", tone: 'disarm', to: 'n_order' },
-        { id: 'threat', label: "Push past the insult — 'Then prove it. Give me the real books, or I tell Marlowe you offered them.'", tone: 'push', to: 'o_bolts' },
+        { id: 'threat', label: "Push past the insult — 'Then prove it. Give me the real books, or I tell Marlowe you offered them.'", tone: 'push', requires: ['saw_exit'], to: 'o_bolts' },
       ],
     },
 

@@ -2,6 +2,7 @@ import type { Mission, MissionOutcome } from '../domain/mission';
 import { missionNode } from '../domain/mission';
 import { principle } from '../domain/principle';
 import { renderMissionNode } from '../ui/mission';
+import { renderRead } from '../ui/read';
 
 // Drive a branching mission: start at its first node, follow the fork the player
 // picks node to node, and when we reach an ending, hand its outcome back so the
@@ -21,6 +22,24 @@ export function startMission(
   function show(): void {
     const node = missionNode(mission, current);
     if (!node) return;
+    // a READ node: investigate the scene, then deduce → route like a fork
+    if (node.read) {
+      const rd = node.read;
+      renderRead(root, {
+        name: node.name ?? meta.name, role: node.role ?? meta.role,
+        portrait: node.portrait ?? mission.scene ?? meta.portrait,
+        mood: node.mood, palette: mission.palette,
+        ask: rd.ask, hint: rd.hint, clues: rd.clues, options: rd.options.map((o) => ({ id: o.id, label: o.label })),
+      }, {
+        deduce(optionId, found) {
+          for (const f of found) flags.add(f);   // evidence you noticed unlocks levers below
+          const o = rd.options.find((x) => x.id === optionId);
+          if (o) { current = o.to; show(); }
+        },
+        menu: onMenu,
+      });
+      return;
+    }
     // an approach is only offered if you carry the flags it needs — prep you did
     // elsewhere (proof dug up, people turned) unlocks how you can play this scene
     const choices = node.choices?.filter((c) => (c.requires ?? []).every((f) => flags.has(f)));
