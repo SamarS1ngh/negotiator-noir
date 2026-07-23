@@ -1,6 +1,6 @@
 {
   "name": "negotiator-noir",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Rebooted 2026-07-15. A **manipulation duel** game: you read, break, scheme and manipulate one person at a time across a table — reading their mood, deducing their hidden agenda, finding their personality levers — inside a noir crime story with a clear end goal.",
   "main": "index.js",
   "directories": {

@@ -560,7 +560,8 @@ body {
 .mr-lab.fail { color: var(--crimson); }
 
 /* the negotiation moment — they want something, you pick how to play them */
-.meet-choose { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(24px + var(--safe-b)); z-index: 3; }
+.meet-choose { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(24px + var(--safe-b)); z-index: 3;
+  max-height: calc(100dvh - var(--safe-t) - var(--safe-b) - 44px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .mc-ask-lab { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
 .mc-ask { font-family: 'JetBrains Mono', monospace; font-size: clamp(13px, 3.5vw, 15px); line-height: 1.45; color: #f4e7c6; margin-bottom: 16px; text-shadow: 0 2px 10px #000; }
 .mc-lab { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--steel); margin-bottom: 8px; }
@@ -664,6 +665,8 @@ body {
 
 .mission-conseq {
   position: absolute; left: var(--pad); right: var(--pad); bottom: calc(24px + var(--safe-b)); z-index: 4;
+  /* never grow off the top of the screen — cap to the safe viewport and scroll inside */
+  max-height: calc(100dvh - var(--safe-t) - var(--safe-b) - 44px); overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 16px 16px 14px; border-radius: 14px; border: 1px solid rgba(120,140,160,.2);
   background: linear-gradient(180deg, rgba(14,16,20,.96), rgba(8,10,13,.98));
   box-shadow: 0 -8px 40px rgba(0,0,0,.6); animation: conseq-in .3s cubic-bezier(.2,.7,.3,1.15) both;
@@ -2335,3 +2338,7 @@ body {
 /* disabled Continue (no game in progress yet) */
 .title-btn.disabled, .title-btn:disabled { opacity: .38; cursor: default; }
 .title-screen .title-btn.disabled { border-color: rgba(120,130,145,.2); background: rgba(12,16,20,.5); color: #9aa4ad; box-shadow: none; }
+
+/* scroll works, but no visible scrollbar anywhere (it's a game, not a document) */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
